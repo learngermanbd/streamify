@@ -106,7 +106,7 @@ object DeepLinkValidator {
         // ── Check 3: HTTPS deep links must be from allowed domains ──
         if (scheme == "https") {
             val host = uri.host?.lowercase() ?: ""
-            if (!host.endsWith("streamify-4phj.onrender.com")) {
+            if (!host.endsWith("learngermanwith.fun")) {
                 Log.w(TAG, "Blocked HTTPS host '$host' from $caller")
                 return DeepLinkResult.Invalid("blocked_host:$host", caller)
             }

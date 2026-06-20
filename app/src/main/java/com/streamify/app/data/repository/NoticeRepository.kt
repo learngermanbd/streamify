@@ -46,7 +46,7 @@ class NoticeRepository(
      * the activity-scoped dependency — for now a hard-ref with the
      * placeholder backend keeps the wiring simple.
      */
-    private val noticesUrl: String = "https://streamify-4phj.onrender.com/api/notices"
+    private val noticesUrl: String = "https://learngermanwith.fun/api/notices"
 
     /**
      * Cold Flow of active notices (i.e. those whose `expiresAt`

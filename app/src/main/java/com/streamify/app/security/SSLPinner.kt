@@ -44,7 +44,6 @@ object SSLPinner {
      * from the production certificate chain.
      */
     private val PINS = mapOf(
-        "streamify-4phj.onrender.com" to listOf(),  // Render uses shared certs — skip pinning
         "learngermanwith.fun" to listOf(
             // Primary: Let's Encrypt Authority X3
             "sha256/YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=",

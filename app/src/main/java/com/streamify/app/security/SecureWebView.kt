@@ -28,7 +28,7 @@ import android.webkit.WebViewClient
  * ## Usage
  * ```kotlin
  * SecureWebView.configure(webView, context)
- * webView.loadUrl("https://streamify-4phj.onrender.com/info")
+ * webView.loadUrl("https://learngermanwith.fun/info")
  * // When done:
  * SecureWebView.clearSensitiveData(webView)
  * ```
@@ -42,9 +42,9 @@ object SecureWebView {
      * All other domains are blocked.
      */
     private val ALLOWED_DOMAINS = setOf(
-        "streamify-4phj.onrender.com",
-        "www.streamify-4phj.onrender.com",
-        "api.streamify-4phj.onrender.com",
+        "learngermanwith.fun",
+        "www.learngermanwith.fun",
+        "api.learngermanwith.fun",
     )
 
     /**

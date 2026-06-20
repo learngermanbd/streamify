@@ -316,11 +316,11 @@ val encryptSecrets by tasks.registering {
         // ── Collect values to encrypt ──────────────────────────────
         val secrets = linkedMapOf(
             "API_BASE_URL" to (props.getProperty("API_BASE_URL")
-                ?: "https://streamify-4phj.onrender.com"),
+                ?: "https://learngermanwith.fun"),
             "API_CONFIG_URL" to (props.getProperty("API_CONFIG_URL")
-                ?: "https://streamify-4phj.onrender.com/config"),
+                ?: "https://learngermanwith.fun/config"),
             "UPDATE_URL" to (props.getProperty("UPDATE_URL")
-                ?: "https://streamify-4phj.onrender.com/update"),
+                ?: "https://learngermanwith.fun/update"),
             "TELEGRAM_LINK" to (props.getProperty("TELEGRAM_LINK")
                 ?: "https://t.me/streamify"),
             "SENTRY_DSN" to (
