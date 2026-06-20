@@ -65,8 +65,7 @@ class StreamifyApp : Application() {
      *                              background telemetry the user has
      *                              already opted out of at OS level.
      *   attachStacktrace  = true
-     *   attachThreads     = true  — multi-thread crashes (the most
-     *                              common shape in this codebase — FCM
+     *   attachThreads     = true  — multi-thread crashes (the most      *                              common shape in this codebase — FCM
      *                              + ExoPlayer render thread + DataStore
      *                              IO) need the full thread dump.
      *   attachViewHierarchy = false  — PiP overlay + crash-screen pixels

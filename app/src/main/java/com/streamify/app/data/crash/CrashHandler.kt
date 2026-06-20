@@ -114,7 +114,7 @@ class CrashHandler private constructor(private val appContext: Context) :
         val device = "${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE}, SDK ${Build.VERSION.SDK_INT})"
 
         val report = buildString {
-            appendLine("SportStream crash report")
+            appendLine("Streamify crash report")
             appendLine("Timestamp: $timestamp")
             appendLine("App version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
             appendLine("Device: $device")
@@ -145,7 +145,7 @@ class CrashHandler private constructor(private val appContext: Context) :
     }
 
     companion object {
-        private const val TAG = "SportStreamCrashHandler"
+        private const val TAG = "StreamifyCrashHandler"
         private const val FILE_NAME = "crash-report-current.log"
         private const val TS_FMT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
 

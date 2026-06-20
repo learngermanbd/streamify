@@ -134,7 +134,7 @@ internal object AuthInterceptor : Interceptor {
  */
 internal class DebugLoggerInterceptor : Interceptor {
 
-    private val tag = "SportStreamHttp"
+    private val tag = "StreamifyHttp"
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()

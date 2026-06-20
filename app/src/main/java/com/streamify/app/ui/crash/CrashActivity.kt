@@ -99,7 +99,7 @@ class CrashActivity : AppCompatActivity() {
             val report = CrashHandler.readLatestCrashReport(this) ?: return@setOnClickListener
             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             clipboard.setPrimaryClip(
-                ClipData.newPlainText("SportStream crash report", report)
+                ClipData.newPlainText("Streamify crash report", report)
             )
             Snackbar.make(
                 binding.root,
