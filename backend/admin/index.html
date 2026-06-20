@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SportStream Admin Panel</title>
+<title>Streamify Admin Panel</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
@@ -228,7 +228,7 @@ tr:hover td { background:rgba(255,255,255,0.02); }
 <!-- ========== LOGIN SCREEN ========== -->
 <div id="loginScreen">
   <div class="login-card">
-    <h1>SportStream</h1>
+    <h1>Streamify</h1>
     <p class="subtitle">Admin Panel — Phase 8</p>
     <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
     <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
@@ -241,7 +241,7 @@ tr:hover td { background:rgba(255,255,255,0.02); }
 <div id="appScreen">
   <!-- Sidebar -->
   <aside class="sidebar">
-    <div class="sidebar-brand">SportStream Admin</div>
+    <div class="sidebar-brand">Streamify Admin</div>
     <nav class="sidebar-nav">
       <a href="#dashboard" class="active" data-page="dashboard">
         <span class="icon">📊</span> Dashboard
@@ -297,7 +297,7 @@ tr:hover td { background:rgba(255,255,255,0.02); }
 
 <script>
 // ==================== STATE ====================
-const API = 'http://localhost:3000/api';
+const API = window.location.origin + '/api';
 let token = localStorage.getItem('streamify_admin_token') || '';
 let user = null;
 let currentPage = 'dashboard';
