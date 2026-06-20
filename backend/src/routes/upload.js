@@ -20,7 +20,7 @@ if (!fs.existsSync(UPLOAD_DIR)) {
 }
 
 /** POST /api/upload — Upload a file (EDITOR+) */
-router.post('/', authRequired, requireRole('EDITOR'), (req, res) => {
+router.post('/upload', authRequired, requireRole('EDITOR'), (req, res) => {
   uploadAny(req, res, async (err) => {
     if (err) {
       if (err.code === 'LIMIT_FILE_SIZE') {
