@@ -59,7 +59,15 @@ function resolveCorsOrigin() {
 }
 
 // --- Global middleware ---
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+      'script-src-attr': ["'unsafe-inline'"],
+      'style-src': ["'self'", "'unsafe-inline'"],
+    },
+  },
+}));
 app.use(cors({
   origin: resolveCorsOrigin(),
   credentials: true
