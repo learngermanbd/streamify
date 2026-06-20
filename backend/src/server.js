@@ -71,10 +71,10 @@ app.use(authOptional);
 // --- Global rate limiter: 100 req / 15 min for all /api routes ---
 app.use('/api', rateLimiter({ windowMs: 15 * 60 * 1000, max: 100 }));
 
-// --- Auth rate limiter: 5 req / 15 min for login ---
+// --- Auth rate limiter: 20 req / 15 min for login ---
 app.use('/api/admin/auth/login', rateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 20,
   message: 'Too many login attempts, please try again later.'
 }));
 
