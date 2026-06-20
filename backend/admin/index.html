@@ -452,7 +452,7 @@ async function renderDashboard(container) {
 
     // Status pie chart
     const statusCounts = { LIVE: 0, SCHEDULED: 0, ENDED: 0, DRAFT: 0 };
-    (events.events || []).forEach(e => { if (statusCounts[e.status] !== undefined) statusCounts[e.status]++; });
+    (eventsRes.events || []).forEach(e => { if (statusCounts[e.status] !== undefined) statusCounts[e.status]++; });
     _charts.push(new Chart(document.getElementById('chartStatus'), {
       type: 'doughnut',
       data: {
@@ -513,7 +513,7 @@ async function renderEvents(container) {
     document.getElementById('eventsTable').innerHTML = `
       <div class="table-wrap"><table>
         <thead><tr><th>Title</th><th>Category</th><th>Status</th><th>Teams</th><th>Streams</th><th>Actions</th></tr></thead>
-        <tbody>${eventsRes.events.map(e => `
+        <tbody>${events.map(e => `
           <tr>
             <td style="color:var(--text)">${esc(e.title)}</td>
             <td>${esc(e.category?.name || '—')}</td>
