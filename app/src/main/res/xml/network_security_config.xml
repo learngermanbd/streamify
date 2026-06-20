@@ -10,7 +10,7 @@
        pins.
   
   To generate real pins:
-    openssl s_client -connect learngermanwith.fun:443 -servername learngermanwith.fun < /dev/null 2>/dev/null \
+    openssl s_client -connect streamify-4phj.onrender.com:443 -servername streamify-4phj.onrender.com < /dev/null 2>/dev/null \
       | openssl x509 -pubkey -noout \
       | openssl pkey -pubin -outform DER \
       | openssl dgst -sha256 -binary \
@@ -30,17 +30,16 @@
         </trust-anchors>
     </base-config>
 
-    <!-- Certificate pinning for the API domain. -->
+    <!-- Certificate pinning is NOT enforced for Render's shared
+         *.onrender.com certificate (managed by Render, rotates).
+         When moving to a custom domain, re-enable pinning below. -->
+    <!--
     <domain-config>
-        <domain includeSubdomains="true">learngermanwith.fun</domain>
+        <domain includeSubdomains="true">streamify-4phj.onrender.com</domain>
         <pin-set expiration="2027-01-01">
-            <!-- Primary pin: Let's Encrypt Authority X3
-                 (generated from the current certificate chain).
-                 TODO(Phase 7): replace with real pin from production cert. -->
-            <pin digest="SHA-256">YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=</pin>
-            <!-- Backup pin: ISRG Root X1 (Let's Encrypt root CA)
-                 Survives intermediate CA rotation. -->
-            <pin digest="SHA-256">Vjs8r4z+80wjNcr1YKepWQboSIRi63WsWXhIMN+eWys=</pin>
+            <pin digest="SHA-256">PIN_HERE</pin>
+            <pin digest="SHA-256">BACKUP_PIN_HERE</pin>
         </pin-set>
     </domain-config>
+    -->
 </network-security-config>

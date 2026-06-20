@@ -40,10 +40,10 @@ object HoneyPotManager {
      * network monitoring), the caller is an attacker.
      */
     val FAKE_ENDPOINTS = listOf(
-        "https://api.learngermanwith.fun/v2/admin/debug/config",
-        "https://api.learngermanwith.fun/v2/internal/metrics/raw",
-        "https://api.learngermanwith.fun/v2/admin/users/export",
-        "https://api.learngermanwith.fun/v2/debug/feature-flags",
+        "https://api.streamify-4phj.onrender.com/v2/admin/debug/config",
+        "https://api.streamify-4phj.onrender.com/v2/internal/metrics/raw",
+        "https://api.streamify-4phj.onrender.com/v2/admin/users/export",
+        "https://api.streamify-4phj.onrender.com/v2/debug/feature-flags",
     )
 
     /**

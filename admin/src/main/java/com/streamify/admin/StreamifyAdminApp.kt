@@ -82,7 +82,7 @@ class StreamifyAdminApp : Application() {
     }
 
     companion object {
-        const val ADMIN_API_BASE_URL = "https://learngermanwith.fun"
+        const val ADMIN_API_BASE_URL = "https://streamify-4phj.onrender.com"
 
         val Context.adminTokenStore by preferencesDataStore(
             name = "streamify_admin_tokens"
