@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 5 · Step 5.3 — Network Stream screen.
+
+    Sections (top → bottom):
+      1. Glass section header "NETWORK STREAM".
+      2. URL input (Material TextInputLayout + OutlinedBox + a paste IconButton
+         anchored at the end).
+      3. Format chip group: AUTO / HLS / DASH (single-select).
+      4. PLAY button (MaterialButton, full-width, primary tint).
+      5. Section subtitle "RECENT".
+      6. RecyclerView of recent URLs (max 10).
+      7. Empty-state TextView ("No recent URLs yet").
+
+    PullToRefresh is intentionally NOT implemented — the DataStore Flow
+    refreshes whenever the user adds or removes a row, so the list is
+    always in sync without user-driven reload.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_bg"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp">
+
+    <TextView
+        android:id="@+id/networkStreamSectionHeader"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_glass_card"
+        android:fontFamily="@font/poppins_regular"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="8dp"
+        android:text="@string/network_stream_section_header"
+        android:textColor="@color/primary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/networkStreamUrlInputLayout"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:hint="@string/network_stream_url_hint"
+        app:boxStrokeColor="@color/primary"
+        app:hintTextColor="@color/text_muted"
+        app:layout_constraintEnd_toStartOf="@id/networkStreamPasteButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/networkStreamSectionHeader">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/networkStreamUrlInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppins_regular"
+            android:imeOptions="actionDone"
+            android:inputType="textUri"
+            android:maxLines="2"
+            android:textColor="@color/text"
+            android:textSize="14sp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/networkStreamPasteButton"
+        style="@style/Widget.Material3.Button.IconButton.Outlined"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="6dp"
+        android:contentDescription="@string/network_stream_paste_desc"
+        app:icon="@drawable/ic_paste"
+        app:iconSize="20dp"
+        app:iconTint="@color/text"
+        app:layout_constraintBottom_toBottomOf="@id/networkStreamUrlInputLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/networkStreamUrlInputLayout" />
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/networkStreamFormatChips"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        app:checkedChip="@id/networkStreamFormatChipAuto"
+        app:chipSpacingHorizontal="8dp"
+        app:selectionRequired="true"
+        app:singleLine="true"
+        app:singleSelection="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/networkStreamUrlInputLayout">
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/networkStreamFormatChipAuto"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checkable="true"
+            android:checked="true"
+            android:text="@string/network_stream_format_auto" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/networkStreamFormatChipHls"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checkable="true"
+            android:text="@string/network_stream_format_hls" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/networkStreamFormatChipDash"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checkable="true"
+            android:text="@string/network_stream_format_dash" />
+    </com.google.android.material.chip.ChipGroup>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/networkStreamPlayButton"
+        style="@style/Widget.Material3.Button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:backgroundTint="@color/primary"
+        android:fontFamily="@font/poppins_regular"
+        android:text="@string/network_stream_play"
+        android:textColor="@color/dark_bg"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:icon="@android:drawable/ic_media_play"
+        app:iconTint="@color/dark_bg"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/networkStreamFormatChips" />
+
+    <TextView
+        android:id="@+id/networkStreamRecentHeader"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="22dp"
+        android:fontFamily="@font/poppins_regular"
+        android:text="@string/network_stream_recent_section"
+        android:textColor="@color/text_muted"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/networkStreamPlayButton" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/networkStreamRecentRecycler"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="6dp"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/networkStreamRecentHeader"
+        tools:listitem="@layout/view_item_recent_url" />
+
+    <TextView
+        android:id="@+id/networkStreamEmptyText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:fontFamily="@font/poppins_regular"
+        android:gravity="center"
+        android:text="@string/network_stream_recent_empty"
+        android:textColor="@color/text_muted"
+        android:textSize="12sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/networkStreamRecentHeader"
+        tools:visibility="visible" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

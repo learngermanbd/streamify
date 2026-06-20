@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 6 \u00b7 Step 6.4 \u2014 DARK MODE theme override.
+
+    Android resource resolution REPLACES (does NOT merge) styles that
+    share a name across qualifiers. So the body of Theme.Streamify
+    here has to mirror values/themes.xml in full; we override only the
+    system-bar light flags because they're mode-dependent.
+
+    Material lib 1.12.0 (Step 1.2) supplies Theme.Material3.* styles.
+    Color tokens resolve through the qualifier-matched
+    values-night/colors.xml automatically, so no color override is
+    needed here.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.Streamify" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Brand palette -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorPrimaryContainer">@color/secondary</item>
+        <item name="colorOnPrimaryContainer">@color/primary</item>
+        <item name="colorSecondary">@color/primary</item>
+        <item name="colorOnSecondary">@color/on_primary</item>
+        <item name="colorTertiary">@color/text_muted</item>
+
+        <!-- Surfaces -->
+        <item name="colorSurface">@color/card_bg</item>
+        <item name="colorOnSurface">@color/text</item>
+        <item name="colorSurfaceVariant">@color/border_default</item>
+        <item name="colorOnSurfaceVariant">@color/text_muted</item>
+        <item name="colorOnBackground">@color/text</item>
+        <item name="colorError">@color/live_red</item>
+        <item name="colorOnError">@color/white</item>
+        <item name="colorOutline">@color/border_default</item>
+
+        <!-- Window chrome \u2014 dark mode keeps transparent system bars; status
+             icons flip to LIGHT (windowLightStatusBar=false) so they stay
+             legible on the dark_nav surface. -->
+        <item name="android:windowBackground">@color/dark_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+
+        <!-- Text colors -->
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textColorPrimary">@color/text</item>
+        <item name="android:textColorSecondary">@color/text_muted</item>
+        <item name="android:textColorHint">@color/text_muted</item>
+    </style>
+</resources>

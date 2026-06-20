@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.2 — BottomNavigationView menu.
+    IDs MUST match destination IDs in res/navigation/main_nav_graph.xml so
+    BottomNavigationView.setupWithNavController() can resolve tab switches
+    automatically (no manual NavController.navigate(...) calls).
+    Icons reference platform drawables (compileSdk 35) so no resource
+    drawables need to ship with this step.
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@android:drawable/ic_menu_view"
+        android:title="@string/main_nav_home" />
+
+    <item
+        android:id="@+id/categoriesFragment"
+        android:icon="@android:drawable/ic_media_play"
+        android:title="@string/main_nav_categories" />
+
+    <item
+        android:id="@+id/favoritesFragment"
+        android:icon="@android:drawable/star_on"
+        android:title="@string/main_nav_favorites" />
+
+    <item
+        android:id="@+id/settingsFragment"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:title="@string/main_nav_settings" />
+
+</menu>

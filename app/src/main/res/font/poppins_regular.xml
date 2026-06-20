@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 1 · Step 1.5 — Poppins Regular font family.
+    Real TTF asset (res/font/poppins_regular.ttf) lands in Step 7.x branding polish.
+    For now we map to Android system sans-serif-medium which visually approximates
+    Poppins (geometric sans-serif, falling back to Roboto on most devices).
+    fontFamily="sans-serif-medium" requires API 26; lower APIs use default sans-serif.
+-->
+<font-family xmlns:app="http://schemas.android.com/apk/res-auto">
+    <font
+        app:fontStyle="normal"
+        app:fontWeight="400"
+        app:fontFamily="sans-serif-medium" />
+</font-family>

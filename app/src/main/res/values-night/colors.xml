@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 6 · Step 6.4 — DARK MODE palette override.
+
+    Token NAMES mirror values/colors.xml exactly so existing layouts
+    (fragment_home.xml, activity_player.xml, etc.) don't need updating:
+    `@color/dark_bg` resolves to `#FFFFFF` in day mode and `#0A0F1A`
+    in night mode without any layout code edits. The semantic of
+    `dark_bg` is "the main surface background", not "literally a dark
+    colour" — the name is retained only for backwards compat with
+    every existing @color/dark_bg reference in the codebase.
+
+    Night qualifier is forced when:
+      - AppCompatDelegate.MODE_NIGHT_YES, OR
+      - AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM + system Configuration is night.
+-->
+<resources>
+    <!-- Brand palette — cyan reads well on either surface, kept constant. -->
+    <color name="primary">#1CCBD4</color>
+    <color name="primary_dark">#17a8b0</color>
+    <color name="secondary">#131931</color>
+
+    <!-- Surface (dark variant). -->
+    <color name="dark_bg">#0A0F1A</color>
+    <color name="card_bg">#121A27</color>
+    <color name="border_default">#1E2D45</color>
+    <color name="text">#E0E6ED</color>
+    <color name="text_muted">#8899AA</color>
+
+    <!--
+        on_primary is NOT overridden here — stays #0A0F1A in both day
+        and night so label text drawn on cyan primary buttons/chips is
+        dark in BOTH modes. (Light variant of @color/dark_bg was
+        #FFFFFF for the main surface, but white text on cyan primary
+        gives ~2.5:1 contrast \u2014 unreadable. Forcing a fixed dark
+        on_primary avoids that.)
+    -->
+
+    <!-- Glass tints — alpha-blended constants; same in either mode. -->
+    <color name="glass_primary">#141CCBD4</color>
+    <color name="glass_primary_border">#261CCBD4</color>
+    <color name="glass_red">#14EF4444</color>
+
+    <!-- Player overlay dim — translucent black, mode-independent. -->
+    <color name="lock_dim">#66000000</color>
+
+    <!-- Semantic accents — mode-independent. -->
+    <color name="live_red">#EF4444</color>
+    <color name="success_green">#22C55E</color>
+    <color name="warning_orange">#F59E0B</color>
+
+    <!-- Favorites swipe-to-delete. -->
+    <color name="swipe_delete_background">#33E11D48</color>
+
+    <!-- Common. -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

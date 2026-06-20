@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.5 — Highlight card (RecyclerView item for the
+    Highlights tab).
+
+    Layout stack, top to bottom:
+      - 16:9 thumbnail ImageView. ConstraintLayout dimensionRatio keeps
+        the aspect locked regardless of cell width. Looks like a video
+        poster; Glide `.centerCrop()` ensures the image fills it.
+      - Play overlay (56dp circular shape drawable) is drawn centred over
+        the thumbnail via a separate ImageView so the overlay reads on
+        top of the picture.
+      - Duration TextView (mm:ss) anchored bottom-end of the thumbnail,
+        background = `bg_duration_pill`. Lighter than the overlay so the
+        number text stays legible while still readable against light
+        thumbnails.
+      - Title (1 line, bold) below the thumbnail.
+      - Meta line below title — `views · <relative date>`.
+
+    Width match_parent so vertical LinearLayoutManager gives 1 column
+    of full-width cards; height wraps content (thumbnail height is
+    width-driven via dimensionRatio).
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="12dp">
+
+    <!-- 16:9 thumbnail. dimensionRatio pins the aspect; width 0dp
+         + top constraint so the height is computed from width. -->
+    <ImageView
+        android:id="@+id/thumbnail"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/bg_highlight_placeholder"
+        android:contentDescription="@string/view_item_highlight_default_title"
+        android:scaleType="centerCrop"
+        app:layout_constraintDimensionRatio="16:9"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="@drawable/bg_highlight_placeholder" />
+
+    <!-- Play overlay — 56dp circle with white triangle inside, drawn
+         dead-centre over the thumbnail. -->
+    <ImageView
+        android:id="@+id/playOverlay"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:contentDescription="@string/view_item_highlight_default_title"
+        android:src="@drawable/bg_play_overlay"
+        app:layout_constraintBottom_toBottomOf="@id/thumbnail"
+        app:layout_constraintEnd_toEndOf="@id/thumbnail"
+        app:layout_constraintStart_toStartOf="@id/thumbnail"
+        app:layout_constraintTop_toTopOf="@id/thumbnail" />
+
+    <!-- Duration pill — mm:ss white text on a 70% black background. -->
+    <TextView
+        android:id="@+id/duration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/bg_duration_pill"
+        android:fontFamily="@font/poppins_regular"
+        android:letterSpacing="0.06"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="2dp"
+        android:textColor="@color/white"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@id/thumbnail"
+        app:layout_constraintEnd_toEndOf="@id/thumbnail"
+        tools:text="02:34" />
+
+    <!-- Title — 1 line, primary-bold 14sp. Falls back to a generic label
+         in the adapter when API returns an empty title. -->
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppins_regular"
+        android:letterSpacing="0.04"
+        android:maxLines="1"
+        android:textColor="@color/text"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/thumbnail"
+        tools:text="Last-minute goal: Brazil vs Argentina" />
+
+    <!-- Meta line — views + relative date. -->
+    <TextView
+        android:id="@+id/metaLine"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppins_regular"
+        android:letterSpacing="0.04"
+        android:maxLines="1"
+        android:textColor="@color/text_muted"
+        android:textSize="11sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/title"
+        tools:text="12.4K views · 2 days ago" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

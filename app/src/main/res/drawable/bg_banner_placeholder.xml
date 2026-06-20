@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.3 — Banner placeholder.
+    Solid card_bg rounded rect so the carousel slide stays opaque
+    while Glide fetches the real imageUrl.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/card_bg" />
+    <corners android:radius="12dp" />
+</shape>

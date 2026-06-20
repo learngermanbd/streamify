@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 6 · Step 6.3 — generic micro-interaction pulse.
+
+    Bouncy scale (1.0 -> 1.08 -> 1.0) with overshoot interpolator —
+    suitable for FAB taps, button presses, and confirmation chip
+    highlights. Existing live_pulse.xml (1.0 -> 1.06 reverse infinite)
+    is reserved for the LIVE badge breathing animation; this file is
+    an explicit one-shot pulse for click feedback.
+
+    Duration 220 ms — feels instantaneous without skipping the
+    perceived "tap acknowledgement".
+-->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="220"
+    android:fillAfter="false"
+    android:fillBefore="true"
+    android:interpolator="@android:anim/overshoot_interpolator"
+    android:shareInterpolator="true">
+
+    <scale
+        android:fromXScale="1.0"
+        android:fromYScale="1.0"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:toXScale="1.08"
+        android:toYScale="1.08" />
+
+    <scale
+        android:fromXScale="1.08"
+        android:fromYScale="1.08"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:startOffset="220"
+        android:toXScale="1.0"
+        android:toYScale="1.0" />
+</set>

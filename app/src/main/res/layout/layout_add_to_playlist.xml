@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 5 · Step 5.2 — Add-to-playlist bottom-sheet layout.
+
+    Tapped from PlayerActivity's top-bar "Add to playlist" button.
+    Shows:
+      - Sheet title ("Add to playlist")
+      - "Create new playlist" affordance (top of list)
+      - ScrollView wrapping a dynamic list of single-choice radios
+        (one per playlist). Caller (dialog fragment) populates these
+        at inflation time.
+      - Cancel button at the bottom (Material 3 outlined button).
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="20dp"
+    android:paddingBottom="20dp">
+
+    <TextView
+        android:id="@+id/addToPlaylistTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppins_regular"
+        android:letterSpacing="0.04"
+        android:text="@string/add_to_playlist_title"
+        android:textColor="@color/text"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/addToPlaylistSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:alpha="0.85"
+        android:fontFamily="@font/poppins_regular"
+        android:text="@string/add_to_playlist_subtitle"
+        android:textColor="@color/text_muted"
+        android:textSize="12sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/addToPlaylistCreateBtn"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:fontFamily="@font/poppins_regular"
+        android:text="@string/add_to_playlist_create_new"
+        app:icon="@android:drawable/ic_input_add"
+        app:iconTint="@color/primary" />
+
+    <ScrollView
+        android:id="@+id/addToPlaylistScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:maxHeight="320dp">
+
+        <RadioGroup
+            android:id="@+id/addToPlaylistRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/addToPlaylistEmptyText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:alpha="0.85"
+        android:fontFamily="@font/poppins_regular"
+        android:gravity="center"
+        android:text="@string/add_to_playlist_empty"
+        android:textColor="@color/text_muted"
+        android:textSize="13sp"
+        android:visibility="gone" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/addToPlaylistCancelBtn"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:fontFamily="@font/poppins_regular"
+        android:text="@android:string/cancel" />
+</LinearLayout>

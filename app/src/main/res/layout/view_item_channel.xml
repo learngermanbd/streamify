@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.4 — Channel card (RecyclerView item for the
+    Categories grid).
+
+    Layout stack, top to bottom:
+      - Optional LIVE dot (10 dp red oval) anchored top-right of the logo
+      - Round channel logo (44 dp circular ImageView)
+      - Channel name (centered, ellipsized, primary bold)
+      - Category label (centered, subtle)
+
+    Width is match_parent so GridLayoutManager(3) distributes equal cells;
+    height is wrap_content so the card sizes to its content. Inner 12 dp
+    padding keeps text away from the cell boundary.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="12dp">
+
+    <!-- Round channel logo with the glass-primary placeholder while
+         the real logoUrl is loading. -->
+    <ImageView
+        android:id="@+id/channelLogo"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="@drawable/bg_team_logo_placeholder"
+        android:contentDescription="@string/view_item_channel_logo_desc"
+        android:scaleType="centerCrop"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- LIVE dot — top-right corner of the card, 10 dp red oval.
+         Default visibility=gone; CategoryAdapter flips to VISIBLE when
+         channel.isActive is true. -->
+    <View
+        android:id="@+id/liveDot"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:layout_marginEnd="6dp"
+        android:background="@drawable/bg_live_dot"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@id/channelLogo"
+        app:layout_constraintTop_toTopOf="@id/channelLogo" />
+
+    <!-- Channel name, primary bold 12 sp. -->
+    <TextView
+        android:id="@+id/channelName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppins_regular"
+        android:gravity="center"
+        android:letterSpacing="0.04"
+        android:maxLines="1"
+        android:textColor="@color/text"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/channelLogo"
+        tools:text="BeIN Sports" />
+
+    <!-- Category label, text_muted 10 sp. -->
+    <TextView
+        android:id="@+id/categoryLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppins_regular"
+        android:gravity="center"
+        android:letterSpacing="0.06"
+        android:maxLines="1"
+        android:textColor="@color/text_muted"
+        android:textSize="10sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/channelName"
+        tools:text="Sports" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

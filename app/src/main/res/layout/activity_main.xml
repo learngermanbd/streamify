@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.2 — MainActivity layout.
+
+    Plan Step 3.2 prompt box: "MainActivity with DrawerLayout +
+    BottomNavigationView (3 tabs: Home, Categories, Highlights).
+    Drawer menu: Network Stream, Playlists, Floating Player, Video Quality,
+    Notice, Join Us, Share, Update, Exit.".
+
+    Post-Step-3.2-realignment the BottomNav is 4 tabs (Home / Categories /
+    Favorites / Settings). This file ships the plan-required DrawerLayout
+    scaffold (added retroactively after the audit in this branch) and
+    preserves the existing ConstraintLayout (NavHost + BottomNav) by
+    nesting it as the DrawerLayout's main content (first child).
+
+    The DrawerLayout becomes the ViewBinding "root", so existing
+    ActivityMainBinding consumers that referred to binding.bottomNav /
+    binding.navHostFragment still resolve (those IDs live inside the
+    nested ConstraintLayout now).
+
+    The NavigationView anchors to drawer_menu.xml (9 plan items +
+    Highlights as a 10th Drawer-top entry).
+
+    Phase 5 · Step 5.6 addition: a MaterialToolbar (`@+id/mainToolbar`)
+    layered ABOVE the NavHost, inside the inner ConstraintLayout. The
+    toolbar hosts the Search action (res/menu/main_toolbar_menu.xml) and
+    consumes the status-bar inset via setOnApplyWindowInsetsListener in
+    MainActivity. We do not call setSupportActionBar — toolbar.inflateMenu
+    / setOnMenuItemClickListener gives us enough surface without forcing
+    a full ActionBar rewrite that would re-style all the BottomNav items.
+-->
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawerRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_splash">
+
+    <!-- Main content — Toolbar + NavHost + BottomNav layered by Step 5.6. -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!--
+            Phase 5 · Step 5.6 — MaterialToolbar with a single Search action item.
+            The toolbar lives at the top of the inner ConstraintLayout, above
+            the NavHost, so taps on the search icon route to SearchFragment via
+            MainActivity. Inflating the menu is done declaratively via the
+            `app:menu=` attribute (no setSupportActionBar invocation — we use
+            Toolbar.setOnMenuItemClickListener to keep the action-bar contract
+            simple and the BottomNav's existing selection behavior intact).
+        -->
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/mainToolbar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@color/secondary"
+            android:elevation="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:menu="@menu/main_toolbar_menu"
+            app:title="@string/app_name"
+            app:titleTextAppearance="@style/TextAppearance.Material3.TitleMedium"
+            app:titleTextColor="@color/text" />
+
+        <!-- NavHostFragment hosts res/navigation/main_nav_graph.xml
+             (now 7 destinations: Home / Categories / Favorites / Settings /
+             Highlights / Notice / Search). Anchored BELOW the toolbar so
+             the toolbar's status-bar inset doesn't double up with one from
+             the NavHost (MainActivity strips the NavHost's top inset). -->
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/navHostFragment"
+            android:name="androidx.navigation.fragment.NavHostFragment"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:defaultNavHost="true"
+            app:layout_constraintTop_toBottomOf="@+id/mainToolbar"
+            app:layout_constraintBottom_toTopOf="@+id/bottomNav"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:navGraph="@navigation/main_nav_graph" />
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNav"
+            style="@style/Streamify.BottomNav"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:menu="@menu/bottom_nav_menu" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Drawer pane — 9 plan items + Highlights as the canonical surface
+         for the Step 3.5 Highlights screen. -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navView"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/secondary"
+        app:itemIconTint="@color/primary"
+        app:itemTextColor="@color/text"
+        app:menu="@menu/drawer_menu" />
+</androidx.drawerlayout.widget.DrawerLayout>

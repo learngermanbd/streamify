@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.2 — Navigation graph for the post-splash Main screen.
+    Hosts the 4 bottom-nav destinations (Home / Categories / Favorites / Settings)
+    + a Stack-Pushed Search destination (Phase 5 · Step 5.6) reachable from the
+    main Toolbar's search icon. Destinations IDs MUST match bottom-nav menu IDs.
+-->
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.streamify.app.ui.fragments.HomeFragment"
+        android:label="@string/main_nav_home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/categoriesFragment"
+        android:name="com.streamify.app.ui.fragments.CategoriesFragment"
+        android:label="@string/main_nav_categories"
+        tools:layout="@layout/fragment_categories" />
+
+    <fragment
+        android:id="@+id/favoritesFragment"
+        android:name="com.streamify.app.ui.fragments.FavoritesFragment"
+        android:label="@string/main_nav_favorites"
+        tools:layout="@layout/fragment_favorites" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.streamify.app.ui.fragments.SettingsFragment"
+        android:label="@string/main_nav_settings"
+        tools:layout="@layout/fragment_settings" />
+
+    <!--
+        Phase 3 · Step 3.5 — Highlights destination.
+        Not in bottom_nav_menu.xml (BottomNav is reserved for the 4
+        always-visible tabs Home / Categories / Favorites / Settings).
+        Reachable from the Drawer menu drawer_highlights item.
+    -->
+    <fragment
+        android:id="@+id/highlightsFragment"
+        android:name="com.streamify.app.ui.fragments.HighlightsFragment"
+        android:label="@string/fragment_highlights_header"
+        tools:layout="@layout/fragment_highlights" />
+
+    <!--
+        Phase 5 · Step 5.2 — Playlists destination.
+        Reachable from the Drawer menu drawer_playlists item.
+    -->
+    <fragment
+        android:id="@+id/playlistsFragment"
+        android:name="com.streamify.app.ui.fragments.PlaylistsFragment"
+        android:label="@string/fragment_playlists_title"
+        tools:layout="@layout/fragment_playlists" />
+
+    <!--
+        Phase 5 · Step 5.3 — Network Stream destination.
+        Reachable from the Drawer menu drawer_network_stream item via
+        MainActivity.onNavigationItemSelected. URL input + AUTO/HLS/DASH
+        format selector + recent-URLs list backed by PlayerPrefs DataStore.
+    -->
+    <fragment
+        android:id="@+id/networkStreamFragment"
+        android:name="com.streamify.app.ui.fragments.NetworkStreamFragment"
+        android:label="@string/network_stream_section_header"
+        tools:layout="@layout/fragment_network_stream" />
+
+    <!--
+        Phase 5 · Step 5.5 — Notice destination.
+        Reachable from the Drawer menu drawer_notice item via
+        MainActivity.onNavigationItemSelected. Renders the admin-controlled
+        `noticeText` from /api/config (cached via RemoteConfigHelper).
+    -->
+    <fragment
+        android:id="@+id/noticeFragment"
+        android:name="com.streamify.app.ui.fragments.NoticeFragment"
+        android:label="@string/notice_section_header"
+        tools:layout="@layout/fragment_notice" />
+
+    <!--
+        Phase 5 · Step 5.6 — Search destination.
+        Reachable from the main Toolbar's search icon (R.id.main_toolbar_action_search
+        in res/menu/main_toolbar_menu.xml). Renders debounced search across
+        events / channels / highlights + persistent recent-searches chip strip
+        keyed by PlayerPrefs.KEY_RECENT_SEARCHES.
+    -->
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.streamify.app.ui.fragments.SearchFragment"
+        android:label="@string/search_section_header"
+        tools:layout="@layout/fragment_search" />
+
+</navigation>

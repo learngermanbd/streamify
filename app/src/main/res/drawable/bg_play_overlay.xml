@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.5 — Play overlay (shape drawable composite).
+
+    Layer-list drawable: a 56 dp translucent dark oval with the white
+    play arrow vector centered inside (24 dp inset on each side leaves
+    a 16 dp dark margin around the arrow). One Drawable resource, used
+    directly as the `src` of the play-overlay ImageView in
+    view_item_highlight.xml.
+
+    The 65 % black fill (~#A6000000) reads clearly over bright thumbnail
+    imagery without fully obscuring it, so users still see the underlying
+    frame even with the overlay drawn.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Outer 56dp dark circle. -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#A6000000" />
+            <size
+                android:width="56dp"
+                android:height="56dp" />
+        </shape>
+    </item>
+
+    <!-- Inner white play-arrow vector (24dp), centered. -->
+    <item
+        android:drawable="@drawable/ic_play_arrow"
+        android:gravity="center"
+        android:width="24dp"
+        android:height="24dp" />
+
+</layer-list>

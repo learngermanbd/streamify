@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 5 · Step 5.1 — Heart-pulse animation.
+
+    Scales a target View from 1.0 → 1.18 → 1.0 over 220 ms total,
+    simulating the "pop" most apps use to confirm a favorite toggle.
+    Pairs with the on-screen MaterialButton.setOnClickListener in
+    PlayerActivity.applyFavoriteToggle().
+-->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fillAfter="true"
+    android:interpolator="@android:anim/overshoot_interpolator">
+
+    <scale
+        android:duration="110"
+        android:fromXScale="1.0"
+        android:fromYScale="1.0"
+        android:toXScale="1.18"
+        android:toYScale="1.18"
+        android:pivotX="50%"
+        android:pivotY="50%" />
+
+    <scale
+        android:duration="110"
+        android:startOffset="110"
+        android:fromXScale="1.18"
+        android:fromYScale="1.18"
+        android:toXScale="1.0"
+        android:toYScale="1.0"
+        android:pivotX="50%"
+        android:pivotY="50%" />
+</set>

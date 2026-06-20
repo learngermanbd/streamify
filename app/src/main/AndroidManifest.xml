@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Step 1.4 — runtime capabilities. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- POST_NOTIFICATIONS is runtime-requested at API 33+ but must be declared. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Phase 4 · Step 4.2 — Media3 / ExoPlayer requirements. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <!-- Phase 4 · Step 4.6 — Floating player overlay. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!--
+        Phase 6 · Step 6.2 — REQUEST_INSTALL_PACKAGES declares our
+        authority to invoke the platform package installer for an APK
+        we downloaded through FileProvider (thinker-gemini point A —
+        no runtime ask needed, but we still need this declaration).
+    -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!--
+        Phase 6 · Step 6.2 — Package Visibility for API 30+. The
+        <queries><intent> ... </intent></queries> block tells the
+        platform PackageManager that we deliberately want to resolve
+        `ACTION_INSTALL_PACKAGE` so the install intent reaches the
+        right activity on Android 11+.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.INSTALL_PACKAGE" />
+            <data android:mimeType="application/vnd.android.package-archive" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="application/vnd.android.package-archive" />
+        </intent>
+    </queries>
+
+    <!--
+        Phase 7 · Step 7.7 — Network security config: disables cleartext,
+        blocks user-installed CAs, enforces certificate pinning for API
+        domain.  See res/xml/network_security_config.xml.
+    -->
+    <application
+        android:name=".StreamifyApp"
+        android:allowBackup="false"
+        android:icon="@android:drawable/sym_def_app_icon"
+        android:label="@string/app_name"
+        android:roundIcon="@android:drawable/sym_def_app_icon"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Streamify"
+        android:networkSecurityConfig="@xml/network_security_config">
+
+        <activity
+            android:name=".ui.activities.SplashActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.activities.MainActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.activities.PlayerActivity"
+            android:exported="false"
+            android:supportsPictureInPicture="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+
+        <!--
+            Phase 6 · Step 6.2 — Forced-update gate. Opaque theme.
+            Excludes itself from Recents so the user can't swipe back
+            to the SplashActivity and bypass the gate.
+        -->
+        <activity
+            android:name=".ui.update.UpdateActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Streamify" />
+
+        <!--
+            Phase 6 · Step 6.4 — Crash recovery UI. Runs in an isolated
+            process (`:crash`) so it can spawn cleanly even when the
+            main process's StreamifyApp.onCreate itself crashed. The
+            taskAffinity="" attribute tells ActivityManager not to
+            inherit the doomed task, and excludeFromRecents keeps the
+            recoveries out of the user's Recent tasks list.
+        -->
+        <activity
+            android:name=".ui.crash.CrashActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:process=":crash"
+            android:theme="@style/Theme.Streamify" />
+
+        <service
+            android:name=".ui.player.FloatingPlayerService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <receiver
+            android:name=".services.UpdateDownloadReceiver"
+            android:exported="true">
+            <!--
+                Thinker-gemini point I: dynamically-registered receivers
+                with RECEIVER_NOT_EXPORTED on Android 14+ block system
+                broadcasts from external apps like DownloadManager. We
+                declare it in the manifest with exported="true" + an
+                intent-filter for ACTION_DOWNLOAD_COMPLETE so the
+                DownloadManager can find our receiver.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />
+            </intent-filter>
+        </receiver>
+
+        <!--
+            Phase 5 · Step 5.4 — FCM messaging service. Standard
+            Firebase Messaging intent-filter; `android:exported="false"`
+            so only our own Firebase instance can dispatch messages
+            to it. The OS instantiates this Service for every FCM
+            push, so onCreate() must be cheap (we pre-create the
+            notification channels there).
+        -->
+        <service
+            android:name=".services.StreamifyMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!--
+            Phase 5 · Step 5.4 — Default notification channel for FCM
+            v1 notification messages. Without this meta-data FCM uses
+            the (deprecated) "miscellaneous" channel. The app's own
+            data-payload pushes go to NotificationHelper.CHANNEL_ID_LIVE_EVENTS.
+        -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="@string/notification_default_channel_id" />
+    </application>
+</manifest>

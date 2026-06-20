@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 5 · Step 5.1 — Favorites screen.
+
+    Section header ("FAVORITES") + vertical RecyclerView + a centered
+    empty-state TextView (visible when adapter is empty) + a centered
+    ProgressIndicator shown during initial Loading. The
+    MaterialCardView-row layout lives at view_item_favorite.xml.
+
+    ItemTouchHelper (swipe-to-delete) is attached programmatically by
+    FavoritesFragment.onViewCreated so it can drive the undo snackbar
+    using the same VM instance.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!--
+        Section header pill — uppercase, brand primary, 12 sp font,
+        letter-spaced for the same look as the Home / Categories headers.
+    -->
+    <TextView
+        android:id="@+id/favoriteSectionHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="16dp"
+        android:fontFamily="@font/poppins_regular"
+        android:letterSpacing="0.22"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="6dp"
+        android:text="@string/fragment_favorites_title"
+        android:textColor="@color/text"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/favoritesRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:paddingBottom="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/favoriteSectionHeader"
+        android:layoutAnimation="@anim/layout_anim_fall_down"
+        tools:ignore="MissingDefaultResource"
+        tools:listitem="@layout/view_item_favorite" />
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/favoritesLoadingIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorColor="@color/primary"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/favoritesEmptyText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="40dp"
+        android:alpha="0.85"
+        android:fontFamily="@font/poppins_regular"
+        android:gravity="center"
+        android:letterSpacing="0.04"
+        android:text="@string/favorites_empty"
+        android:textColor="@color/text_muted"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

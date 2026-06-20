@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 6 · Step 6.4 — Crash recovery UI layout.
+
+    Centred MaterialCardView (glass_red bg + live_red stroke, mirrors
+    the UpdateActivity card aesthetic but with a red palette so users
+    immediately read it as 'something went wrong'). Title + subtitle
+    + body copy + the full crash-report text in a monospace TextView
+    (collapsed by default; revealed when the dump is short enough to
+    show meaningfully).
+
+    Two actions at the bottom:
+      - Restart \u2014 cold-launches MainActivity (NewTask | ClearTask).
+      - Copy details \u2014 ClipboardManager copy of the dump text.
+
+    NestedScrollView wraps the card so a long stack trace never clips.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_bg"
+    android:fitsSystemWindows="true">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/crashScroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toTopOf="@id/crashRestartButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="48dp">
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/crashCard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/glass_red"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="8dp"
+                app:strokeColor="@color/live_red"
+                app:strokeWidth="1dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintVertical_bias="0.3">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="22dp">
+
+                    <TextView
+                        android:id="@+id/crashTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_regular"
+                        android:letterSpacing="0.10"
+                        android:text="@string/crash_title"
+                        android:textColor="@color/live_red"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/crashSubtitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:alpha="0.75"
+                        android:fontFamily="@font/poppins_regular"
+                        android:letterSpacing="0.04"
+                        android:textColor="@color/white"
+                        android:textSize="13sp"
+                        tools:text="2026-06-20T11:42:09.123Z" />
+
+                    <TextView
+                        android:id="@+id/crashBody"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:fontFamily="@font/poppins_regular"
+                        android:letterSpacing="0.04"
+                        android:text="@string/crash_body_template"
+                        android:textColor="@color/text"
+                        android:textSize="13sp" />
+
+                    <!--
+                        Monospace block for the raw dump. Visible only
+                        when CrashActivity.onCreate finds a non-empty
+                        file. Capped at 240 dp via maxHeight so very
+                        long stack traces don't push actions offscreen.
+                    -->
+                    <TextView
+                        android:id="@+id/crashReportText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:fontFamily="monospace"
+                        android:maxHeight="240dp"
+                        android:textColor="@color/text"
+                        android:textSize="9sp"
+                        android:typeface="monospace"
+                        android:visibility="gone"
+                        tools:text="java.lang.RuntimeException: ..."
+                        tools:visibility="visible" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/crashRestartButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="12dp"
+        android:backgroundTint="@color/primary"
+        android:text="@string/crash_restart"
+        android:textColor="@color/on_primary"
+        app:layout_constraintBottom_toTopOf="@id/crashCopyButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/crashCopyButton"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="40dp"
+        android:text="@string/crash_copy"
+        android:textColor="@color/primary"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:strokeColor="@color/primary" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

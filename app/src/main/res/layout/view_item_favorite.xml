@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 5 · Step 5.1 — Favorite channel row.
+
+    Horizontal MaterialCardView used by the Favorites Fragment's RecyclerView.
+    Supports swipe-to-delete via the parent RecyclerView's ItemTouchHelper;
+    the heart IconButton on the right gives an extra remove affordance for
+    users who don't know the swipe gesture yet.
+
+    Background is the SportStream glass card (12 dp / 8 % primary fill +
+    1 dp primary-border stroke) so the row sits comfortably on the dark
+    fragment background without visual noise.
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="14dp"
+    android:layout_marginTop="10dp"
+    app:cardBackgroundColor="@color/glass_primary"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/glass_primary_border"
+    app:strokeWidth="1dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="12dp">
+
+        <ImageView
+            android:id="@+id/favoriteChannelLogo"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_team_logo_placeholder"
+            android:contentDescription="@string/view_item_channel_logo_desc"
+            android:scaleType="centerCrop"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <TextView
+            android:id="@+id/favoriteChannelName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/poppins_regular"
+            android:maxLines="1"
+            android:textColor="@color/text"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@id/favoriteChannelCategory"
+            app:layout_constraintEnd_toStartOf="@id/favoriteHeartButton"
+            app:layout_constraintStart_toEndOf="@id/favoriteChannelLogo"
+            app:layout_constraintTop_toTopOf="@id/favoriteChannelLogo"
+            app:layout_constraintVertical_chainStyle="packed"
+            tools:text="BeIN Sports HD" />
+
+        <TextView
+            android:id="@+id/favoriteChannelCategory"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/poppins_regular"
+            android:letterSpacing="0.04"
+            android:maxLines="1"
+            android:textColor="@color/text_muted"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="@id/favoriteChannelLogo"
+            app:layout_constraintEnd_toStartOf="@id/favoriteHeartButton"
+            app:layout_constraintStart_toEndOf="@id/favoriteChannelLogo"
+            app:layout_constraintTop_toBottomOf="@id/favoriteChannelName"
+            tools:text="Sports" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/favoriteHeartButton"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:contentDescription="@string/favorites_heart_remove_desc"
+            app:icon="@drawable/ic_heart_filled"
+            app:iconSize="24dp"
+            app:iconTint="@color/live_red"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

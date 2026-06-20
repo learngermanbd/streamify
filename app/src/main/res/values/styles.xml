@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+        Phase 1 · Step 1.5 — SportStream custom styles.
+        All reuse Material3 base widgets from the Material lib added in Step 1.2.
+
+        Empty `SportStream` and `Streamify.Text` parents below are required
+        for Android dot-inheritance: when a style is named `Foo.Bar`, AAPT looks
+        for a style named `Foo` as the implicit parent. Without these empty
+        bases the linker would emit `style/SportStream not found`.
+    -->
+    <style name="SportStream" />
+    <style name="Streamify.Text" />
+
+    <!-- Pressed / focus ripple on glass surfaces -->
+    <style name="Streamify.GlassCard">
+        <item name="android:background">@drawable/bg_glass_card</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <style name="Streamify.BottomNav" parent="Widget.Material3.BottomNavigationView">
+        <item name="itemIconTint">@color/text_muted</item>
+        <item name="itemTextColor">@color/text_muted</item>
+        <item name="itemActiveIndicatorStyle">@style/Streamify.BottomNavIndicator</item>
+        <item name="backgroundTint">@color/card_bg</item>
+    </style>
+
+    <style name="Streamify.BottomNavIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/glass_primary</item>
+        <item name="android:width">48dp</item>
+        <item name="android:height">32dp</item>
+    </style>
+
+    <style name="Streamify.PlayerOverlay">
+        <item name="android:background">@drawable/bg_player_controls</item>
+        <item name="android:padding">8dp</item>
+    </style>
+
+    <style name="Streamify.Button" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/primary</item>
+        <item name="android:textColor">@color/dark_bg</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <style name="Streamify.Button.Outline" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="strokeColor">@color/primary</item>
+        <item name="android:textColor">@color/primary</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+        <item name="cornerRadius">12dp</item>
+    </style>
+
+    <style name="Streamify.Text.Body">
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+
+    <style name="Streamify.Text.Muted">
+        <item name="android:textColor">@color/text_muted</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+
+    <style name="Streamify.Text.Headline">
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+</resources>

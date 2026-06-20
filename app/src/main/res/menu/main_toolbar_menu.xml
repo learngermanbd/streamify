@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 5 · Step 5.6 — Main-screen toolbar menu items.
+
+    Single "Search" action rendered as an icon. Tapping it routes the
+    user to SearchFragment via the existing navController (the menu
+    listener lives in MainActivity).
+
+    The actionId must match what the listener expects (see the
+    `onMenuItemClickListener` callback in MainActivity).
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/main_toolbar_action_search"
+        android:icon="@drawable/ic_search"
+        android:title="@string/main_toolbar_search_title"
+        app:showAsAction="ifRoom" />
+</menu>

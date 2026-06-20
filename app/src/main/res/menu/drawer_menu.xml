@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.2 — Drawer menu (plan-compliance retro-fix).
+
+    Plan Step 3.2 prompt box lists 9 Drawer items: Network Stream,
+    Playlists, Floating Player, Video Quality, Notice, Join Us, Share,
+    Update, Exit.
+
+    This menu ships all 9 (in order) plus a Highlights entry at the top
+    so the Highlights screen stays reachable via Drawer. The plan's
+    "3 tabs: Home, Categories, Highlights" originally put Highlights
+    on the BottomNav; the Step 3.2-realignment commit moved the
+    BottomNav to 4 tabs (Home / Categories / Favorites / Settings), so
+    Highlights became unreachable from the BottomNav. Surfacing it in
+    the Drawer keeps the Highlights screen reachable for the Step 3.7
+    Browser visual-test pass + future deep-link / Share-entry points.
+
+    Item icons reference platform drawables (compileSdk 35) so we
+    don't ship per-step vector assets. Drawer item click logic lives
+    in MainActivity.kt — each non-Highlights item shows a Snackbar
+    hinting at the future step where its feature ships; Highlights
+    actually navigates the NavController.
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Highlights (Drawer-top, ahead of the 9 plan items). The icon is
+        the platform's btn_star_big_on so the item reads visually
+        distinct from the 9 plan items below.
+    -->
+    <item
+        android:id="@+id/drawer_highlights"
+        android:icon="@android:drawable/btn_star_big_on"
+        android:title="@string/drawer_highlights" />
+
+    <!--
+        9 plan items — order intentionally mirrors the plan's commas so
+        code-reviewers can scan the menu against the plan line in one
+        look.
+    -->
+    <item
+        android:id="@+id/drawer_network_stream"
+        android:icon="@android:drawable/ic_menu_send"
+        android:title="@string/drawer_network_stream" />
+
+    <item
+        android:id="@+id/drawer_playlists"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:title="@string/drawer_playlists" />
+
+    <item
+        android:id="@+id/drawer_floating_player"
+        android:icon="@android:drawable/ic_media_play"
+        android:title="@string/drawer_floating_player" />
+
+    <item
+        android:id="@+id/drawer_video_quality"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:title="@string/drawer_video_quality" />
+
+    <item
+        android:id="@+id/drawer_notice"
+        android:icon="@android:drawable/ic_dialog_info"
+        android:title="@string/drawer_notice" />
+
+    <item
+        android:id="@+id/drawer_join_us"
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="@string/drawer_join_us" />
+
+    <item
+        android:id="@+id/drawer_share"
+        android:icon="@android:drawable/ic_menu_share"
+        android:title="@string/drawer_share" />
+
+    <item
+        android:id="@+id/drawer_update"
+        android:icon="@drawable/ic_drawer_update"
+        android:title="@string/drawer_update" />
+
+    <item
+        android:id="@+id/drawer_exit"
+        android:icon="@drawable/ic_drawer_exit"
+        android:title="@string/drawer_exit" />
+</menu>

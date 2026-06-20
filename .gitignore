@@ -1,0 +1,58 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build
+build/
+*.apk
+*.aab
+.gradle/
+local.properties
+
+# Node
+node_modules/
+npm-debug.log
+.env
+.env.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+*.log
+crashlytics/
+
+# Temp
+*.tmp
+*.bak
+*.orig
+
+# Decompiled APK files (removed from repo)
+resources/
+sources/
+
+# Local-only UI reference screenshots (extracted for MiMo 2.5 multimodal prompts in Phase 3; not versioned).
+ui-reference/screenshots/
+captures/
+.cxx/
+.kotlin/
+*.keystore
+*.jks
+keystore.properties
+signing.properties
+
+# Phase 7 \u00b7 Step 7.2 \u2014 Build-time secrets (plaintext credentials)
+secrets.properties
+
+# Phase 7 \u00b7 Step 7.2 \u2014 Generated encrypted constants (build artifact)
+app/build/generated/source/encryption/

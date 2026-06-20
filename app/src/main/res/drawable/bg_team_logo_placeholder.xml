@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.3 — Team-logo placeholder shown by Glide before the
+    real logo URL finishes loading. Oval (circle-ish) shape with the
+    glass-primary fill + 1 dp glass-primary-border stroke. Visually
+    consistent with the Streamify.GlassCard style from Step 1.5.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/glass_primary" />
+    <stroke
+        android:width="1dp"
+        android:color="@color/glass_primary_border" />
+    <size
+        android:width="44dp"
+        android:height="44dp" />
+</shape>

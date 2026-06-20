@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 6 · Step 6.3 — staggered RecyclerView entrance wrapper.
+
+    Used via `android:layoutAnimation="@anim/layout_anim_fall_down"` on
+    each fragment-level RecyclerView (Home / Categories / Highlights /
+    Favorites / Playlists / Search). Companion code at submitList time
+    calls `recycler.scheduleLayoutAnimation()` so the animation
+    re-fires whenever a new list lands (otherwise it plays only once).
+
+    `android:delay="4%"` — each subsequent row starts 4 % of the
+    per-item duration (320 ms × 0.04 = ~13 ms) after the previous.
+    With 20 rows, the last row starts ~260 ms after the first — fast
+    enough to feel snappy, slow enough to be perceptible.
+
+    `android:animationOrder="normal"` plays top-to-bottom; for grid
+    RecyclerViews (Categories 3-col) this still produces a clean
+    left-to-right / top-to-bottom traversal.
+
+    Reference: https://developer.android.com/develop/ui/views/animations/prop-animation
+-->
+<layoutAnimation xmlns:android="http://schemas.android.com/apk/res/android"
+    android:delay="4%"
+    android:animationOrder="normal"
+    android:animation="@anim/item_fall_in" />

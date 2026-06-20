@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Streamify</string>
+    <!-- Splash screen (Step 3.1) -->
+    <string name="splash_loading">Connecting…</string>
+    <string name="splash_error_title">NETWORK ERROR</string>
+    <string name="splash_retry">RETRY</string>
+    <string name="splash_open_wifi">WiFi</string>
+    <string name="splash_open_mobile">Mobile Net</string>
+    <string name="splash_version_template">v%1$s</string>
+    <!-- Main placeholder (Step 3.1) — kept for backwards compat with any
+         code reference; superseded by the tab labels below. -->
+    <string name="main_title">STREAMIFY</string>
+    <string name="main_subtitle">Welcome — Phase 3 · Step 3.2 next</string>
+    <string name="main_phase_badge">PHASE 3 · STEP 3.2 INCOMING</string>
+
+    <!-- Main bottom nav tabs (Step 3.2). These MUST be the same identifiers
+         used by res/menu/bottom_nav_menu.xml `android:title` attributes —
+         AAPT validates the @string/main_nav_* refs at compile time. -->
+    <string name="main_nav_home">HOME</string>
+    <string name="main_nav_favorites">FAVORITES</string>
+    <string name="main_nav_settings">SETTINGS</string>
+
+    <!-- Tab placeholder content (Step 3.2 — replaced in Steps 3.3, 5.1, 5.5).
+         Note: fragment_live_title / fragment_live_subtitle were dropped in
+         the Step 3.2 realignment commit (the Live tab was renamed Categories
+         and the placeholder liveFragment + fragment_live.xml are gone). -->
+    <string name="fragment_home_title">HOME</string>
+    <string name="fragment_home_subtitle">Step 3.3 incoming</string>
+    <string name="fragment_favorites_title">FAVORITES</string>
+    <string name="fragment_favorites_subtitle">Step 5.1 incoming</string>
+    <string name="fragment_settings_title">SETTINGS</string>
+    <string name="fragment_settings_subtitle">Customise your Streamify experience</string>
+
+    <!--
+        Phase 6 · Step 6.4 — Settings tab widget strings.
+        THEME picker chips + hint + version footer powered by ThemePrefs
+        + AppCompatDelegate.setDefaultNightMode.
+    -->
+    <string name="fragment_settings_appearance_section">APPEARANCE</string>
+    <string name="fragment_settings_theme_hint">System follows your device setting. Light and Dark override it explicitly.</string>
+    <string name="theme_picker_system">System</string>
+    <string name="theme_picker_light">Light</string>
+    <string name="theme_picker_dark">Dark</string>
+    <string name="fragment_settings_version_template">SportStream v%1$s</string>
+
+    <!--
+        Phase 6 · Step 6.4 — Crash recovery UI strings.
+        CrashActivity reads the local dump from filesDir + exposes a
+        Restart button (cold-launches MainActivity) + Copy details
+        (ClipboardManager of the dump text).
+    -->
+    <string name="crash_title">Something went wrong</string>
+    <string name="crash_body_template">Tap Restart to relaunch SportStream, or Copy details to share a report with our support team.</string>
+    <string name="crash_restart">Restart</string>
+    <string name="crash_copy">Copy details</string>
+    <string name="crash_copied_to_clipboard">Crash report copied to clipboard.</string>
+
+    <!-- Home tab (Step 3.3) — section header + empty-state copy. -->
+    <string name="fragment_home_header">LIVE EVENTS</string>
+    <string name="fragment_home_empty">No live matches right now</string>
+
+    <!-- view_item_match.xml row content (Step 3.3). -->
+    <string name="view_item_match_vs">VS</string>
+    <string name="view_item_match_live">LIVE</string>
+    <string name="view_item_match_default_team">TBD</string>
+    <string name="view_item_match_default_title">Match</string>
+    <string name="view_item_match_team_a_desc">Team A logo</string>
+    <string name="view_item_match_team_b_desc">Team B logo</string>
+
+    <!-- Categories tab (Step 3.4) — section header, chip copy, empty state. -->
+    <string name="fragment_categories_header">CHANNELS</string>
+    <string name="fragment_categories_chip_all">All</string>
+    <string name="fragment_categories_empty">No channels in this category</string>
+
+    <!-- Highlights tab (Step 3.5) — section header + empty-state copy. -->
+    <string name="fragment_highlights_header">HIGHLIGHTS</string>
+    <string name="fragment_highlights_empty">No highlights yet</string>
+
+    <!-- view_item_highlight.xml row content (Step 3.5). -->
+    <string name="view_item_highlight_default_title">Highlight</string>
+    <string name="view_item_highlight_default_duration">00:00</string>
+
+    <!-- view_item_banner.xml + ViewPager2 carousel (Step 3.3). -->
+    <string name="view_item_banner_default_title">Promo</string>
+    <string name="fragment_home_banners_a11y">Promotional banner carousel</string>
+
+    <!-- Nav graph label for the Categories destination (used by toolbars, action labels). -->
+    <string name="main_nav_categories">CATEGORIES</string>
+
+    <!-- view_item_channel.xml row content (Step 3.4). -->
+    <string name="view_item_channel_default_name">Channel</string>
+    <string name="view_item_channel_logo_desc">Channel logo</string>
+
+    <!--
+        Drawer menu (Step 3.2 retro-fix).
+        Plan Step 3.2 prompt box lists 9 items: Network Stream,
+        Playlists, Floating Player, Video Quality, Notice, Join Us,
+        Share, Update, Exit.
+    -->
+    <string name="drawer_highlights">Highlights</string>
+    <string name="drawer_network_stream">Network Stream</string>
+    <string name="drawer_playlists">Playlists</string>
+    <string name="drawer_floating_player">Floating Player</string>
+    <string name="drawer_video_quality">Video Quality</string>
+    <string name="drawer_notice">Notice</string>
+    <string name="drawer_join_us">Join Us</string>
+    <string name="drawer_share">Share</string>
+    <string name="drawer_update">Update</string>
+    <string name="drawer_exit">Exit</string>
+    <string name="drawer_coming_soon_template">%1$s — Coming in Step %2$s</string>
+    <string name="drawer_share_message">Check out SportStream — live sports streaming in HLS / DASH.</string>
+
+    <!-- Phase 4 · Step 4.2 — Player screen strings. -->
+    <string name="player_top_back">Back</string>
+    <string name="player_top_lock">Lock controls</string>
+    <string name="player_top_lock_unlocked">Unlock controls</string>
+    <string name="player_top_pip">Picture in picture</string>
+    <string name="player_top_resize">Resize</string>
+    <string name="player_top_settings">Settings</string>
+    <string name="player_links_label">Sources</string>
+    <string name="player_links_empty">Auto</string>
+    <string name="player_controls_rewind">Rewind 10 seconds</string>
+    <string name="player_controls_play">Play</string>
+    <string name="player_controls_pause">Pause</string>
+    <string name="player_controls_forward">Forward 10 seconds</string>
+    <string name="player_position_label">Position</string>
+    <string name="player_duration_label">Duration</string>
+    <string name="player_volume_label">Volume</string>
+    <string name="player_fullscreen_enter">Enter fullscreen</string>
+    <string name="player_fullscreen_exit">Exit fullscreen</string>
+    <string name="player_resize_fit">Fit</string>
+    <string name="player_resize_fill">Fill</string>
+    <string name="player_resize_zoom">Zoom</string>
+    <string name="player_loading">Loading stream…</string>
+    <string name="player_channel_loading">Loading channel…</string>
+    <string name="player_error_no_url">No stream URL available</string>
+    <string name="player_error_codec">Player can’t decode this stream</string>
+    <string name="player_error_network">Network error contacting stream source</string>
+    <string name="player_title_extra">Live channel</string>
+
+    <!-- Phase 4 · Step 4.3 — Swipe-gesture indicator labels. -->
+    <string name="player_gesture_generic_label">Gestures</string>
+    <string name="player_gesture_brightness_label">Brightness</string>
+    <string name="player_gesture_volume_label">Volume</string>
+    <string name="player_gesture_seek_label">Seek</string>
+    <string name="player_lock_short">Lock</string>
+    <string name="player_unlock_short">Unlock</string>
+    <string name="player_lock_desc">Lock player controls</string>
+    <string name="player_unlock_desc">Unlock player controls</string>
+    <!-- Step 4.5 — quality selector (5-way). -->
+    <string name="player_quality_title">Video quality</string>
+    <string name="player_quality_auto">Auto</string>
+    <string name="player_quality_fhd">Full HD (1080p)</string>
+    <string name="player_quality_hd">HD (720p)</string>
+    <string name="player_quality_sd">Standard (480p)</string>
+    <string name="player_quality_ld">Low (360p)</string>
+    <!-- Step 4.5 — subtitle track dialog. -->
+    <string name="player_track_selection_title">Subtitles</string>
+    <string name="player_track_selection_close_desc">Close</string>
+    <string name="player_track_selection_section_subtitle">Subtitle tracks</string>
+    <string name="player_track_selection_empty">No subtitle tracks available for this stream</string>
+    <string name="player_track_selection_done">Done</string>
+    <string name="player_track_off">Off</string>
+    <string name="player_subtitle_url_desc">Subtitle URL</string>
+    <string name="player_subtitle_url_unknown_mime">Unknown subtitle MIME for URL — attaching as best-effort VTT</string>
+    <!-- Step 4.6 — Floating player surface. -->
+    <string name="player_top_detach">Float player over other apps</string>
+    <string name="player_floating_close_desc">Close floating player</string>
+    <string name="player_floating_drag_desc">Drag floating player</string>
+    <string name="player_floating_notification_text">Playing in floating window</string>
+    <string name="player_floating_action_stop">Stop</string>
+    <string name="player_floating_channel_name">Floating player</string>
+    <string name="player_floating_default_title">Live stream</string>
+    <string name="player_floating_permission_required_title">Overlay permission required</string>
+    <string name="player_floating_permission_required_message">SportStream needs \"Display over other apps\" to show a floating player. Tap Settings to grant it, then tap Detach again.</string>
+
+    <!--
+        Phase 5 · Step 5.1 — Favorites screen strings.
+        Used by FavoritesFragment, FavoriteAdapter, and the heart toggle
+        button / animation in PlayerActivity.
+    -->
+    <string name="favorites_empty">No favorites yet.\nTap the heart on a channel to save it.</string>
+    <string name="favorites_removed_template">Removed %1$s from favorites</string>
+    <string name="favorites_action_undo">UNDO</string>
+    <string name="view_item_favorite_default_category">Channel</string>
+    <string name="favorites_heart_remove_desc">Remove from favorites</string>
+    <string name="player_favorite_add_desc">Add to favorites</string>
+    <string name="player_favorite_remove_desc">Remove from favorites</string>
+
+    <!-- Phase 5 - Step 5.2 Playlists strings -->
+    <string name="fragment_playlists_title">PLAYLISTS</string>
+    <string name="playlists_empty">No playlists yet.\nTap + to create one and add streams from the player.</string>
+    <string name="playlists_default_name">Untitled playlist</string>
+    <string name="playlists_icon_desc">Playlist</string>
+    <string name="playlists_create_fab_desc">Create new playlist</string>
+    <string name="playlists_create_title">New playlist</string>
+    <string name="playlists_create_hint">Playlist name</string>
+    <string name="playlists_create_confirm">Create</string>
+    <string name="playlists_rename_title">Rename playlist</string>
+    <string name="playlists_action_rename">Rename</string>
+    <string name="playlists_action_delete">Delete</string>
+    <string name="playlists_confirm_delete_title">Delete playlist?</string>
+    <string name="playlists_confirm_delete_message">“%1$s” will be removed. This can’t be undone.</string>
+    <string name="playlists_deleted_template">Deleted %1$s</string>
+    <string name="playlists_undo_note">Tap the playlist to re-add the streams manually.</string>
+    <string name="playlists_detail_empty">This playlist is empty. Open a stream and tap the playlist icon to add it.</string>
+    <string name="player_add_to_playlist_desc">Add current stream to a playlist</string>
+    <string name="add_to_playlist_title">Add to playlist</string>
+    <string name="add_to_playlist_subtitle">Choose a playlist for this stream</string>
+    <string name="add_to_playlist_subtitle_template">Add “%1$s” to…</string>
+    <string name="add_to_playlist_create_new">Create new playlist…</string>
+    <string name="add_to_playlist_empty">No playlists yet. Tap “Create new playlist…” first.</string>
+    <string name="add_to_playlist_added_template">Added to %1$s</string>
+    <plurals name="playlists_item_count">
+        <item quantity="one">%d stream</item>
+        <item quantity="other">%d streams</item>
+    </plurals>
+
+    <!--
+        Phase 5 · Step 5.3 — Network Stream screen.
+        Used by NetworkStreamFragment + RecentUrlAdapter.
+        Form lets the user paste/type an HTTP(S) URL, pick an
+        AUTO/HLS/DASH format hint, and tap PLAY. Recent URLs survive
+        across app launches via the player-prefs DataStore.
+    -->
+    <string name="network_stream_section_header">NETWORK STREAM</string>
+    <string name="network_stream_url_hint">Stream URL (http:// or https://)</string>
+    <string name="network_stream_paste_desc">Paste from clipboard</string>
+    <string name="network_stream_format_auto">Auto</string>
+    <string name="network_stream_format_hls">HLS</string>
+    <string name="network_stream_format_dash">DASH</string>
+    <string name="network_stream_play">Play stream</string>
+    <string name="network_stream_recent_section">RECENTLY OPENED</string>
+    <string name="network_stream_recent_empty">No streams yet. Paste a URL above and tap Play.</string>
+    <string name="network_stream_recent_removed_template">Removed %1$s</string>
+    <string name="network_stream_undo">UNDO</string>
+    <string name="network_stream_url_required">Enter a stream URL first</string>
+    <string name="network_stream_url_invalid_scheme">URL must start with http:// or https://</string>
+    <string name="network_stream_default_title">Network stream</string>
+    <string name="network_stream_paste_empty">Clipboard is empty</string>
+    <string name="network_stream_icon_desc">Network stream</string>
+    <string name="network_stream_recent_remove_desc">Remove from recent</string>
+
+    <!--
+        Phase 5 · Step 5.4 — Push notifications.
+        Used by NotificationHelper + StreamifyMessagingService. The
+        default_channel_id MUST match NotificationHelper.CHANNEL_ID_LIVE_EVENTS
+        — pre-create the channel from SplashActivity.onCreate so the
+        first push that arrives after cold launch lands in the right
+        importance bucket.
+    -->
+    <string name="notification_default_title">Live update</string>
+    <string name="notification_default_body">A new event is happening. Tap to view.</string>
+    <string name="notification_default_channel_id">live_events</string>
+    <string name="notification_live_event_channel_name">Live Events</string>
+    <string name="notification_live_event_channel_desc">Heads-up notifications when a match goes live or a favorite team scores.</string>
+    <string name="notification_general_channel_name">General</string>
+    <string name="notification_general_channel_desc">App announcements and maintenance notices.</string>
+
+    <!--
+        Phase 5 · Step 5.5 — Notice screen.
+        Reachable from the Drawer menu's drawer_notice item; rendered
+        by NoticeFragment + fragment_notice.xml. Renders the free-form
+        `noticeText` string the admin sets via RemoteConfigHelper's
+        cached /api/config payload.
+    -->
+    <string name="fragment_notice_title">NOTICE</string>
+    <string name="fragment_notice_subtitle">Updates from the SportStream team</string>
+    <string name="notice_section_header">Notice</string>
+    <string name="notice_empty_title">No active notice</string>
+    <string name="notice_empty_subtitle">There\'s nothing to read right now.</string>
+    <string name="notice_refresh">Refresh</string>
+    <string name="notice_error_title">Couldn\'t load notice</string>
+    <string name="notice_error_retry">Retry</string>
+
+    <!--
+        Phase 5 · Step 5.6 — Search screen + toolbar search action.
+        Touched by SearchFragment, fragment_search.xml, SearchAdapter,
+        and main_toolbar_menu.xml. Mirrors the protocol of the existing
+        playlist / network-stream strings (section header + content hints).
+    -->
+    <string name="main_toolbar_search_title">Search</string>
+    <string name="main_toolbar_search_desc">Open the search screen</string>
+    <string name="fragment_search_title">SEARCH</string>
+    <string name="search_hint">Search events, channels, highlights</string>
+    <string name="search_back_desc">Back</string>
+    <string name="search_clear_desc">Clear search</string>
+    <string name="search_empty">No results. Try fewer or different keywords.</string>
+    <string name="search_section_events">MATCHES</string>
+    <string name="search_section_channels">CHANNELS</string>
+    <string name="search_section_highlights">HIGHLIGHTS</string>
+    <string name="search_recent_header">RECENT SEARCHES</string>
+    <string name="search_recent_clear">Clear all</string>
+    <string name="search_no_recent">No recent searches yet</string>
+    <string name="search_remove_recent_desc">Remove this recent search</string>
+    <string name="search_meta_views_label">%1$s views</string>
+    <string name="search_section_header">Search</string>
+
+    <!--
+        Phase 5 · Step 5.5 v2 — multi-section Notice screen.
+
+        v2 keeps the v1 minimal strings intact (used as the fallback
+        LegacyMode render path) and adds section labels, relative
+        timestamps, attachment labels and Plurals for item counts.
+    -->
+    <string name="notice_v2_section_alert">ALERTS</string>
+    <string name="notice_v2_section_info">UPDATES</string>
+    <string name="notice_v2_section_promo">OFFERS</string>
+    <string name="notice_v2_section_alert_short">ALERT</string>
+    <string name="notice_v2_section_info_short">INFO</string>
+    <string name="notice_v2_section_promo_short">PROMO</string>
+    <plurals name="notice_v2_section_count">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+    <string name="notice_v2_relative_now">Just now</string>
+    <string name="notice_v2_relative_minutes_template">%d min ago</string>
+    <string name="notice_v2_relative_hours_template">%d h ago</string>
+    <string name="notice_v2_relative_days_template">%d d ago</string>
+    <string name="notice_v2_attachment_image">Image</string>
+    <string name="notice_v2_attachment_link">Open link</string>
+    <string name="notice_v2_attachment_file">Attachment</string>
+    <string name="notice_v2_priority_urgent_desc">Urgent</string>
+    <string name="notice_v2_push_dot_desc">Push notification</string>
+    <string name="notice_v2_title">NOTICE</string>
+    <string name="notice_v2_subtitle">Multi-section updates from the SportStream team</string>
+
+    <!--
+        Phase 6 · Step 6.2 — Auto-Update strings.
+
+        Used by:
+          - UpdateActivity          (theme host)
+          - UpdateDialogFragment    (BottomSheet body content)
+          - AppUpdateManager        (DownloadManager notification title/desc)
+          - MainActivity            (Snackbar UpToDate / Failed)
+
+        Forced-mode text uses the server `minAppVersion` as %1$s.
+        Optional-mode text uses the server `latestVersion` as %1$s.
+    -->
+    <string name="update_forced_label">REQUIRED UPDATE</string>
+    <string name="update_forced_title">Version %1$s is required</string>
+    <string name="update_forced_body">Your current build is below the minimum version required by the server. Tap Update to install the latest release, or Quit to close the app.</string>
+    <string name="update_optional_title">Version %1$s is available</string>
+    <string name="update_optional_default_changelog">Includes performance improvements, the newest live-stream sources, and bugfixes. Tap Update to install now, or Later to be reminded later.</string>
+    <string name="update_now">Update Now</string>
+    <string name="update_later">Later</string>
+    <string name="update_quit">Quit</string>
+    <string name="update_up_to_date">You’re already on the latest version</string>
+    <string name="update_check_failed">Couldn’t check for updates (%1$s)</string>
+    <string name="update_notification_title">SportStream update</string>
+    <string name="update_notification_description">Downloading the latest release…</string>
+    <string name="update_downloading">Downloading update…</string>
+    <string name="update_download_failed">Couldn’t start the update download</string>
+    <string name="update_channel_name">App Updates</string>
+    <string name="update_channel_description">Notifications about available SportStream updates.</string>
+</resources>

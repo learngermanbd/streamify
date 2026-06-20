@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 4 · Step 4.3 — Single visual-feedback overlay reused for horizontal-seek
+    (top-center indicator), left-vertical-brightness (left indicator), and
+    right-vertical-volume (right indicator). The SwipeGestureDetector updates
+    icon + label + linear progress via binding from PlayerActivity.
+
+    A single MaterialCardView resolves the strict-plan criterion
+    "layout_swipe_gesture.xml containing an overlay for detection and
+    brightness/volume indicator (icon and progress bar)" — no three separate
+    layouts needed.
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/swipeGestureCard"
+    android:layout_width="240dp"
+    android:layout_height="92dp"
+    android:visibility="invisible"
+    app:cardBackgroundColor="@color/glass_primary"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="12dp"
+    app:strokeColor="@color/glass_primary_border"
+    app:strokeWidth="1dp"
+    tools:ignore="ContentDescription">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="6dp">
+
+        <ImageView
+            android:id="@+id/swipeGestureIcon"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:contentDescription="@string/player_gesture_generic_label"
+            app:iconTint="@color/text"
+            app:tint="@color/text"
+            tools:src="@android:drawable/ic_menu_view" />
+
+        <TextView
+            android:id="@+id/swipeGestureLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/poppins_regular"
+            android:singleLine="true"
+            android:textColor="@color/text"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            tools:text="Brightness · 50%" />
+
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/swipeGestureBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:max="1000"
+            android:progress="500"
+            app:indicatorColor="@color/primary"
+            app:trackColor="@color/glass_primary_border"
+            app:trackThickness="3dp" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -1,0 +1,114 @@
+[versions]
+# Toolchain
+agp = "8.7.3"
+kotlin = "2.0.21"
+ksp = "2.0.21-1.0.27"
+google-services = "4.4.2"
+# kotlin-kapt reuses the Kotlin version (kept as separate alias for clarity)
+
+# Step 1.2 — library versions
+media3 = "1.5.1"
+okhttp = "4.12.0"
+room = "2.6.1"
+firebaseBom = "33.7.0"
+sentry = "7.16.0"
+# Step 6.5 — sentry-android-gradle-plugin auto-uploads the R8 mapping.txt
+# to Sentry on `assembleRelease`. Plugin version is intentionally
+# independent of `sentry` SDK version (Sentry ships them on separate release
+# trains — plugin 5.x is the current track for SDK 7.x). Mismatch causes
+# `NoSuchMethodError` in the upload task at the very last step of a release.
+sentry-gradle-plugin = "5.7.0"
+lottie = "6.6.0"
+material = "1.12.0"
+navigation = "2.8.4"
+lifecycle = "2.8.7"
+datastore = "1.1.1"
+glide = "4.16.0"
+coroutines = "1.9.0"
+gson = "2.10.1"           # Step 2.1 — @SerializedName on data models
+swiperefreshlayout = "1.1.0"   # Step 3.3 — SwipeRefreshLayout host for Home pull-to-refresh
+viewpager2 = "1.1.0"           # Step 3.3 — banner carousel on Home tab
+workmanager = "2.10.0"          # Step 6.2 — daily update check PeriodicWorkRequest
+security-crypto = "1.1.0-alpha06"  # Step 7.8 — EncryptedSharedPreferences (AES-256-GCM + HMAC)
+# --- Test dependencies (Step 9.1) ---
+junit-jupiter = "5.11.0"
+mockk = "1.13.12"
+truth = "1.4.2"
+
+[libraries]
+# Media3 — video player
+media3-exoplayer         = { module = "androidx.media3:media3-exoplayer",          version.ref = "media3" }
+media3-ui                = { module = "androidx.media3:media3-ui",                 version.ref = "media3" }
+media3-session           = { module = "androidx.media3:media3-session",            version.ref = "media3" }
+media3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp",  version.ref = "media3" }
+
+# OkHttp — networking
+okhttp                    = { module = "com.squareup.okhttp3:okhttp",            version.ref = "okhttp" }
+okhttp-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
+
+# Room — local database
+room-runtime  = { module = "androidx.room:room-runtime",  version.ref = "room" }
+room-ktx      = { module = "androidx.room:room-ktx",      version.ref = "room" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+
+# Firebase — messaging ONLY (Remote Config replaced by /api/config; Crashlytics replaced by Sentry)
+firebase-bom       = { module = "com.google.firebase:firebase-bom",          version.ref = "firebaseBom" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging" }  # version managed by BoM
+play-integrity     = { module = "com.google.android.play:integrity",        version = "1.4.0" }  # Step 7.10
+
+# Sentry — crash reporting (replaces Crashlytics)
+sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry" }
+
+# Lottie — animations
+lottie = { module = "com.airbnb.android:lottie", version.ref = "lottie" }
+
+# Material Design 3
+material = { module = "com.google.android.material:material", version.ref = "material" }
+
+# Navigation
+navigation-fragment-ktx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigation" }
+navigation-ui-ktx       = { module = "androidx.navigation:navigation-ui-ktx",       version.ref = "navigation" }
+
+# Lifecycle
+lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
+lifecycle-livedata-ktx  = { module = "androidx.lifecycle:lifecycle-livedata-ktx",  version.ref = "lifecycle" }
+
+# DataStore — preferences (used for config cache + AppConfig + remote-config offline fallback)
+datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+
+# Glide — image loading
+glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
+
+# Coroutines
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+
+# Gson — @SerializedName annotations on Phase 2 data models
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+
+# SwipeRefreshLayout — Home tab's pull-to-refresh host (Phase 3 · Step 3.3)
+swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefreshlayout", version.ref = "swiperefreshlayout" }
+
+# ViewPager2 — Home tab banner carousel (Phase 3 · Step 3.3)
+viewpager2 = { module = "androidx.viewpager2:viewpager2", version.ref = "viewpager2" }
+
+# WorkManager — background periodic update check (Phase 6 · Step 6.2)
+work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "workmanager" }
+
+# Security — EncryptedSharedPreferences + MasterKey (Phase 7 · Step 7.8)
+security-crypto = { module = "androidx.security:security-crypto", version.ref = "security-crypto" }
+
+# --- Test libraries (Step 9.1) ---
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+truth = { module = "com.google.truth:truth", version.ref = "truth" }
+
+[plugins]
+android-application = { id = "com.android.application",                  version.ref = "agp" }
+kotlin-android      = { id = "org.jetbrains.kotlin.android",             version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp",                 version.ref = "ksp" }
+google-services     = { id = "com.google.gms.google-services",           version.ref = "google-services" }
+# Step 6.5 — Sentry Gradle plugin (autoProguardConfig=true sends
+# mapping.txt + InApp frames so release crash reports deobfuscate).
+sentry-android      = { id = "io.sentry.android.gradle",                 version.ref = "sentry-gradle-plugin" }

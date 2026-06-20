@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.4 — Categories tab content.
+
+    Top — `HorizontalScrollView` wrapping a `ChipGroup` with `singleSelection=true`
+    and `singleLine=true`. ChipGroup is populated dynamically from
+    CategoriesViewModel.state.Success — first chip is the special "All"
+    null-id filter, followed by one chip per Category returned by the API.
+
+    Below — RecyclerView with GridLayoutManager(3 cols).
+    `app:spanCount="3"` matches `setSpanCount(3)` in CategoriesFragment.
+
+    Bottom — Material 3 CircularProgressIndicator overlay (Loading) and a
+    TextView empty-state. Both overlays start gone; the fragment toggles.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_bg">
+
+    <!-- Section header. -->
+    <TextView
+        android:id="@+id/sectionTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:fontFamily="@font/poppins_regular"
+        android:letterSpacing="0.18"
+        android:paddingHorizontal="20dp"
+        android:text="@string/fragment_categories_header"
+        android:textColor="@color/primary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Filter chips — wrapped in HorizontalScrollView so a long list
+         of categories can be swiped horizontally on small screens. -->
+    <HorizontalScrollView
+        android:id="@+id/chipScroll"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:paddingHorizontal="14dp"
+        android:scrollbars="none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/sectionTitle">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/categoryChips"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleLine="true"
+            app:singleSelection="true" />
+    </HorizontalScrollView>
+
+    <!-- Channel grid — 3 columns. RecyclerView is given a fixed
+         vector-span attribute via app:spanCount in CategoriesFragment. -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/channelsRv"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="14dp"
+        android:clipToPadding="false"
+        android:paddingHorizontal="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"            app:layout_constraintTop_toBottomOf="@id/chipScroll"
+            android:layoutAnimation="@anim/layout_anim_fall_down"
+            tools:listitem="@layout/view_item_channel"
+            tools:itemCount="6" />
+
+    <!-- Empty state overlay. -->
+    <TextView
+        android:id="@+id/emptyState"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppins_regular"
+        android:gravity="center"
+        android:letterSpacing="0.06"
+        android:paddingHorizontal="32dp"
+        android:text="@string/fragment_categories_empty"
+        android:textColor="@color/text_muted"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/channelsRv"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/channelsRv" />
+
+    <!-- Loading overlay. -->
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/loadingIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorColor="@color/primary"
+        app:indicatorSize="40dp"
+        app:layout_constraintBottom_toBottomOf="@id/channelsRv"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/channelsRv"
+        app:layout_constraintVertical_bias="0.4"
+        app:trackThickness="3dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

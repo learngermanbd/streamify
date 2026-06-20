@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 6 · Step 6.2 — UpdateActivity host layout.
+
+    Just an empty FrameLayout carrying the FragmentContainerView id
+    that UpdateActivity replaces with [com.streamify.app.ui.update.UpdateDialogFragment]
+    in forced mode.
+
+    Fits system windows so the dark background extends behind the
+    status bar on edge-to-edge displays.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/updateContainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_bg"
+    android:fitsSystemWindows="true" />

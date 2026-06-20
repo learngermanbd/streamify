@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 1 · Step 1.5 → Phase 6 · Step 6.4 — Splash background.
+
+    Phase 6.4 update: hardcoded the diagonal gradient from
+    `#0A0F1A` (the dark-mode value of @color/dark_bg) through
+    `#131931` (@color/secondary, mode-independent) to
+    `#121A27` (the dark-mode value of @color/card_bg).
+
+    Previously this drawable referenced @color/dark_bg / @color/card_bg.
+    After the Step 6.4 light/dark flip, those tokens resolve to white /
+    off-white under the day qualifier and the splash background becomes
+    a white-on-cyan logo \u2014 broken brand identity.
+
+    Hardcoding the dark hex values keeps the splash dark in BOTH
+    qualifiers so the cyan logoText / glass card overlay on top stay
+    legible. Trade-off: the splash no longer flips with the user's
+    theme choice — deliberate, since SportStream's brand identity is
+    "OLED-friendly dark surface" and the splash is the most visible
+    moment of brand expression in the user flow.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+       android:shape="rectangle">
+    <gradient
+        android:angle="45"
+        android:startColor="#0A0F1A"
+        android:centerColor="#131931"
+        android:endColor="#121A27"
+        android:type="linear" />
+</shape>

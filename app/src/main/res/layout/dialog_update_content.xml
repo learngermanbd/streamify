@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 6 · Step 6.2 — Update Dialog content body.
+
+    Both forced and optional modes use this layout. Visibility flips:
+      • updateForcedLabel   — only forced mode
+      • updateQuitButton    — only forced mode
+      • updateLaterButton   — only optional mode
+      • updateLaterDivider  — only optional mode
+    Other rows are shared.
+-->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="16dp"
+    android:background="@drawable/bg_update_card"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/glass_primary_border"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Forced badge: red pill anchored top-left. -->
+        <TextView
+            android:id="@+id/updateForcedLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_live_badge"
+            android:fontFamily="sans-serif-medium"
+            android:paddingStart="12dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="4dp"
+            android:text="@string/update_forced_label"
+            android:textAllCaps="true"
+            android:textColor="@color/text"
+            android:textSize="11sp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <!-- Title — varies between forced + optional. -->
+        <TextView
+            android:id="@+id/updateTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="@color/text"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            tools:text="New version 1.2.0" />
+
+        <!-- Body — long changelog OR forced-update body copy. -->
+        <TextView
+            android:id="@+id/updateBody"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:fontFamily="sans-serif"
+            android:textColor="@color/text_muted"
+            android:textSize="14sp"
+            tools:text="Improvements and bugfixes." />
+
+        <!-- Primary CTA — Update Now. -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/updateNowButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="22dp"
+            android:backgroundTint="@color/primary"
+            android:fontFamily="sans-serif-medium"
+            android:text="@string/update_now"
+            android:textAllCaps="false"
+            android:textColor="@color/dark_bg"
+            android:textSize="15sp"
+            app:cornerRadius="14dp" />
+
+        <!-- Optional-mode secondary: persist dismissal to DataStore. -->
+        <View
+            android:id="@+id/updateLaterDivider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="14dp"
+            android:background="@color/glass_primary_border"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/updateLaterButton"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="6dp"
+            android:fontFamily="sans-serif-medium"
+            android:text="@string/update_later"
+            android:textAllCaps="false"
+            android:textColor="@color/text_muted"
+            android:textSize="14sp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <!-- Forced-mode secondary: quit the app entirely. -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/updateQuitButton"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="6dp"
+            android:fontFamily="sans-serif-medium"
+            android:text="@string/update_quit"
+            android:textAllCaps="false"
+            android:textColor="@color/live_red"
+            android:textSize="14sp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.5 — Thumbnail placeholder for highlight cards.
+
+    Rounded-rect with @color/card_bg fill (matches the surrounding
+    Fragment dark scaffold so the loading state doesn't pop in/out
+    visually). Drawn by Glide's `.placeholder(R.drawable.bg_highlight_placeholder)`
+    on the thumbnail ImageView while the real `highlight.thumbnailUrl`
+    is still in flight.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/card_bg" />
+    <corners android:radius="8dp" />
+</shape>

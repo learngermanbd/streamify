@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 5 · Step 5.5 v2 — Section divider row used by NoticeAdapter.
+
+    Pill style matching the fragment_home section header ("LIVE EVENTS")
+    and the other strings.xml section_ rows. The "count" text on the
+    right is short so the pill stays single-line on wrist-sized layouts.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingTop="22dp"
+    android:paddingBottom="10dp"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp">
+
+    <TextView
+        android:id="@+id/noticeSectionTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:fontFamily="@font/poppins_regular"
+        android:letterSpacing="0.18"
+        android:textColor="@color/primary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        tools:ignore="HardcodedText"
+        xmlns:tools="http://schemas.android.com/tools"
+        tools:text="ALERTS" />
+
+    <TextView
+        android:id="@+id/noticeSectionCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:alpha="0.85"
+        android:fontFamily="@font/poppins_regular"
+        android:textColor="@color/text_muted"
+        android:textSize="11sp"
+        xmlns:tools="http://schemas.android.com/tools"
+        tools:text="3 items" />
+</LinearLayout>

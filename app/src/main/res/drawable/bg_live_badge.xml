@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.3 — LIVE badge background.
+    Solid @color/live_red fill, 4 dp corner radius. The TextView in
+    view_item_match.xml sets this as background and uses white text
+    (via @color/white). Lives inside a padding-6dp×2dp background.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/live_red" />
+    <corners android:radius="4dp" />
+</shape>

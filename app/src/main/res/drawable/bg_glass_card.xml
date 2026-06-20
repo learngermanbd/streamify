@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 1 · Step 1.5 — Glass card shape: 8% primary fill + 1dp primary stroke + 12dp corners.
+    Used by Streamify.GlassCard style and as a base decoration on the Home screen.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+       android:shape="rectangle">
+    <solid android:color="@color/glass_primary" />
+    <stroke
+        android:width="1dp"
+        android:color="@color/glass_primary_border" />
+    <corners android:radius="12dp" />
+</shape>

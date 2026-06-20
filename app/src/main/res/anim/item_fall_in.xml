@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 6 · Step 6.3 — single-item entrance animation.
+
+    Wrapped by `layout_anim_fall_down.xml` which feeds a `delay`
+    proportional to the child's index, so the RecyclerView stagger
+    emerges naturally from this single animation playing per row.
+
+    Values:
+      - 320 ms — long enough to read the row entering, short enough
+        that a list of 20 rows finishes its full stagger in ~700 ms.
+      - Y offset 12 % of row height — gentle "fall into place" feel,
+        avoids the "marquee" look of a full 24 % offset.
+      - alpha 0 → 1 — prevents the row from flashing on entry.
+-->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="320"
+    android:interpolator="@android:anim/decelerate_interpolator"
+    android:shareInterpolator="true">
+
+    <translate
+        android:fromYDelta="12%p"
+        android:toYDelta="0"
+        android:duration="320" />
+
+    <alpha
+        android:fromAlpha="0.0"
+        android:toAlpha="1.0"
+        android:duration="320" />
+</set>

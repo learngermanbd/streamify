@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 4 · Step 4.6 — Floating player overlay root layout.
+
+    The Service programmatically attaches a PlayerView + close X into a
+    FrameLayout at runtime so we can size the overlay to 55 % of screen
+    width and preserve 16:9 aspect. This XML file is the visual reference
+    + portrait-mode fallback (the Service uses ViewGroup.LayoutParams
+    computed from WindowManager.displayMetrics rather than inflating
+    this layout, because TYPE_APPLICATION_OVERLAY needs explicit pixel sizes).
+
+    Structural parallel to activity_player.xml's playerView + close chrome.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_floating_player">
+
+    <!-- 16:9 Media3 PlayerView. -->
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/floatingPlayerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/black"
+        app:resize_mode="fit"
+        app:use_controller="false"
+        xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+    <!-- Close X overlay (top-end, 32 dp circle tinted to glass-primary). -->
+    <ImageButton
+        android:id="@+id/floatingCloseButton"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="4dp"
+        android:background="@drawable/bg_floating_close"
+        android:contentDescription="@string/player_floating_close_desc"
+        android:padding="6dp"
+        android:src="@drawable/ic_floating_close" />
+</FrameLayout>

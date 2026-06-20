@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Phase 7 · Step 7.7 — Network security configuration.
+  
+  Enforces:
+    1. No cleartext (HTTP) traffic on any connection.
+    2. Only system CA certificates are trusted (user-installed CAs
+       are blocked, preventing MITM via proxy tools like Charles).
+    3. Certificate pinning for the API domain with primary + backup
+       pins.
+  
+  To generate real pins:
+    openssl s_client -connect learngermanwith.fun:443 -servername learngermanwith.fun < /dev/null 2>/dev/null \
+      | openssl x509 -pubkey -noout \
+      | openssl pkey -pubin -outform DER \
+      | openssl dgst -sha256 -binary \
+      | base64
+  
+  The backup pin should be from a different CA or an offline key
+  that can be rotated if the primary CA is compromised.
+-->
+<network-security-config>
+    <!-- Block cleartext globally — all connections must use TLS. -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- Only trust system-installed CA certificates.
+                 User-installed CAs are NOT trusted, blocking MITM
+                 via proxy tools (Charles, Burp Suite, etc.). -->
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Certificate pinning for the API domain. -->
+    <domain-config>
+        <domain includeSubdomains="true">learngermanwith.fun</domain>
+        <pin-set expiration="2027-01-01">
+            <!-- Primary pin: Let's Encrypt Authority X3
+                 (generated from the current certificate chain).
+                 TODO(Phase 7): replace with real pin from production cert. -->
+            <pin digest="SHA-256">YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=</pin>
+            <!-- Backup pin: ISRG Root X1 (Let's Encrypt root CA)
+                 Survives intermediate CA rotation. -->
+            <pin digest="SHA-256">Vjs8r4z+80wjNcr1YKepWQboSIRi63WsWXhIMN+eWys=</pin>
+        </pin-set>
+    </domain-config>
+</network-security-config>

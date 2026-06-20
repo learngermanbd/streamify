@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 4 · Step 4.6 — Close button circular background.
+
+    Translucent dark 32 dp circle so the close X is tappable + legible
+    over any video frame. Pair with ic_floating_close.xml.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#66000000" />
+</shape>

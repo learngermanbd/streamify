@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phase 8 · Step 8.14-8.15 — Admin Dashboard with toolbar + fragment container. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/admin_bg">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/admin_text"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:text="SportStream Admin" />
+
+            <TextView
+                android:id="@+id/tvRole"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/admin_text_muted"
+                android:textSize="11sp"
+                android:text="EDITOR" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:textSize="12sp"
+            android:minHeight="0dp"
+            android:padding="8dp"
+            android:backgroundTint="@color/border_default" />
+    </LinearLayout>
+
+    <!-- Stats -->
+    <TextView
+        android:id="@+id/tvStats"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:textColor="@color/admin_text_muted"
+        android:textSize="12sp" />
+
+    <!-- Section toolbar -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <Button android:id="@+id/btnEvents" android:text="Events"
+                android:textSize="12sp" android:minHeight="0dp" android:padding="8dp"
+                android:layout_marginEnd="8dp" />
+
+            <Button android:id="@+id/btnChannels" android:text="Channels"
+                android:textSize="12sp" android:minHeight="0dp" android:padding="8dp"
+                android:layout_marginEnd="8dp" />
+
+            <Button android:id="@+id/btnHighlights" android:text="Highlights"
+                android:textSize="12sp" android:minHeight="0dp" android:padding="8dp"
+                android:layout_marginEnd="8dp" />
+
+            <Button android:id="@+id/btnCategories" android:text="Categories"
+                android:textSize="12sp" android:minHeight="0dp" android:padding="8dp"
+                android:layout_marginEnd="8dp" />
+
+            <Button android:id="@+id/btnConfig" android:text="Config"
+                android:textSize="12sp" android:minHeight="0dp" android:padding="8dp"
+                android:layout_marginEnd="8dp" />
+
+            <Button android:id="@+id/btnNotifications" android:text="Notifications"
+                android:textSize="12sp" android:minHeight="0dp" android:padding="8dp" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- Fragment container -->
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.4 — Channel LIVE dot.
+
+    10 dp solid red oval. Drawn to the top-right of a channel logo in
+    view_item_channel.xml when channel.isActive is true. Same @color/live_red
+    as the home Live badge so the brand reads consistently across the app.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/live_red" />
+    <size
+        android:width="10dp"
+        android:height="10dp" />
+</shape>

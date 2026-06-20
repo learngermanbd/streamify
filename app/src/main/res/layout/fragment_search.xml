@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 5 · Step 5.6 — Search screen root layout.
+
+    Structured so the EditText header + recent-chips summary + result
+    RecyclerView all fit in a vertical ConstraintLayout. Status-bar
+    padding is applied at the Activity level via WindowInsetsCompat
+    (same pattern as fragment_categories.xml).
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/searchRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_bg">
+
+    <!--
+        Header row \u2014 back, EditText (IME action = SEARCH), clear-text IconButton.
+        Sits at the top of the ConstraintLayout so it pins above the
+        recent-strip / recycler pair below it.
+    -->
+    <LinearLayout
+        android:id="@+id/searchHeader"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/glass_primary"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="6dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/searchBackButton"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:contentDescription="@string/search_back_desc"
+            app:icon="@android:drawable/ic_menu_revert"
+            app:iconTint="@color/text" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/searchQueryInputLayout"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/search_hint"
+            android:layout_marginHorizontal="6dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/searchQueryInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:maxLines="1"
+                android:textColor="@color/text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/searchClearButton"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:contentDescription="@string/search_clear_desc"
+            android:visibility="gone"
+            app:icon="@android:drawable/ic_menu_close_clear_cancel"
+            app:iconTint="@color/text" />
+    </LinearLayout>
+
+    <!--
+        Recent searches row \u2014 visible only while the query is blank AND
+        the user has at least one past search. The ChipGroup is laid out
+        inside a HorizontalScrollView so a long history can pan.
+    -->
+    <LinearLayout
+        android:id="@+id/searchRecentRow"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/searchHeader">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="@font/poppins_regular"
+                android:text="@string/search_recent_header"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.06" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/searchClearRecentButton"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="0dp"
+                android:text="@string/search_recent_clear"
+                android:textColor="@color/primary"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/searchRecentChipGroup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:singleLine="true"
+                app:singleSelection="false" />
+        </HorizontalScrollView>
+
+        <TextView
+            android:id="@+id/searchRecentEmptyText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:fontFamily="@font/poppins_regular"
+            android:gravity="center"
+            android:text="@string/search_no_recent"
+            android:textColor="@color/text_muted"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!--
+        Result RecyclerView \u2014 visible whenever the query has any
+        characters. Adapter renders section headers + rows.
+    -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/searchResultsRecycler"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:paddingHorizontal="6dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="14dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"            app:layout_constraintTop_toBottomOf="@id/searchRecentRow"
+            android:layoutAnimation="@anim/layout_anim_fall_down"
+            tools:listitem="@layout/view_search_event" />
+
+    <!--
+        Loading indicator \u2014 only shown while upstream MainViewModel is in
+        Loading AND the user has typed at least one character. For an Idle
+        state (very first launch before any fetch) we keep the chip strip.
+    -->
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/searchProgress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorColor="@color/primary"
+        app:indicatorSize="36dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/searchHeader"
+        app:trackThickness="3dp" />
+
+    <!--
+        Empty TextView \u2014 shown over the RecyclerView when the query has
+        non-zero characters but the snapshot yields 0 hits, OR when the
+        snapshot is in Error state.
+    -->
+    <TextView
+        android:id="@+id/searchEmptyText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="32dp"
+        android:fontFamily="@font/poppins_regular"
+        android:gravity="center"
+        android:text="@string/search_empty"
+        android:textColor="@color/text_muted"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/searchResultsRecycler"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/searchResultsRecycler" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

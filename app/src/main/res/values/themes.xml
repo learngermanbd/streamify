@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        Phase 1 · Step 1.5 → Phase 6 · Step 6.4 — Material 3 DayNight
+        theme. Material lib 1.12.0 (Step 1.2) supplies
+        Theme.Material3.* styles.
+
+        Step 6.4 update:
+          - colorOnPrimary / colorOnSecondary now point at the fixed-
+            dark @color/on_primary token so label text on cyan primary
+            buttons reads in BOTH modes.
+          - windowLightStatusBar / windowLightNavigationBar flip to
+            TRUE so the system bar icons stay dark (legible on the
+            light surface).
+        values-night/themes.xml REPLACES (not merges) this entire style
+        with the dark-mode equivalent; only the 2 system-bar flags
+        differ between the two qualifiers.
+    -->
+    <style name="Theme.Streamify" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Brand palette -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorPrimaryContainer">@color/secondary</item>
+        <item name="colorOnPrimaryContainer">@color/primary</item>
+        <item name="colorSecondary">@color/primary</item>
+        <item name="colorOnSecondary">@color/on_primary</item>
+        <item name="colorTertiary">@color/text_muted</item>
+
+        <!-- Surfaces -->
+        <item name="colorSurface">@color/card_bg</item>
+        <item name="colorOnSurface">@color/text</item>
+        <item name="colorSurfaceVariant">@color/border_default</item>
+        <item name="colorOnSurfaceVariant">@color/text_muted</item>
+        <item name="colorOnBackground">@color/text</item>
+        <item name="colorError">@color/live_red</item>
+        <item name="colorOnError">@color/white</item>
+        <item name="colorOutline">@color/border_default</item>
+
+        <!-- Window chrome — light mode keeps transparent system bars;
+             status icons flip to DARK (windowLightStatusBar=true) so they
+             stay legible on the white surface. -->
+        <item name="android:windowBackground">@color/dark_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+
+        <!-- Text colors -->
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textColorPrimary">@color/text</item>
+        <item name="android:textColorSecondary">@color/text_muted</item>
+        <item name="android:textColorHint">@color/text_muted</item>
+    </style>
+</resources>

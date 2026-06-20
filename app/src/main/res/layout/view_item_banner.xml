@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.3 — Banner carousel slide (ViewPager2 item).
+    Full-width image with the bg_banner_placeholder drawable underneath
+    so the slide stays opaque while Glide fetches the real imageUrl.
+
+    `app:layout_constraintDimensionRatio="16:7"` matches the Sportzfy
+    design ratio for promo banners. cornerRadius 12dp gives the slide
+    a soft pill shape inside the ViewPager card.
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="14dp"
+    app:cardCornerRadius="12dp"
+    app:cardBackgroundColor="@color/card_bg"
+    app:strokeColor="@color/glass_primary_border"
+    app:strokeWidth="1dp"
+    app:cardElevation="4dp">
+
+    <ImageView
+        android:id="@+id/bannerImage"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@drawable/bg_banner_placeholder"
+        android:contentDescription="@string/view_item_banner_default_title"
+        android:scaleType="centerCrop"
+        app:layout_constraintDimensionRatio="16:7"
+        tools:src="@drawable/bg_banner_placeholder" />
+
+</com.google.android.material.card.MaterialCardView>

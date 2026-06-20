@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 6 · Step 6.2 — FileProvider paths for the update-flow APK delivery.
+
+    The platform DownloadManager writes to `getExternalFilesDir(DOWNLOADS)`
+    so the file is inside our own scoped storage and FileProvider authority
+    can serve it to the package installer via `grantUriPermission`.
+
+    `external-files-path` and `files-path` map to the in-app file scope so
+    the FileProvider URI authority in the manifest resolves both roots.
+-->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-files-path
+        name="apk_external"
+        path="Download/" />
+    <cache-path
+        name="apk_cache"
+        path="/" />
+</paths>

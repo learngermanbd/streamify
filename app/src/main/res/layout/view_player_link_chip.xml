@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 4 · Step 4.2 — A single row in the player's links bar.
+
+    Wraps a Material 3 Chip with the stream-link label (e.g. "Server 1 HD")
+    inside a LinearLayout containing a small margin (so multiple chips
+    don't touch horizontally).
+-->
+<com.google.android.material.chip.Chip
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/linkChip"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="8dp"
+    android:fontFamily="@font/poppins_regular"
+    android:checkable="true"
+    android:textColor="@color/text"
+    app:chipBackgroundColor="@color/card_bg"
+    tools:text="Server 1 \u00b7 HD" />

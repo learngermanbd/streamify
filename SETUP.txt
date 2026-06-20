@@ -1,0 +1,278 @@
+================================================================================
+  SPORTSTREAM — SETUP GUIDE
+  Last updated: 2026-06-20
+  This file tracks every manual step needed to get the project running.
+  Whenever a new manual step comes up, this file gets updated.
+================================================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TABLE OF CONTENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1. Prerequisites
+  2. Supabase Setup (Database)
+  3. Backend Setup
+  4. Android App Setup
+  5. Admin Panel Setup
+  6. Firebase Setup (Push Notifications)
+  7. Running the Project
+  8. Credentials & Accounts
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. PREREQUISITES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  You need these installed on your computer:
+
+  - Node.js >= 18        [https://nodejs.org]
+  - JDK 17+              [https://adoptium.net]
+  - Android Studio       [https://developer.android.com/studio]
+  - Git                  [https://git-scm.com]
+
+  Verify installations:
+    node --version
+    java --version
+    git --version
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  2. SUPABASE SETUP (Database)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Step 2.1 — Create a Supabase project
+  ─────────────────────────────────────
+    1. Go to: https://supabase.com/dashboard
+    2. Click "New project"
+    3. Choose organization, name it "streamify"
+    4. Set a strong database password (SAVE IT!)
+    5. Choose region (e.g., ap-south-1 for India)
+    6. Click "Create project" — wait ~2 minutes
+
+  Step 2.2 — Get your database credentials
+  ─────────────────────────────────────────
+    1. In your Supabase dashboard, go to: Settings → Database
+    2. Scroll to "Connection Pooling"
+    3. Copy these values:
+
+       Host:     aws-1-ap-south-1.pooler.supabase.com
+       Port:     6543
+       User:     postgres.xxxxxxxxxxxx
+       Password: (the password you set when creating the project)
+       Database: postgres
+
+    4. Save them — you'll need them in Step 3.
+
+    ⚠️  The backend uses direct PostgreSQL (not Supabase REST API),
+        so you do NOT need the service_role or anon API keys.
+
+  Step 2.3 — [MANUAL] Create database tables (Run SQL Migration)
+  ───────────────────────────────────────────────────────────────
+    1. In your Supabase dashboard, click "SQL Editor" (left sidebar)
+    2. Click "New query"
+    3. Open this file on your computer:
+       streamify/backend/prisma/supabase_migration.sql
+    4. Copy ALL contents and paste into the SQL Editor
+    5. Click "Run" (green button, bottom-right)
+    6. Verify: Go to "Table Editor" — you should see 11 tables:
+       Admin, Category, Channel, Event, StreamLink, Highlight,
+       Banner, AppConfig, Notification, DeviceToken, AnalyticsEvent
+
+    This also seeds the first admin user:
+      Email:    admin@streamify.app
+      Password: admin123
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  3. BACKEND SETUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Step 3.1 — Install dependencies
+  ────────────────────────────────
+    cd streamify/backend
+    npm install
+
+  Step 3.2 — Configure environment variables
+  ───────────────────────────────────────────
+    The .env file already exists at: streamify/backend/.env
+
+    Update these values with YOUR PostgreSQL credentials from Step 2.2:
+
+      DB_HOST="aws-1-ap-south-1.pooler.supabase.com"
+      DB_PORT=6543
+      DB_USER="postgres.xxxxxxxxxxxx"
+      DB_PASSWORD="your-database-password"
+      DB_NAME="postgres"
+
+    Also change these for production:
+      JWT_SECRET="your-own-random-secret-string"
+      ADMIN_JWT_SECRET="another-random-secret-string"
+
+  Step 3.3 — Start the backend server
+  ────────────────────────────────────
+    cd streamify/backend
+    npm run dev
+
+    Server starts on: http://localhost:4000
+    Health check:     http://localhost:4000/api/health
+
+  Step 3.4 — Verify the API works
+  ────────────────────────────────
+    Test these endpoints in your browser or with curl:
+
+    # Health check
+    curl http://localhost:4000/api/health
+
+    # Login as admin
+    curl -X POST http://localhost:4000/api/admin/auth/login \
+      -H "Content-Type: application/json" \
+      -d '{"email":"admin@streamify.app","password":"admin123"}'
+
+    # Get events (public)
+    curl http://localhost:4000/api/events
+
+    # Get config (public)
+    curl http://localhost:4000/api/config
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  4. ANDROID APP SETUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Step 4.1 — Open in Android Studio
+  ──────────────────────────────────
+    1. Open Android Studio
+    2. File → Open → select: streamify/ (root folder)
+    3. Wait for Gradle sync to complete
+
+  Step 4.2 — Configure API base URL
+  ──────────────────────────────────
+    Open: app/src/main/java/com/streamify/app/data/remote/ApiClient.kt
+    Update BASE_URL to point to your backend:
+      const val BASE_URL = "http://YOUR_COMPUTER_IP:4000/api/"
+
+    For Android emulator use:  http://10.0.2.2:4000/api/
+    For real device use:       http://192.168.x.x:4000/api/
+
+  Step 4.3 — Build and run
+  ──────────────────────────
+    1. Click the green Play button in Android Studio
+    2. Choose an emulator or connected device
+    3. The app should build and launch
+
+  Step 4.4 — Run unit tests
+  ──────────────────────────
+    cd streamify
+    ./gradlew :app:testDebugUnitTest
+
+    Expected: 22 tests passing, BUILD SUCCESSFUL
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  5. ADMIN PANEL SETUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  5.1 — Web Admin Panel
+  ──────────────────────
+    The web admin panel is a single HTML file served by the backend.
+
+    Access it at: http://localhost:4000/admin/
+
+    Login with:
+      Email:    admin@streamify.app
+      Password: admin123
+
+  5.2 — Android Admin App
+  ─────────────────────────
+    The admin Android app is in: streamify/admin/
+
+    Open in Android Studio as a separate project:
+    File → Open → select: streamify/admin/
+    Build and run on a device/emulator.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  6. FIREBASE SETUP (Push Notifications) — OPTIONAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Push notifications are OPTIONAL. The server works without Firebase.
+
+  To enable push notifications:
+    1. Go to: https://console.firebase.google.com
+    2. Create a project named "streamify-app"
+    3. Go to: Project Settings → Service accounts
+    4. Click "Generate new private key" → download JSON
+    5. Update these in .env:
+       FIREBASE_PROJECT_ID="your-project-id"
+       FIREBASE_CLIENT_EMAIL="firebase-adminsdk@your-project.iam.gserviceaccount.com"
+       FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_KEY_HERE\n-----END PRIVATE KEY-----\n"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  7. RUNNING THE PROJECT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  7.1 — Quick Start (all at once)
+  ────────────────────────────────
+
+    Terminal 1 — Backend:
+      cd streamify/backend
+      npm run dev
+
+    Terminal 2 — Start ngrok (optional, for external access):
+      ngrok http 4000
+
+    Android Studio 1 — User App:
+      Open streamify/ (root)
+      Update ApiClient.kt BASE_URL
+      Click Run
+
+    Android Studio 2 — Admin App:
+      Open streamify/admin/
+      Click Run
+
+  7.2 — Verify everything
+  ────────────────────────
+    ✅ Backend health:    curl http://localhost:4000/api/health
+    ✅ Admin login:        curl -X POST http://localhost:4000/api/admin/auth/login ...
+    ✅ Web admin panel:    http://localhost:4000/admin/
+    ✅ Android app:        Should show events/channels from DB
+    ✅ Unit tests:         ./gradlew :app:testDebugUnitTest
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  8. CREDENTIALS & ACCOUNTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  GitHub:       https://github.com/learngermanbd/streamify
+  Supabase:     https://supabase.com/dashboard
+  Firebase:     https://console.firebase.google.com (optional)
+
+  Default admin login (after SQL migration):
+    Email:       admin@streamify.app
+    Password:    admin123
+
+  ⚠️  CHANGE the admin password after first login!
+      Use the Admin Panel → Users section, or:
+      curl -X PUT http://localhost:4000/api/admin/users/:id \
+        -H "Authorization: Bearer YOUR_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"password":"new-password"}'
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  MANUAL STEPS LOG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Date        | Step                       | Status
+  ────────────┼────────────────────────────┼──────────
+  2026-06-20  | Run SQL migration (v2)      | ✅ Done ← DO THIS NOW
+  ────────────┼────────────────────────────┼──────────
+  2026-06-20  | Install Node.js deps       | ✅ Done
+  2026-06-20  | Configure .env             | ✅ Done
+  2026-06-20  | Unit tests pass (22/22)    | ✅ Done
+  2026-06-20  | Server boots on :4000      | ✅ Done
+  2026-06-20  | Code pushed to GitHub      | ✅ Done
+  2026-06-20  | Verify 14 API endpoints   | ✅ 8 public pass, auth OK
+  2026-06-20  | A-Z Codebase Audit (HTML)  | ✅ 8 issues found & fixed

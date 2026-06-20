@@ -1,0 +1,203 @@
+// Phase 8 \u00b7 Step 8.2 \u2014 Prisma database schema.
+//
+// Mirrors the data-model layer in :app/src/main/java/com/sportstream/app/
+// data/models/ (Step 2.1) so the JSON contract between the admin backend
+// and the user Android app stays stable. Real migrations + seed data land
+// in Step 8.6.
+//
+// To migrate against a real DB:
+//   cp .env.example .env       # set DATABASE_URL
+//   npx prisma migrate dev
+//   npx prisma generate
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Device tokens for FCM push (Step 8.18)
+
+model DeviceToken {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  platform   String?
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+}
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// \u2500\u2500\u2500 Enums \u2500\u2500\u2500
+
+enum AdminRole {
+  SUPER_ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum EventStatus {
+  DRAFT
+  SCHEDULED
+  LIVE
+  ENDED
+}
+
+enum VideoQuality {
+  AUTO
+  HD
+  SD
+}
+
+enum NotificationStatus {
+  PENDING
+  SCHEDULED
+  SENT
+  FAILED
+  CANCELLED
+}
+
+// \u2500\u2500\u2500 Auth + access control \u2500\u2500\u2500
+
+model Admin {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  name          String
+  role          AdminRole @default(EDITOR)
+  avatarUrl     String?
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  notifications Notification[] @relation("AdminNotifications")
+}
+
+// \u2500\u2500\u2500 Content taxonomy \u2500\u2500\u2500
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  iconUrl   String?
+  sortOrder Int       @default(0)
+  isVisible Boolean   @default(true)
+  channels  Channel[]
+  events    Event[]
+}
+
+model Channel {
+  id         String   @id @default(cuid())
+  name       String
+  logoUrl    String?
+  streamUrl  String
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  isActive   Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Event {
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
+  categoryId   String
+  category     Category     @relation(fields: [categoryId], references: [id])
+  teamAName    String
+  teamALogoUrl String?
+  teamBName    String
+  teamBLogoUrl String?
+  date         String?
+  time         String?
+  isLive       Boolean      @default(false)
+  status       EventStatus  @default(DRAFT)
+  streams      StreamLink[]
+  thumbnailUrl String?
+  scheduledFor DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  @@index([status, scheduledFor])
+  @@index([categoryId])
+}
+
+model StreamLink {
+  id        String       @id @default(cuid())
+  eventId   String
+  event     Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name      String
+  url       String
+  quality   VideoQuality @default(AUTO)
+  sortOrder Int          @default(0)
+  isActive  Boolean      @default(true)
+  @@index([eventId])
+}
+
+model Highlight {
+  id           String   @id @default(cuid())
+  title        String
+  thumbnailUrl String
+  videoUrl     String
+  date         BigInt
+  duration     Int      @default(0)
+  views        Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  title     String
+  imageUrl  String
+  linkUrl   String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// \u2500\u2500\u2500 App config (replaces Firebase Remote Config) \u2500\u2500\u2500
+
+model AppConfig {
+  id              String   @id @default(cuid())
+  apiBaseUrl      String
+  updateUrl       String?
+  telegramLink    String?
+  noticeText      String?
+  maintenanceMode Boolean  @default(false)
+  minAppVersion   String?
+  featureFlags    Json
+  updatedAt       DateTime @updatedAt
+}
+
+// \u2500\u2500\u2500 Push notifications \u2500\u2500\u2500
+
+model Notification {
+  id          String    @id @default(cuid())
+  title       String
+  body        String
+  targetTopic String?
+  targetToken String?
+  deepLink    String?
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  status      NotificationStatus @default(PENDING)
+  sentById    String?
+  sentBy      Admin?    @relation("AdminNotifications", fields: [sentById], references: [id])
+  createdAt   DateTime  @default(now())
+}
+
+// \u2500\u2500\u2500 Analytics ingest \u2500\u2500\u2500
+
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  eventType  String
+  eventName  String
+  properties Json
+  deviceId   String?
+  platform   String?
+  appVersion String?
+  country    String?
+  occurredAt DateTime @default(now())
+  @@index([eventType, occurredAt])
+}

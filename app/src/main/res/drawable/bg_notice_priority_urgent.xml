@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 5 · Step 5.5 v2 — Urgent priority chip background. 14dp
+    tall rounded rect filled with the live-red color. Used as the
+    `android:background` of the `noticeCardPriorityChip` spare-area
+    View in view_notice_card.xml.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/live_red" />
+    <corners android:radius="7dp" />
+</shape>

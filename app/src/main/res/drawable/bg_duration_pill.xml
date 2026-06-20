@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.5 — Duration pill shape.
+
+    Rounded-rect background drawn behind the duration TextView on
+    view_item_highlight.xml. 70 % black fill so the white mm:ss text
+    stays legible over any thumbnail imagery. 4 dp corner radius —
+    pill-shaped but not over-rounded (so the 1-line label hugs the
+    background tightly).
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#B3000000" />
+    <corners android:radius="4dp" />
+</shape>

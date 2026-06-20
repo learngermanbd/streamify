@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <!-- Diagonal gradient background drawn beneath everything -->
+    <View
+        android:id="@+id/background"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/bg_splash"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Glass logo card -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/logoCard"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        app:cardCornerRadius="28dp"
+        app:cardBackgroundColor="@color/glass_primary"
+        app:strokeColor="@color/glass_primary_border"
+        app:strokeWidth="1dp"
+        app:cardElevation="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/loader"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintVertical_bias="0.4">
+
+        <TextView
+            android:id="@+id/logoText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="36dp"
+            android:fontFamily="@font/poppins_regular"
+            android:text="S"
+            android:textColor="@color/primary"
+            android:textSize="76sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/logoSubtext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_marginBottom="22dp"
+            android:fontFamily="@font/poppins_regular"
+            android:letterSpacing="0.08"
+            android:text="@string/app_name"
+            android:textColor="@color/white" android:alpha="0.7"
+            android:textSize="14sp" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <!--
+        Phase 6 · Step 6.3 — Lottie loading animation (replaces the Material 3
+        CircularProgressIndicator used in Phase 3 · Step 3.1). The 3-dot
+        bouncing loader lives at res/raw/streamify_loading.json (200×200,
+        60 frames, 30 fps, looping). Auto-plays on attach via
+        app:lottie_autoPlay="true"; the SDK exposes LottieAnimationView as a
+        FrameLayout subclass so the existing SplashActivity binding.loader
+        compile reference (.visibility = View.VISIBLE on retry path) still
+        resolves through to View.setVisibility(int).
+    -->
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/loader"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginTop="32dp"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/streamify_loading"
+        app:layout_constraintTop_toBottomOf="@id/logoCard"
+        app:layout_constraintBottom_toTopOf="@id/statusText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:fontFamily="@font/poppins_regular"
+        android:letterSpacing="0.05"
+        android:text="@string/splash_loading"
+        android:textColor="@color/text_muted"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@id/loader"
+        app:layout_constraintBottom_toTopOf="@id/versionText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Network-error card (hidden until wired in Step 3.5) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/errorCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="68dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="@color/glass_red"
+        app:cardCornerRadius="16dp"
+        app:strokeColor="@color/live_red"
+        app:strokeWidth="1dp"
+        app:layout_constraintBottom_toTopOf="@id/versionText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:id="@+id/errorTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/poppins_regular"
+                android:letterSpacing="0.10"
+                android:text="@string/splash_error_title"
+                android:textColor="@color/live_red"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/errorMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:fontFamily="@font/poppins_regular"
+                android:textColor="@color/white" android:alpha="0.8"
+                android:textSize="13sp"
+                tools:text="Couldn’t reach server" />
+
+            <!--
+                Phase 3 · Step 3.1 plan-aligned network error card CTA row.
+                Plan line 3250: "Network error card (hidden by default) with
+                WiFi/Mobile/Retry buttons". WiFi opens
+                Settings.ACTION_WIFI_SETTINGS (always available, API 1+).
+                Mobile opens Settings.ACTION_DATA_USAGE_SETTINGS (API 16+, +
+                on devices where it is omitted in Android 11+ the OS routes
+                to the equivalent Network & Internet page automatically).
+                Retry re-runs the splash nav cycle (Step 3.1 original).
+            -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:gravity="end"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/wifiButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/splash_open_wifi"
+                    android:textColor="@color/primary"
+                    app:strokeColor="@color/primary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/mobileButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/splash_open_mobile"
+                    android:textColor="@color/primary"
+                    app:strokeColor="@color/primary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/retryButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/splash_retry"
+                    android:textColor="@color/white"
+                    app:backgroundTint="@color/primary" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Version text pinned to the bottom -->
+    <TextView
+        android:id="@+id/versionText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="14dp"
+        android:alpha="0.6"
+        android:fontFamily="@font/poppins_regular"
+        android:letterSpacing="0.08"
+        android:textColor="@color/text_muted"
+        android:textSize="10sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="v1.0.0" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Phase 3 · Step 3.3 — Home tab content (the Step 3.2 placeholder
+    is fully replaced).
+
+    Top-level SwipeRefreshLayout (so Swipe-to-refresh works); inside
+    it a ConstraintLayout hosting:
+      - section header ("LIVE EVENTS" pill)
+      - RecyclerView of Event rows (view_item_match.xml inflated)
+      - empty-state TextView ("No live matches right now") shown when
+        the merged list is empty
+      - CircularProgressIndicator overlay during Loading
+
+    All overlays ('emptyState', 'loadingIndicator') start gone; the
+    HomeFragment pipe-orchestrator toggles them on each UiState.
+-->
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/swipeRefresh"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/dark_bg">
+
+        <!--
+            Phase 3 · Step 3.3 — banner carousel.
+            ViewPager2 hosted above the sectionTitle so the LIVE
+            EVENTS list sits directly under the promo slides.
+            Auto-scroll (5s) is driven from HomeFragment via a Handler
+            posted to the main looper; the runnable is cancelled in
+            `onDestroyView` to avoid leaks.
+        -->
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/bannerPager"
+            android:layout_width="0dp"
+            android:layout_height="160dp"
+            android:layout_marginTop="14dp"
+            android:contentDescription="@string/fragment_home_banners_a11y"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/sectionTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:fontFamily="@font/poppins_regular"
+            android:letterSpacing="0.18"
+            android:paddingHorizontal="20dp"
+            android:text="@string/fragment_home_header"
+            android:textColor="@color/primary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/bannerPager" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/homeRv"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="14dp"
+            android:clipToPadding="false"
+            android:paddingHorizontal="14dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="20dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/sectionTitle"
+            android:layoutAnimation="@anim/layout_anim_fall_down"
+            tools:listitem="@layout/view_item_match" />
+
+        <TextView
+            android:id="@+id/emptyState"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppins_regular"
+            android:gravity="center"
+            android:letterSpacing="0.06"
+            android:paddingHorizontal="32dp"
+            android:text="@string/fragment_home_empty"
+            android:textColor="@color/text_muted"
+            android:textSize="14sp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/homeRv"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/homeRv" />
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/loadingIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:visibility="gone"
+            app:indicatorColor="@color/primary"
+            app:indicatorSize="40dp"
+            app:layout_constraintBottom_toBottomOf="@id/homeRv"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/homeRv"
+            app:layout_constraintVertical_bias="0.4"
+            app:trackThickness="3dp" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
