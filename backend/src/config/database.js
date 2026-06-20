@@ -22,14 +22,33 @@ let client = null;
 function getClient() {
   if (client) return client;
 
-  const host     = process.env.DB_HOST;
-  const port     = process.env.DB_PORT     ? parseInt(process.env.DB_PORT, 10) : 6543;
-  const user     = process.env.DB_USER;
-  const password = process.env.DB_PASSWORD;
-  const database = process.env.DB_NAME || 'postgres';
+  // ── Resolve connection params from DATABASE_URL or individual DB_* vars ──
+  //     DATABASE_URL is the universal standard (Render, Railway, Heroku, etc.)
+  //     DB_* vars are kept for local development.
+  let host, port, user, password, database;
+
+  const dbUrl = process.env.DATABASE_URL;
+  if (dbUrl) {
+    try {
+      const u = new URL(dbUrl);
+      host     = u.hostname;
+      port     = parseInt(u.port || '5432', 10);
+      user     = u.username;
+      password = u.password;
+      database = (u.pathname || '/postgres').slice(1);
+    } catch (e) {
+      throw new Error(`[pg] Invalid DATABASE_URL: ${e.message}`);
+    }
+  } else {
+    host     = process.env.DB_HOST;
+    port     = process.env.DB_PORT     ? parseInt(process.env.DB_PORT, 10) : 6543;
+    user     = process.env.DB_USER;
+    password = process.env.DB_PASSWORD;
+    database = process.env.DB_NAME || 'postgres';
+  }
 
   if (!host || !user || !password) {
-    throw new Error('[pg] Missing DB_HOST/DB_USER/DB_PASSWORD env vars. Set them in .env');
+    throw new Error('[pg] Missing DATABASE_URL or DB_HOST/DB_USER/DB_PASSWORD env vars');
   }
 
   client = new Client({
