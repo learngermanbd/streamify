@@ -169,6 +169,6 @@ VALUES (
 -- reach without an admin having to PUT /api/config immediately.
 -- Switch to a per-environment value once Supabase + custom domain land.
 INSERT INTO "AppConfig" ("id", "apiBaseUrl")
-VALUES (gen_random_uuid()::text, 'https://learngermanwith.fun/api');
+VALUES (gen_random_uuid()::text, 'https://learngermanwith.fun');
 
 COMMIT;
