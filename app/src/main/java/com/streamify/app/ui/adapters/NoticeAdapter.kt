@@ -127,8 +127,8 @@ class NoticeAdapter(
                 NoticeSection.PROMO -> itemView.context.getString(R.string.notice_v2_section_promo_short)
             }
             val badgeColor = when (notice.section) {
-                NoticeSection.ALERT -> 0xFFEF4444.toInt()  // red
-                NoticeSection.INFO  -> 0xFF1CCBD4.toInt()  // primary
+                NoticeSection.ALERT -> 0xFFFF1744.toInt()  // live_red
+                NoticeSection.INFO  -> 0xFF00E676.toInt()  // primary
                 NoticeSection.PROMO -> 0xFFA78BFA.toInt()  // purple
             }
             sectionBadge.setBackgroundColor(badgeColor)

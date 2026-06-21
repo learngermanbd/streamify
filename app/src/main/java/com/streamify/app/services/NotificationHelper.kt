@@ -60,7 +60,7 @@ object NotificationHelper {
         ).apply {
             description = LIVE_EVENTS_DESC
             enableLights(true)
-            lightColor = Color.parseColor("#1CCBD4")
+            lightColor = Color.parseColor("#00E676")
             setShowBadge(true)
         }
         nm.createNotificationChannel(live)
