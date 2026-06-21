@@ -78,7 +78,19 @@ class StreamifyApp : Application() {
      */
     private fun initSentry() {
         SentryAndroid.init(this) { options ->
-            options.dsn = BuildConfig.SENTRY_DSN.takeIf { it.isNotBlank() }
+            // v1.1.1 — align with KDoc: "When blank, SDK no-ops".
+            // The previous `takeIf { isNotBlank() }` returned null when
+            // APP_SENTRY_DSN was unset, which Sentry.init() throws
+            // "DSN is required" on (Sentry.java:396). Per Sentry's own
+            // guidance on that exception: "Use empty string or set
+            // enabled to false in SentryOptions to disable SDK". We
+            // choose `isEnabled = false` so the SDK no-ops silently
+            // (no warning log, no error breadcrumb).
+            if (BuildConfig.SENTRY_DSN.isBlank()) {
+                options.isEnabled = false
+            } else {
+                options.dsn = BuildConfig.SENTRY_DSN
+            }
             options.isDebug = BuildConfig.DEBUG
             options.sampleRate = 1.0
             options.tracesSampleRate = 0.0

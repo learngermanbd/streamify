@@ -161,5 +161,24 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="@string/notification_default_channel_id" />
+
+        <!--
+            v1.1.1 — Disable Sentry's auto-init ContentProvider
+            (SentryInitProvider, injected by sentry-android-core's
+            merged manifest). Without this meta-data the InitProvider
+            runs auto-init during installContentProviders (which happens
+            BEFORE Application.onCreate), and with no DSN anywhere it
+            throws "java.lang.IllegalArgumentException: DSN is required"
+            from Sentry.init() → kills the process on every cold start
+            when BuildConfig.SENTRY_DSN is blank. With auto-init off,
+            StreamifyApp.initSentry() (called from onCreate) is the
+            single source of truth — it conditionally disables the SDK
+            when the DSN is blank, falling through to Logcat's native
+            stack trace exactly as the existing initSentry() KDoc
+            intends.
+        -->
+        <meta-data
+            android:name="io.sentry.auto-init"
+            android:value="false" />
     </application>
 </manifest>
