@@ -365,7 +365,7 @@ class PgModel {
 
   async upsert({ where: _where, update, create }) {
     // For DeviceToken: upsert on token column
-    const data = update || create || {};
+    const data = { ...(create || {}), ...(update || {}) };
     const onConflictCol = _where ? Object.keys(_where)[0] : 'token';
 
     const columns = Object.keys(data);
