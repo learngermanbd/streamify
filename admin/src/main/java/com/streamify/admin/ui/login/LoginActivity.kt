@@ -6,12 +6,16 @@ import android.util.Log
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.snackbar.Snackbar
 import com.streamify.admin.StreamifyAdminApp
 import com.streamify.admin.databinding.ActivityLoginBinding
 import com.streamify.admin.ui.dashboard.DashboardActivity
 import com.streamify.admin.ui.login.LoginViewModel.LoginState
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 /**
  * Phase 8 \u00b7 Step 8.13 \u2014 Login screen.
@@ -20,6 +24,13 @@ import kotlinx.coroutines.CancellationException
  * [LoginViewModel]. On success we jump to [DashboardActivity] and `finish()`
  * the login so back-press doesn't return here. On failure the VM surfaces
  * a [Snackbar] message.
+ *
+ * post-v1.1.0 fix \u2014 Auto-login: if [StreamifyAdminApp.loadSession] finds
+ * a persisted token we skip the form, dispatch straight to Dashboard.
+ * Also migrated from `LiveData.observe(this)` to the more robust
+ * `repeatOnLifecycle(STARTED) { state.collect { ... } }` pattern, which
+ * guarantees we never fire navigation while the activity is STOPPED
+ * (e.g. user rotates mid-login).
  */
 class LoginActivity : AppCompatActivity() {
 
@@ -52,8 +63,39 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-        viewModel.state.observe(this) { state ->
-            render(state)
+        // post-v1.1.0 — observe via repeatOnLifecycle so navigation never
+        // fires while the activity is STOPPED (preventing the
+        // "startActivity from non-foreground" IllegalStateException on
+        // rotation mid-login).
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.state.collect { state -> render(state) }
+            }
+        }
+
+        // post-v1.1.0 — auto-login when a persisted session already exists.
+        // Runs while STARTED so process death + recreation still hits this path.
+        if (savedInstanceState == null) launchAutoLogin()
+    }
+
+    private fun launchAutoLogin() {
+        val app = applicationContext as StreamifyAdminApp
+        // post-v1.1.0 race fix — DashboardActivity.logout() wipes the in-memory
+        // quartet synchronously before startActivity. By the time this gate
+        // runs, app.adminToken is already blank for the just-logged-out
+        // window, so we short-circuit to avoid a stale-session auto-login.
+        if (app.adminToken.isBlank()) return
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                val session = app.loadSession()
+                if (session != null && session.accessToken.isNotBlank()) {
+                    // Already logged in — dispatch straight to Dashboard and
+                    // back out of LoginActivity so back-press returns home,
+                    // not here.
+                    startActivity(Intent(this@LoginActivity, DashboardActivity::class.java))
+                    finish()
+                }
+            }
         }
     }
 

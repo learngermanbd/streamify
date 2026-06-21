@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.streamify.admin.R
 import com.streamify.admin.data.AdminApi
@@ -72,15 +74,17 @@ class EventsFragment : Fragment() {
     private fun loadEvents(status: String?) {
         progress.visibility = View.VISIBLE
         listContainer.removeAllViews()
-        lifecycleScope.launch {
-            when (val r = api.getEvents(status)) {
-                is AdminApi.ApiResult.Success -> {
-                    events = r.data.filterIsInstance<EventItem>()
-                    renderList()
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                when (val r = api.getEvents(status)) {
+                    is AdminApi.ApiResult.Success -> {
+                        events = r.data.filterIsInstance<EventItem>()
+                        renderList()
+                    }
+                    is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
                 }
-                is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
+                progress.visibility = View.GONE
             }
-            progress.visibility = View.GONE
         }
     }
 
@@ -133,12 +137,25 @@ class EventsFragment : Fragment() {
             fields[key] = et
         }
 
-        // Status spinner
-        dialogView.addView(TextView(requireContext()).apply { text = "Status"; textSize = 11f })
+        // Status spinner. Build the ArrayAdapter as a typed local so we
+        // don't have to cast `statusSpinner.adapter` later (avoids the
+        // `Unchecked cast: SpinnerAdapter! -> ArrayAdapter<String>` warning
+        // kotlinc emits when `adapter` is read through the Spinner property).
+        val statusOptions = listOf("DRAFT", "SCHEDULED", "LIVE", "ENDED")
+        val statusAdapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_item,
+            statusOptions
+        ).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+        // post-v1.1.0 review fix — coerce to >= 0 so an unknown backend
+        // status (e.g. `CANCELLED`) still selects the first item instead
+        // of silently deselecting (setSelection(-1) is a no-op, but it
+        // also drops the highlighted affordance).
         val statusSpinner = Spinner(requireContext()).apply {
-            adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, listOf("DRAFT", "SCHEDULED", "LIVE", "ENDED"))
-            (adapter as ArrayAdapter<String>).setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            setSelection(listOf("DRAFT", "SCHEDULED", "LIVE", "ENDED").indexOf(event?.status ?: "DRAFT"))
+            adapter = statusAdapter
+            setSelection(statusOptions.indexOf(event?.status ?: "DRAFT").coerceAtLeast(0))
         }
         dialogView.addView(statusSpinner)
 
@@ -151,12 +168,14 @@ class EventsFragment : Fragment() {
                     put("status", statusSpinner.selectedItem.toString())
                     if (event != null) put("categoryId", event.categoryId)
                 }
-                lifecycleScope.launch {
-                    val r = if (event != null) api.updateEvent(event.id, json)
-                    else api.createEvent(json)
-                    when (r) {
-                        is AdminApi.ApiResult.Success -> loadEvents(null)
-                        is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                        val r = if (event != null) api.updateEvent(event.id, json)
+                        else api.createEvent(json)
+                        when (r) {
+                            is AdminApi.ApiResult.Success -> loadEvents(null)
+                            is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
+                        }
                     }
                 }
             }
@@ -165,10 +184,12 @@ class EventsFragment : Fragment() {
     }
 
     private fun deleteEvent(id: String) {
-        lifecycleScope.launch {
-            when (val result = api.deleteEvent(id)) {
-                is AdminApi.ApiResult.Success -> loadEvents(null)
-                is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(result.message)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                when (val result = api.deleteEvent(id)) {
+                    is AdminApi.ApiResult.Success -> loadEvents(null)
+                    is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(result.message)
+                }
             }
         }
     }

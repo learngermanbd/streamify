@@ -10,6 +10,7 @@ import android.provider.Settings
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -20,7 +21,6 @@ import com.streamify.app.data.update.UpdateDecision
 import com.streamify.app.databinding.ActivitySplashBinding
 import com.streamify.app.services.NotificationHelper
 import com.streamify.app.ui.update.UpdateActivity
-import com.streamify.app.ui.viewmodels.MainViewModel
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import com.airbnb.lottie.LottieProperty
@@ -57,18 +57,17 @@ class SplashActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySplashBinding
 
-    private val mainVm: MainViewModel by lazy {
-        val app = application as StreamifyApp
-        val factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return MainViewModel(app.repository.mainRepository) as T
-            }
-        }
-        ViewModelProvider(this, factory)[MainViewModel::class.java]
-    }
-
     private val navDelayMs = 2_000L
+
+    // Post-v1.1.0 hot-fix: SplashActivity no longer hosts the MainViewModel.
+    // The previous design created a ViewModelProvider-scoped VM here, but
+    // that VM was WIPED the moment Splash finished and MainActivity started
+    // its own (Activity-scoped) MainViewModel instance — so we triggered the
+    // same five-fan-out fetch twice per cold launch (visible in logcat as
+    // two cycles of `StreamifyHttp --> GET ... /api/live|events|...`). The
+    // activity-scoped MainActivity now owns the single MainViewModel and
+    // gates load() with `state is UiState.Idle`, so the first fetch fires
+    // exactly once per cold launch.
 
     /**
      * Phase 5 · Step 5.4 — POST_NOTIFICATIONS runner. We use the
@@ -79,6 +78,16 @@ class SplashActivity : AppCompatActivity() {
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* result ignored — UI only */ }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Phase 7 · v1.1.1 — StrictMode compliance. The persisted
+        // themePrefs read backing this method now runs on Dispatchers.IO
+        // inside [StreamifyApp.onCreate] (async prefetch), so
+        // [Application.onCreate] no longer hits `detectDiskReads()`
+        // for the DataStore lookup. We apply the resolved flag HERE,
+        // BEFORE `super.onCreate`, so [AppCompatActivity] picks up
+        // the correct uiMode for its first inflate — preserves the
+        // v1.1.0 "no dark→light flash on cold launch" guarantee.
+        applyPersistedThemeFlags()
+
         super.onCreate(savedInstanceState)
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -156,9 +165,36 @@ class SplashActivity : AppCompatActivity() {
         binding.wifiButton.setOnClickListener { openSettingsOrFallback(Settings.ACTION_WIFI_SETTINGS) }
         binding.mobileButton.setOnClickListener { openSettingsOrFallback(Settings.ACTION_DATA_USAGE_SETTINGS) }
 
-        mainVm.load()
+        // Network boot fetch is now owned by MainActivity (gated on
+        // UiState.Idle). SplashActivity no longer pre-warms the VM — see
+        // the class-level note for the post-v1.1.0 hot-fix backstory.
 
         launchUpdateGate()
+    }
+
+    /**
+     * Phase 7 · v1.1.1 — StrictMode compliance. Pulls the user's
+     * preferred night-mode flag from
+     * [com.streamify.app.StreamifyApp]'s async prefetch cache (kicked
+     * off in [com.streamify.app.StreamifyApp.onCreate] on Dispatchers.IO)
+     * and applies it to [AppCompatDelegate] if it differs from the
+     * current default.
+     *
+     * The recreation-cascade guard from the original
+     * `StreamifyApp.runStep("themePrefs apply")` block is preserved
+     * — AppCompat's auto-recreate does NOT fire when the flag already
+     * matches (post-v1.1.0 logcat fix for the
+     * `Schedule relaunch activity: ...MainActivity` incident).
+     *
+     * Counts as a memory synchronization NOT a disk read — StrictMode's
+     * `detectDiskReads()` does not flag the bounded wait below.
+     */
+    private fun applyPersistedThemeFlags() {
+        val app = application as StreamifyApp
+        val flag = app.awaitThemeFlag(timeoutMs = 100L)
+        if (AppCompatDelegate.getDefaultNightMode() != flag) {
+            AppCompatDelegate.setDefaultNightMode(flag)
+        }
     }
 
     /**

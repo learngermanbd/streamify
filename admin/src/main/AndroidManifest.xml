@@ -26,6 +26,7 @@
         <activity
             android:name=".ui.login.LoginActivity"
             android:exported="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
             android:theme="@style/Theme.StreamifyAdmin.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -36,6 +37,7 @@
         <activity
             android:name=".ui.dashboard.DashboardActivity"
             android:exported="false"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
             android:theme="@style/Theme.StreamifyAdmin.NoActionBar" />
 
     </application>

@@ -18,16 +18,16 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
-import java.util.Properties
-
 android {
     namespace = "com.streamify.admin"
     compileSdk = 35
 
-    val rootSigningProps = Properties()
-    rootProject.file("signing.properties").takeIf { it.exists() }?.let { f ->
-        f.inputStream().use { stream -> rootSigningProps.load(stream) }
-    }
+    // Release signing is intentionally NOT configured in gradle.
+    // `signingConfigs { release { ... } }` was removed; the release
+    // `signingConfig` below is `null` so `assembleRelease` emits an
+    // *unsigned* APK (`admin-release-unsigned.apk`) that the developer
+    // signs through Android Studio's "Build → Generate Signed APK"
+    // wizard.
 
     defaultConfig {
         applicationId = "com.streamify.admin"
@@ -42,37 +42,6 @@ android {
         buildConfig = true   // Needed for BuildConfig.DEBUG in AdminApi (mirrors :app)
     }
 
-    // -----------------------------------------------------------------
-    // Phase 6 · Step 6.5 — Release signing. Same fallback-to-debug
-    // pattern as `:app`; see `app/build.gradle.kts` for the rationale.
-    //
-    // Implementation note: we deliberately do NOT nest `apply {}` inside
-    // `use {}` because Kotlin's receiver-resolution makes `load(it)` then
-    // ambiguous (it resolves to the inner InputStream receiver, not
-    // Properties). An explicit named lambda parameter + a `p.load()`
-    // call sidesteps the trap.
-    // -----------------------------------------------------------------
-    signingConfigs {
-        create("release") {
-            // Step 6.5 — reuse `rootSigningProps` hoisted above (avoids
-            // re-reading the file twice).
-            if (rootSigningProps.isNotEmpty()) {
-                // Admin may use a DIFFERENT keystore than :app — fall
-                // back to the user-app keystore fields when admin-
-                // specific keys are absent.
-                storeFile = file(rootSigningProps.getProperty("RELEASE_ADMIN_STORE_FILE")
-                    ?: rootSigningProps.getProperty("RELEASE_STORE_FILE") ?: "")
-                storePassword = rootSigningProps.getProperty("RELEASE_STORE_PASSWORD")
-                keyAlias = rootSigningProps.getProperty("RELEASE_ADMIN_KEY_ALIAS")
-                    ?: rootSigningProps.getProperty("RELEASE_KEY_ALIAS")
-                keyPassword = rootSigningProps.getProperty("RELEASE_KEY_PASSWORD")
-                enableV1Signing = true
-                enableV2Signing = true
-                enableV3Signing = true
-            }
-        }
-    }
-
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -81,11 +50,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Same `takeIf { storeFile != null }` guard as :app — falls
-            // back to debug signing when signing.properties is absent.
-            signingConfig = signingConfigs.findByName("release")
-                ?.takeIf { it.storeFile != null }
-                ?: signingConfigs.getByName("debug")
+            // Signing is handled externally through Android Studio's
+            // "Build → Generate Signed APK" wizard — gradle emits an
+            // unsigned release APK (`admin-release-unsigned.apk`) for
+            // the wizard to consume.
+            signingConfig = null
         }
         debug {
             isMinifyEnabled = false

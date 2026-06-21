@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.streamify.admin.data.AdminApi
 import com.streamify.admin.ui.dashboard.DashboardActivity
 import kotlinx.coroutines.launch
@@ -50,10 +52,12 @@ class NotificationsFragment : Fragment() {
                         val link = fields["nlLink"]?.text.toString()
                         if (link.isNotEmpty()) put("deepLink", link)
                     }
-                    lifecycleScope.launch {
-                        when (val result = api.sendNotification(json)) {
-                            is AdminApi.ApiResult.Success -> (requireActivity() as DashboardActivity).toast("Notification sent!")
-                            is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(result.message)
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                            when (val result = api.sendNotification(json)) {
+                                is AdminApi.ApiResult.Success -> (requireActivity() as DashboardActivity).toast("Notification sent!")
+                                is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(result.message)
+                            }
                         }
                     }
                 }

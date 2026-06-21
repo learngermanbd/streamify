@@ -44,8 +44,38 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `load - failure on first fetch stops early`() = runTest {
-        coEvery { repo.fetchLive() } returns ApiResult.Failure(throwable = RuntimeException("offline"))
+    fun `load - failure on live alone degrades gracefully`() = runTest {
+        // Post-v1.1.0 logcat incident: /api/live rolled out last on the
+        // backend and 404'd while /api/events, /api/categories,
+        // /api/highlights were all 200. The previous hard-sentinel
+        // turned one missing endpoint into a fully blanked boot snapshot.
+        // Soft-dep: live failure → emptyList, snapshot still renders.
+        val events = listOf(makeEvent("e1", "Match", Team("A"), Team("B")))
+        val categories = listOf(Category(id = "cat1", name = "Sports"))
+        val highlights = listOf(Highlight(id = "h1", title = "Goal", thumbnailUrl = "t.jpg", videoUrl = "v.mp4", date = 1L, duration = 30, views = 500))
+
+        coEvery { repo.fetchLive() } returns ApiResult.Failure(throwable = java.io.IOException("HTTP 404: /api/live"))
+        coEvery { repo.fetchEvents() } returns ApiResult.Success(events)
+        coEvery { repo.fetchCategories() } returns ApiResult.Success(categories)
+        coEvery { repo.fetchHighlights() } returns ApiResult.Success(highlights)
+
+        vm.load()
+        val state = vm.state.value
+        assertThat(state is UiState.Success<*>).isTrue()
+        val snapshot = (state as UiState.Success<MainSnapshot>).value
+        assertThat(snapshot.live).isEmpty()
+        assertThat(snapshot.events).hasSize(1)
+        assertThat(snapshot.categories).hasSize(1)
+        assertThat(snapshot.highlights).hasSize(1)
+    }
+
+    @Test
+    fun `load - failure on both live and events surfaces Error`() = runTest {
+        // Genuine "no content available" hard-error gate keeps the
+        // snackbar-with-Retry path alive for the offline / backend-down
+        // case rather than rendering four empty lists.
+        coEvery { repo.fetchLive() } returns ApiResult.Failure(throwable = RuntimeException("live offline"))
+        coEvery { repo.fetchEvents() } returns ApiResult.Failure(throwable = RuntimeException("events offline"))
 
         vm.load()
         val state = vm.state.value
@@ -54,14 +84,25 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `load - failure on second fetch after live succeeds`() = runTest {
-        coEvery { repo.fetchLive() } returns ApiResult.Success(emptyList())
-        coEvery { repo.fetchEvents() } returns ApiResult.Failure(throwable = RuntimeException("events error"))
+    fun `load - failure on live seeds liveList from events with isLive=true`() = runTest {
+        // Positive coverage of the Phase 3 Step 3.3 client-side safety
+        // net: when /api/live 404'd but /api/events carries isLive=true
+        // rows, those rows should flow into MainSnapshot.live so the
+        // Home tab can still render in-progress matches.
+        val liveEvent = makeEvent("live1", "Live Match", Team("X"), Team("Y"), isLive = true)
+        val upcomingEvent = makeEvent("up1", "Upcoming", Team("A"), Team("B"), isLive = false)
+        coEvery { repo.fetchLive() } returns ApiResult.Failure(throwable = java.io.IOException("HTTP 404: /api/live"))
+        coEvery { repo.fetchEvents() } returns ApiResult.Success(listOf(liveEvent, upcomingEvent))
+        coEvery { repo.fetchCategories() } returns ApiResult.Success(emptyList())
+        coEvery { repo.fetchHighlights() } returns ApiResult.Success(emptyList())
 
         vm.load()
         val state = vm.state.value
-        assertThat(state is UiState.Error).isTrue()
-        assertThat((state as UiState.Error).message).contains("events error")
+        assertThat(state is UiState.Success<*>).isTrue()
+        val snapshot = (state as UiState.Success<MainSnapshot>).value
+        assertThat(snapshot.live).hasSize(1)
+        assertThat(snapshot.live.first().id).isEqualTo("live1")
+        assertThat(snapshot.events).hasSize(2)
     }
 
     @Test

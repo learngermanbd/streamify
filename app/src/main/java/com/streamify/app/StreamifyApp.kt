@@ -24,7 +24,10 @@ import com.streamify.app.security.SecurityGate
 import com.streamify.app.security.SecurityModule
 import com.streamify.app.security.TokenStore
 import com.streamify.app.services.UpdateWorker
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * Application entry-point. Initialised once per process.
@@ -134,21 +137,39 @@ class StreamifyApp : Application() {
             Log.i(TAG, "Resolved API Base URL: ${AppConfig.defaults().apiBaseUrl}")
         }
 
-        // Phase 6 · Step 6.4 — apply persisted theme BEFORE any
-        // Activity inflates so the first Activity launched after a
-        // cold start holds the correct uiMode (no dark→light flash
-        // on launch). DataStore.fist() returns from a tiny on-disk
-        // blob (~10 ms typical, never blocks more than ~50 ms).
-        //
-        // NOTE: StrictMode disabled by default — enable for debug builds only
-        // `detectDiskReads()` later, move this read into a
-        // ContentProvider.onCreate (which fires before
-        // Application.onCreate, before StrictMode policies activate
-        // at attachBaseContext()). For v1 we accept the main-thread
-        // DataStore read since no StrictMode policy is active.
-        runStep("themePrefs apply") {
-            val themeMode = runBlocking { themePrefs.currentMode() }
-            AppCompatDelegate.setDefaultNightMode(themePrefs.toNightModeFlag(themeMode))
+        // Phase 7 · v1.1.1 — StrictMode compliance. The previous
+        // `runBlocking { themePrefs.currentMode() }` was a textbook
+        // `detectDiskReads()` violation acknowledged in v1.1.0. We now
+        // KICK OFF the DataStore read asynchronously on Dispatchers.IO
+        // and stash the resolved [AppCompatDelegate] flag in
+        // [prefetchedThemeFlag]. The first Activity (SplashActivity is
+        // the manifest launcher) applies it in its own onCreate BEFORE
+        // `super.onCreate` via [awaitThemeFlag], so the first inflated
+        // frame still reflects the user's preference (no dark→light
+        // flash on cold launch). The await itself is a memory
+        // synchronization ([CountDownLatch]), NOT a disk read, so it
+        // does not trigger StrictMode.
+        runStep("themePrefs async prefetch") {
+            val themePrefs = this.themePrefs
+            appScope.launch {
+                try {
+                    prefetchedThemeFlag = themePrefs.toNightModeFlag(themePrefs.currentMode())
+                } catch (t: Throwable) {
+                    // Fail-soft (preserves v1.1.0 behaviour): log + fall
+                    // back to the framework default rather than crash.
+                    // `MODE_NIGHT_FOLLOW_SYSTEM` is the value
+                    // `AppCompatDelegate.getDefaultNightMode()` returns
+                    // before any explicit `setDefaultNightMode` call.
+                    Log.w(
+                        TAG,
+                        "themePrefs async prefetch failed; falling back to framework default",
+                        t
+                    )
+                    prefetchedThemeFlag = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                } finally {
+                    prefetchLatch.countDown()
+                }
+            }
         }
 
         // Touch the lazy seams so onCreate's cold start still gets the
@@ -287,6 +308,73 @@ class StreamifyApp : Application() {
      */
     val tokenManager: com.streamify.app.security.TokenManager by lazy {
         com.streamify.app.security.TokenManager(applicationContext)
+    }
+
+    // ----- Phase 7 · v1.1.1 — StrictMode compliance -----
+
+    /**
+     * App-process-scoped coroutine scope for fire-and-forget init
+     * prefetches kicked off in [Application.onCreate].
+     * `SupervisorJob + Dispatchers.IO` means a failure on one prefetch
+     * does not poison sibling prefetches, and IO satisfies StrictMode's
+     * "disk reads off the main thread" rule. The scope lives for the
+     * lifetime of the Application process; cleanup isn't necessary
+     * because process death ends it.
+     */
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * Cached resolved [AppCompatDelegate] night-mode flag. Populated by
+     * the async `themePrefs` prefetch in [onCreate]. `@Volatile` makes
+     * the IO thread's write visible to the main thread's read without
+     * a synchronized read block.
+     *
+     * Initial value `null` means "the IO read hasn't completed yet";
+     * [awaitThemeFlag] uses the paired [prefetchLatch] + `getDefaultNightMode()`
+     * fallback to handle that case.
+     */
+    @Volatile
+    private var prefetchedThemeFlag: Int? = null
+
+    /**
+     * One-shot [CountDownLatch] paired with [prefetchedThemeFlag].
+     * Counted down by the IO coroutine when the read completes
+     * (success OR exception path). Consumed by [awaitThemeFlag] on
+     * the main thread with a bounded [timeoutMs] so a wedged DataStore
+     * can never hang the first Activity's onCreate.
+     */
+    private val prefetchLatch = java.util.concurrent.CountDownLatch(1)
+
+    /**
+     * First-Activity gateway for the cached night-mode flag.
+     * [com.streamify.app.ui.activities.SplashActivity] calls this from
+     * its own onCreate BEFORE `super.onCreate` so the resolved flag is
+     * in effect when [AppCompatActivity] reads uiMode for its first
+     * inflate — preserves the v1.1.0 "no dark→light flash on cold
+     * launch" guarantee with no main-thread disk read.
+     *
+     * This is a memory synchronization ([CountDownLatch.await]), NOT
+     * a disk read, so StrictMode's `detectDiskReads()` does not flag
+     * it.
+     *
+     * Fallback: if [timeoutMs] elapses before the prefetch completes
+     * (rare on warm devices; ~10 ms typical for a single-key
+     * DataStore read), returns [AppCompatDelegate.getDefaultNightMode]
+     * — which equals `MODE_NIGHT_FOLLOW_SYSTEM` (-1) on a freshly-
+     * initialised AppCompat. User-perceptible consequence of a
+     * fallback: at most one possible one-frame flash on cold launch
+     * only when the prefetch hadn't completed yet.
+     */
+    fun awaitThemeFlag(timeoutMs: Long = 100L): Int {
+        try {
+            if (prefetchLatch.await(timeoutMs, java.util.concurrent.TimeUnit.MILLISECONDS)) {
+                prefetchedThemeFlag?.let { return it }
+            }
+        } catch (t: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
+        Log.d(TAG, "awaitThemeFlag: cache not populated in ${timeoutMs}ms; using framework default")
+        return AppCompatDelegate.getDefaultNightMode()
     }
 
     companion object {

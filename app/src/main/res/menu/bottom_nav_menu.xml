@@ -24,9 +24,5 @@
         android:icon="@android:drawable/star_on"
         android:title="@string/main_nav_favorites" />
 
-    <item
-        android:id="@+id/settingsFragment"
-        android:icon="@android:drawable/ic_menu_preferences"
-        android:title="@string/main_nav_settings" />
 
 </menu>

@@ -8,7 +8,7 @@
     Notice, Join Us, Share, Update, Exit.".
 
     Post-Step-3.2-realignment the BottomNav is 4 tabs (Home / Categories /
-    Favorites / Settings). This file ships the plan-required DrawerLayout
+    Favorites). This file ships the plan-required DrawerLayout
     scaffold (added retroactively after the audit in this branch) and
     preserves the existing ConstraintLayout (NavHost + BottomNav) by
     nesting it as the DrawerLayout's main content (first child).
@@ -67,7 +67,7 @@
             app:titleTextColor="@color/text" />
 
         <!-- NavHostFragment hosts res/navigation/main_nav_graph.xml
-             (now 7 destinations: Home / Categories / Favorites / Settings /
+             (now 7 destinations: Home / Categories / Favorites /
              Highlights / Notice / Search). Anchored BELOW the toolbar so
              the toolbar's status-bar inset doesn't double up with one from
              the NavHost (MainActivity strips the NavHost's top inset). -->

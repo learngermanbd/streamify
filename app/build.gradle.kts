@@ -32,19 +32,14 @@ android {
     compileSdk = 36
     ndkVersion = "27.3.13750724"  // r27c; AGP-injected 16 KB linker defaults
 
-    // -----------------------------------------------------------------
-    // Hoisted signing.properties read for the release keystore.  The
-    // .example lives at repo root (`signing.properties.example`); real
-    // values drop into `signing.properties` (also gitignored) which
-    // Gradle reads at configuration time.
-    //
-    // Falls back to an empty Properties when the file is missing so
-    // `assembleDebug` still works for developers without prod creds.
-    // -----------------------------------------------------------------
-    val rootSigningProps = Properties()
-    rootProject.file("signing.properties").takeIf { it.exists() }?.let { f ->
-        f.inputStream().use { stream -> rootSigningProps.load(stream) }
-    }
+    // Release signing is intentionally NOT configured in gradle.
+    // `signingConfigs { release { ... } }` was removed; the release
+    // `signingConfig` below is `null` so `assembleRelease` emits an
+    // *unsigned* APK (`app-release-unsigned.apk`) that the developer
+    // signs through Android Studio's "Build → Generate Signed APK"
+    // wizard.  This keeps the keystore out of the build pipeline and
+    // avoids the historical "fallback to debug" trap that silently
+    // shipped debug-signed APKs.
 
     defaultConfig {
         applicationId = "com.streamify.app"
@@ -58,17 +53,16 @@ android {
         versionCode = 2
         versionName = "1.1.0"
 
-        // Phase 7 · Step 7.5 + Step 7.13 — APK signing certificate SHA-256.
-        // Production release builds read the actual signing cert from the
-        // release keystore (populated below by computeReleaseSigningSha256)
-        // and inject it as a BuildConfig constant consumed by
-        // IntegrityChecker.expectedSignatureSha256 during StreamifyApp
-        // bootstrap. Empty string triggers the skip-signature path
-        // (debug builds, unsigned prod builds with -PallowUnsignedRelease).
+        // Phase 7 · Step 7.5 — APK signing certificate SHA-256.
+        // Signing is not handled by gradle (see android block above);
+        // APP_SIGNING_SHA256 remains as a constant empty string so
+        // IntegrityChecker.expectedSignatureSha256 takes its documented
+        // skip-signature path until the Android Studio wizard signs the
+        // APK and the SHA is plumbed in externally.
         buildConfigField(
             "String",
             "APP_SIGNING_SHA256",
-            "\"" + (rootSigningProps.getProperty("APP_SIGNING_SHA256") ?: "") + "\""
+            "\"\""
         )
 
         // Phase 7 · Step 7.7 — Real SSL pins for production domains.
@@ -81,7 +75,7 @@ android {
         buildConfigField(
             "String",
             "SSL_PINS_LEARNGERMANWITH_FUN",
-            "\"" + (rootSigningProps.getProperty("SSL_PINS_LEARNGERMANWITH_FUN") ?: "") + "\""
+            "\"\""
         )
 
         // Phase 7 · Step 7.4 — NDK ABI targets + CMake compile flags.
@@ -136,41 +130,6 @@ android {
         }
     }
 
-    // -----------------------------------------------------------------
-    // Phase 6 · Step 6.5 — Release signing config.
-    //
-    // Reads from `signing.properties` (gitignored, lives in repo root)
-    // when present. Real keystore values land alongside the production
-    // release pipeline in Phase 7 (Step 7.13 — Security build & verify).
-    //
-    // When `signing.properties` is missing we fall back to the debug
-    // signing config so `./gradlew assembleRelease` still produces an
-    // installable APK for end-to-end pipeline testing. Production
-    // releases must ALWAYS provide a real `signing.properties` BEFORE
-    // the build pipeline ships to Play.
-    //
-    // Implementation note: we deliberately do NOT nest `apply {}` inside
-    // `use {}` because Kotlin's receiver-resolution makes `load(it)` then
-    // ambiguous (it resolves to the inner InputStream receiver, not
-    // Properties). An explicit named lambda parameter + a `p.load()`
-    // call sidesteps the trap.
-    // -----------------------------------------------------------------
-    signingConfigs {
-        create("release") {
-            // Step 6.5 — reuse the hoisted `rootSigningProps` from above
-            // instead of re-reading the file (two disk opens avoided).
-            if (rootSigningProps.isNotEmpty()) {
-                storeFile = rootProject.file(rootSigningProps.getProperty("RELEASE_STORE_FILE") ?: "")
-                storePassword = rootSigningProps.getProperty("RELEASE_STORE_PASSWORD")
-                keyAlias = rootSigningProps.getProperty("RELEASE_KEY_ALIAS")
-                keyPassword = rootSigningProps.getProperty("RELEASE_KEY_PASSWORD")
-                enableV1Signing = true
-                enableV2Signing = true
-                enableV3Signing = true
-            }
-        }
-    }
-
     buildTypes {
         release {
             // R8 / ProGuard enabled — see `proguard-rules.pro` for the
@@ -182,22 +141,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Resolve release-variant signing config based on the
-            // `-PallowUnsignedRelease` flag OR signing.properties contents:
-            //   * allowUnsignedRelease=true → signingConfig=null (produces
-            //     `app-release-unsigned.apk`; test-install only)
-            //   * signing.properties has RELEASE_STORE_FILE → use the release
-            //     signing config (production / Play-store build)
-            //   * signing.properties absent OR empty → fall back to debug
-            //     signing; verifyReleaseSecrets pre-flight will then throw
-            //     GradleException listing every missing key (above)
-            signingConfig = if (rootProject.findProperty("allowUnsignedRelease") == "true") {
-                null
-            } else {
-                signingConfigs.findByName("release")
-                    ?.takeIf { it.storeFile != null }
-                    ?: signingConfigs.getByName("debug")
-            }
+            // Signing is handled externally through Android Studio's
+            // "Build → Generate Signed APK" wizard — gradle emits an
+            // unsigned release APK (`app-release-unsigned.apk`) for the
+            // wizard to consume.  The historical `-PallowUnsignedRelease`
+            // flag and `signing.properties` automatic fallback were
+            // removed alongside the `signingConfigs.release` block.
+            signingConfig = null
         }
         debug {
             isMinifyEnabled = false
@@ -333,7 +283,6 @@ val encryptSecrets by tasks.registering {
     description = "Encrypts sensitive strings into EncryptedConstants.kt"
 
     val secretsFile = rootProject.file("secrets.properties")
-    val signingFile = rootProject.file("signing.properties")
     val outputDir = layout.buildDirectory.dir("generated/source/encryption/main")
 
     // Always regenerate: the key is random per build so up-to-date
@@ -349,10 +298,6 @@ val encryptSecrets by tasks.registering {
         val props = Properties()
         if (secretsFile.exists()) {
             secretsFile.inputStream().use { props.load(it) }
-        }
-        val signingProps = Properties()
-        if (signingFile.exists()) {
-            signingFile.inputStream().use { signingProps.load(it) }
         }
 
         // ── Collect values to encrypt ──────────────────────────────
@@ -487,14 +432,15 @@ tasks.withType<Test>().configureEach {
 // -----------------------------------------------------------------
 // Phase 7 · Step 7.15 — Release Secrets Pre-Flight Verification
 //
-// Verifies signing.properties + secrets.properties exist with all
-// required keys BEFORE `:app:assembleRelease` runs. Without this
-// guard a missing key was silently falling through to:
-//   - hard Gradle failures deep inside a packaging task
-//   - signingConfig falling back to debug (since the `release`
-//     config block's `storeFile` resolves to null when the path
-//     property is blank — the `takeIf { it.storeFile != null }`
-//     guard picks debug rather than failing loud)
+// Verifies `secrets.properties` exists with all required keys BEFORE
+// `:app:assembleRelease` runs. Without this guard a missing key was
+// silently falling through to hard Gradle failures deep inside a
+// packaging task.
+//
+// (signing.properties verification was removed when the
+// `signingConfigs.release` block was stripped — gradle no longer
+// reads signing credentials; the developer signs via Android Studio's
+// "Generate Signed APK" wizard.)
 //
 // The reference to `assembleRelease` is wrapped in `afterEvaluate { }`
 // because AGP registers the variant tasks (assembleRelease,
@@ -514,36 +460,7 @@ tasks.withType<Test>().configureEach {
 afterEvaluate {
         tasks.named("assembleRelease").configure {
             doFirst {
-                // Production builds enforce all 8 secrets (4 from signing.properties
-                // + 4 from secrets.properties). Use
-                // `-PallowUnsignedRelease=true` to opt out — produces an
-                // *unsigned* release APK that still runs R8/minification, but
-                // skips the credentials gate. Use case: sandbox test-installs
-                // or CI artifacts where signing/api secrets don't matter.
-                // NEVER set this flag for Play-store-shippable builds.
-                if (rootProject.findProperty("allowUnsignedRelease") == "true") {
-                    logger.lifecycle("verifyReleaseSecrets: SKIPPED (-PallowUnsignedRelease=true)")
-                    return@doFirst
-                }
                 val errors = mutableListOf<String>()
-
-            // ── signing.properties ─────────────────────────────────────
-            val signingProps = Properties()
-            rootProject.file("signing.properties").takeIf { it.exists() }?.let { f ->
-                f.inputStream().use { signingProps.load(it) }
-            } ?: run {
-                errors += "signing.properties missing at repo root"
-            }
-            for (k in listOf(
-                "RELEASE_STORE_FILE",
-                "RELEASE_STORE_PASSWORD",
-                "RELEASE_KEY_ALIAS",
-                "RELEASE_KEY_PASSWORD",
-            )) {
-                if (signingProps.getProperty(k).isNullOrBlank()) {
-                    errors += "signing.properties: missing $k"
-                }
-            }
 
             // ── secrets.properties ─────────────────────────────────────
             val secretsProps = Properties()
@@ -570,8 +487,7 @@ afterEvaluate {
                 )
             }
             logger.lifecycle(
-                "verifyReleaseSecrets: signing.properties (4/4 keys) + " +
-                    "secrets.properties (4/4 keys) all present ✓"
+                "verifyReleaseSecrets: secrets.properties (4/4 keys) all present ✓"
             )
         }
     }

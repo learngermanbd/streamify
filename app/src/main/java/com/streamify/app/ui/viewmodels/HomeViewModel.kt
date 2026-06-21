@@ -5,6 +5,8 @@ import com.streamify.app.data.remote.ApiResult
 import com.streamify.app.data.repository.MainRepository
 import com.streamify.app.ui.common.StateViewModel
 import com.streamify.app.ui.common.UiState
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 /**
  * Phase 2 · Step 2.5 — Home (LIVE + upcoming events) ViewModel.
@@ -20,21 +22,39 @@ class HomeViewModel(
     fun refresh() = launch {
         setState(UiState.Loading)
 
-        val liveR = mainRepository.fetchLive()
-        if (liveR !is ApiResult.Success) {
-            val ex = liveR.exceptionOrNull()
-            setState(UiState.Error(ex?.message ?: "Couldn\u2019t load live events", ex))
-            return@launch
+        // post-v1.1.0 fix — same soft-dep shape as MainViewModel.load().
+        // /api/live + /api/events fan out in parallel so a single-lane
+        // failure no longer collapses the home tab to Error when the
+        // other lane is healthy. This function is currently latent
+        // (HomeFragment uses bindFromSnapshot from the activity-scoped
+        // MainViewModel snapshot), but the public API stays safe under
+        // any future caller.
+        val (liveR, eventsR) = coroutineScope {
+            val liveD = async { mainRepository.fetchLive() }
+            val eventsD = async { mainRepository.fetchEvents() }
+            liveD.await() to eventsD.await()
         }
-        val eventsR = mainRepository.fetchEvents()
-        if (eventsR !is ApiResult.Success) {
-            val ex = eventsR.exceptionOrNull()
-            setState(UiState.Error(ex?.message ?: "Couldn\u2019t load events", ex))
+
+        val liveFailure = liveR as? ApiResult.Failure
+        val eventsFailure = eventsR as? ApiResult.Failure
+        if (liveFailure != null && eventsFailure != null) {
+            setState(
+                UiState.Error(
+                    eventsFailure.message ?: liveFailure.message
+                        ?: "Couldn't load events",
+                    eventsFailure.throwable
+                )
+            )
             return@launch
         }
 
-        // Live first; upcoming follows.
-        setState(UiState.Success(liveR.value + eventsR.value))
+        val live = (liveR as? ApiResult.Success)?.value ?: emptyList()
+        val events = (eventsR as? ApiResult.Success)?.value ?: emptyList()
+
+        // Live first; upcoming follows. distinctBy { it.id } matches
+        // bindFromSnapshot's de-dup semantics so a row appearing in
+        // both /api/live and /api/events doesn't double-render.
+        setState(UiState.Success((live + events).distinctBy { it.id }))
     }
 
     /**

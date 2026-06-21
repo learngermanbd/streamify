@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.streamify.admin.data.AdminApi
 import com.streamify.admin.ui.dashboard.DashboardActivity
 import kotlinx.coroutines.launch
@@ -45,19 +47,21 @@ class ConfigFragment : Fragment() {
     }
 
     private fun load() {
-        lifecycleScope.launch {
-            when (val r = api.getConfig()) {
-                is AdminApi.ApiResult.Success -> {
-                    val c = r.data
-                    fields["apiBaseUrl"]?.setText(c.optString("apiBaseUrl", ""))
-                    fields["updateUrl"]?.setText(c.optString("updateUrl", ""))
-                    fields["telegramLink"]?.setText(c.optString("telegramLink", ""))
-                    fields["noticeText"]?.setText(c.optString("noticeText", ""))
-                    fields["minAppVersion"]?.setText(c.optString("minAppVersion", ""))
-                    maintCb.isChecked = c.optBoolean("maintenanceMode", false)
-                    featureFlags = c.optJSONObject("featureFlags") ?: JSONObject()
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                when (val r = api.getConfig()) {
+                    is AdminApi.ApiResult.Success -> {
+                        val c = r.data
+                        fields["apiBaseUrl"]?.setText(c.optString("apiBaseUrl", ""))
+                        fields["updateUrl"]?.setText(c.optString("updateUrl", ""))
+                        fields["telegramLink"]?.setText(c.optString("telegramLink", ""))
+                        fields["noticeText"]?.setText(c.optString("noticeText", ""))
+                        fields["minAppVersion"]?.setText(c.optString("minAppVersion", ""))
+                        maintCb.isChecked = c.optBoolean("maintenanceMode", false)
+                        featureFlags = c.optJSONObject("featureFlags") ?: JSONObject()
+                    }
+                    is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
                 }
-                is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
             }
         }
     }
@@ -68,10 +72,12 @@ class ConfigFragment : Fragment() {
             put("maintenanceMode", maintCb.isChecked)
             put("featureFlags", featureFlags)
         }
-        lifecycleScope.launch {
-            when (val result = api.updateConfig(json)) {
-                is AdminApi.ApiResult.Success -> (requireActivity() as DashboardActivity).toast("Config saved")
-                is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(result.message)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                when (val result = api.updateConfig(json)) {
+                    is AdminApi.ApiResult.Success -> (requireActivity() as DashboardActivity).toast("Config saved")
+                    is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(result.message)
+                }
             }
         }
     }

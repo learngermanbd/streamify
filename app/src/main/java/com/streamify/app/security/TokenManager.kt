@@ -86,8 +86,36 @@ class TokenManager(private val context: Context) {
          * unit tests can verify the AAD contract end-to-end without
          * booting Keystore.
          */
+        @Volatile
+        private var cachedDevicePinApplicationContext: Context? = null
+        @Volatile
+        private var cachedDevicePinValue: String? = null
+
+        /**
+         * post-v1.1.0 fix — Memoize: `Settings.Secure.ANDROID_ID` requires
+         * a Binder roundtrip (5–50 ms typical) and is called on every
+         * refresh-token read from `TokenManager.getRefreshToken()` AND from
+         * `TokenStore.aad`. Since FINGERPRINT/BOARD/HARDWARE are static-final
+         * ints and ANDROID_ID only changes on factory reset / new primary
+         * user, caching for the process lifetime is safe. Double-checked
+         * locking so two first-touch callers don't race the Binder call.
+         */
         @JvmStatic
         fun devicePin(context: Context): String {
+            val appCtx = context.applicationContext
+            val cached = cachedDevicePinValue
+            if (cached != null && cachedDevicePinApplicationContext === appCtx) return cached
+            synchronized(this) {
+                val recent = cachedDevicePinValue
+                if (recent != null && cachedDevicePinApplicationContext === appCtx) return recent
+                val pin = computeDevicePin(appCtx)
+                cachedDevicePinValue = pin
+                cachedDevicePinApplicationContext = appCtx
+                return pin
+            }
+        }
+
+        private fun computeDevicePin(context: Context): String {
             val androidId = android.provider.Settings.Secure.getString(
                 context.contentResolver,
                 android.provider.Settings.Secure.ANDROID_ID
@@ -191,18 +219,47 @@ class TokenManager(private val context: Context) {
 
     /**
      * Get the stored refresh token.
-     * Returns null if no refresh token is stored, the device pin
-     * doesn't match (token theft detection), or the Keystore-wrapped
-     * blob is corrupt / cross-device-cloned.
+     *
+     * post-v1.1.1 hardening — Pin drift tolerance.
+     *
+     * The historical pin-equality check was overly strict and caused
+     * legitimate users to be logged out on every major OS update
+     * because `Build.FINGERPRINT` rotates per OTA, `BOARD` rarely
+     * changes but can on hardware swaps, and `HARDWARE` is mostly
+     * stable but changes across factory-resets and kernel updates.
+     *
+     * New policy: drift is logged at WARN but does NOT cause a
+     * forced logout.  The refresh token itself is server-side
+     * validated by the auth-server (which enforces its own
+     * device-binding check, including revocation lists), so we trust
+     * its answer over a client-side fingerprint match.  The
+     * Keystore-wrapped blob is still bound to the AndroidKeyStore
+     * alias — which does NOT migrate across fingerprints — so a
+     * truly stolen device still can't read it without the original
+     * TEE/StrongBox key material.
+     *
+     * The next `setTokens()` call (after a successful refresh)
+     * re-seeds [PREF_DEVICE_PIN] to the current signature so future
+     * drift detection has a fresh baseline.
+     *
+     * Returns null only if no refresh token is stored or the
+     * Keystore-wrapped blob is corrupt / cross-device-cloned
+     * (decrypt throws).
      */
     fun getRefreshToken(): String? {
         val storedPin = prefs.getString(PREF_DEVICE_PIN, null)
         val currentPin = devicePin(context)
 
         if (storedPin != null && storedPin != currentPin) {
-            Log.w(TAG, "Device pin mismatch — possible token theft!")
-            clearTokens()
-            return null
+            Log.w(
+                TAG,
+                "Device fingerprint drifted since last refresh (legitimate " +
+                    "OS/board change OR anomalous session). Refresh-token " +
+                    "Keystore-wrap is still device-bound; not logging the " +
+                    "user out. Next setTokens() re-seeds PREF_DEVICE_PIN."
+            )
+            // No clearTokens() — would force a logout on every OS update.
+            // Server-side auth-server enforces true theft detection.
         }
 
         return runCatching { tokenStore.load() }

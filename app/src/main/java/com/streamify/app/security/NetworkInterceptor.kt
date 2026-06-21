@@ -62,29 +62,50 @@ internal object NetworkInterceptor : Interceptor {
         val response = chain.proceed(signedRequest)
 
         // ── 4. Redirect protection ──────────────────────────────────
-        val redirectUrl = response.header("Location")
-        if (redirectUrl != null && !redirectUrl.startsWith("https://", ignoreCase = true)) {
-            Log.e(TAG, "BLOCKED redirect to non-HTTPS: $redirectUrl")
-            response.close()
-            throw SecurityException(
-                "Non-HTTPS redirect blocked: $redirectUrl"
-            )
+        // post-v1.1.1 hardening — Resolve relative Location headers
+        // against the request URL before validating. The historical
+        // startsWith("https://") check threw SecurityException on
+        // legitimate same-host redirects like `Location: /v2/some/path`
+        // (relative) which are perfectly HTTPS-safe after resolution.
+        // We now use OkHttp's own HttpUrl.resolve() — exactly what
+        // the transport layer would do when following the redirect.
+        val locationHeader = response.header("Location")
+        if (locationHeader != null) {
+            val absoluteUrl = runCatching { request.url.resolve(locationHeader) }.getOrNull()
+            if (absoluteUrl != null && !absoluteUrl.isHttps) {
+                Log.e(TAG, "BLOCKED redirect to non-HTTPS: $absoluteUrl (raw: $locationHeader)")
+                response.close()
+                throw SecurityException(
+                    "Non-HTTPS redirect blocked: $absoluteUrl"
+                )
+            }
         }
 
         // ── 5. Response content-type warning ────────────────────────
-        // API responses should be JSON.  If we get HTML/JS, it might
-        // be a proxy injecting content.
+        // post-v1.1.1 hardening — Apply this check to every path.
+        // The historical filter (only warn for /api/) let an HTML
+        // proxy injection pass silently if the upstream backend
+        // happened to point at a non-/api/ JSON endpoint (some
+        // routes are mounted under /v1/, /graphql/, /internal/, etc.).
+        // Bypass list: octet-stream (HLS segments, downloadable
+        // assets), text/plain (manifests, server-side text logs),
+        // image/* (thumbnails), video/* (HLS video segments).
         val contentType = response.header("Content-Type")
         if (contentType != null &&
             !contentType.contains("json", ignoreCase = true) &&
             !contentType.contains("octet-stream", ignoreCase = true) &&
             !contentType.contains("text/plain", ignoreCase = true) &&
-            request.url.encodedPath.startsWith("/api/")
+            !contentType.contains("image/", ignoreCase = false) &&
+            !contentType.contains("video/", ignoreCase = false)
         ) {
-            Log.w(TAG, "Unexpected Content-Type for API response: " +
-                "$contentType (${request.url})")
+            Log.w(
+                TAG,
+                "Unexpected Content-Type for response: " +
+                    "$contentType (${request.url})"
+            )
             // Don't block — some endpoints might legitimately return
-            // non-JSON (e.g., file downloads).  Just warn.
+            // non-JSON.  Just warn so a downstream proxy injection
+            // (e.g. captive portal returning HTML) surfaces in logcat.
         }
 
         return response

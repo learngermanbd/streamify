@@ -122,9 +122,32 @@ class FloatingPlayerService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
+        // post-v1.1.0 fix — When the OS auto-restarts this service after
+        // process kill (because we returned START_STICKY earlier), it
+        // invokes onStartCommand with a NULL Intent and no ACTION_START.
+        // The previous code fell through and returned START_STICKY again,
+        // leaving a zombie foreground service with no player, no overlay,
+        // and an undismissable ongoing notification. Tear down cleanly.
+        if (intent == null) {
+            Log.w(TAG, "onStartCommand with null intent (OS auto-restart); tearing down")
+            tearDown()
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        when (intent.action) {
             ACTION_START -> handleStart(intent)
             ACTION_STOP -> {
+                tearDown()
+                stopSelf()
+                return START_NOT_STICKY
+            }
+            else -> {
+                // post-v1.1.0 review follow-up — close the zombie gap. If a
+                // future Action constant is added without updating this when,
+                // an Intent carrying it would otherwise fall through to
+                // START_STICKY and leave the service alive but inert. Tear
+                // down unconditionally on unknown actions.
+                Log.w(TAG, "onStartCommand with unexpected action=${intent.action}; tearing down")
                 tearDown()
                 stopSelf()
                 return START_NOT_STICKY
@@ -425,6 +448,56 @@ class FloatingPlayerService : Service() {
             runCatching {
                 prefs.setFloatingPlayerPosition(xRatio, yRatio)
             }
+        }
+    }
+
+    /**
+     * post-v1.1.0 review follow-up — release ExoPlayer under memory
+     * pressure. The onStartCommand path now keeps the player alive (so
+     * PiP entry, known actions, unknown actions all behave correctly).
+     * To avoid holding decoders + media buffers indefinitely when the
+     * user backgrounds the app for hours, hook onTrimMemory:
+     *
+     *  - TRIM_MEMORY_UI_HIDDEN is INTENTIONALLY not handled. UI_HIDDEN
+     *    fires any time the UI is no longer the foremost surface
+     *    (notification shade pulled, recents opened, PiP entered). A
+     *    video app must keep playing under the shade — pausing on
+     *    UI_HIDDEN would be a UX regression. Only TRIM_MEMORY_BACKGROUND
+     *    and above are treated as background pressure.
+     *  - TRIM_MEMORY_BACKGROUND+: full release. We detach the PlayerView
+     *    from the player BEFORE releasing so the overlay surface doesn't
+     *    display the post-released ExoPlayer's last decoded frame as a
+     *    stale image; on resume, [ensurePlayer] rebuilds when ACTION_START
+     *    fires again.
+     *
+     * NOTE: this is a [Service], not an [Activity], so it cannot enter
+     * Picture-in-Picture mode — the previous `!isInPictureInPictureMode`
+     * guard referenced a member that does not exist on Service (compile
+     * error). As a foreground service with a foregroundServiceType of
+     * `mediaPlayback`, it is also significantly less likely to be killed
+     * by moderate background pressure than an Activity, but we still
+     * release at BACKGROUND+ to be a good citizen under heavy load.
+     */
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        val p = player ?: return
+        if (level >= TRIM_MEMORY_BACKGROUND) {
+            // Asymmetric error handling is intentional:
+            //  - runCatching { playerView?.player = null } is wrapped.
+            //    The PlayerView's underlying Surface can already be torn
+            //    down if the WindowManager detached the view; setting
+            //    `player` then throws IllegalStateException. We want to
+            //    ALWAYS reach the release() line below, so we absorb that.
+            //  - p.release() is bare (no runCatching). Release-time errors
+            //    indicate a genuine bug (e.g. double-release) that the
+            //    OS uncaught-exception handler should report rather than
+            //    silently swallow.
+            // PlayerView.player = null clears the Surface's last drawable;
+            // without this the overlay would show the post-released
+            // ExoPlayer's last decoded frame as a stale image.
+            runCatching { playerView?.player = null }
+            p.release()
+            player = null
         }
     }
 

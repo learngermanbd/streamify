@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.streamify.admin.data.AdminApi
 import com.streamify.admin.data.CategoryItem
@@ -38,30 +40,32 @@ class CategoriesFragment : Fragment() {
 
     private fun load() {
         listContainer.removeAllViews()
-        lifecycleScope.launch {
-            when (val r = api.getCategories()) {
-                is AdminApi.ApiResult.Success -> {
-                    val items = r.data.filterIsInstance<CategoryItem>()
-                    if (items.isEmpty()) listContainer.addView(TextView(requireContext()).apply {
-                        text = "No categories"; setPadding(8, 24, 8, 8)
-                    })
-                    items.forEach { cat ->
-                        listContainer.addView(TextView(requireContext()).apply {
-                            text = "${cat.name} · ${if (cat.isVisible) "Visible" else "Hidden"} · Sort: ${cat.sortOrder}"
-                            setPadding(12, 12, 12, 12); setBackgroundColor(0x1412121a.toInt())
-                            setTextColor(0xFFE0E6ED.toInt()); textSize = 13f
-                            setOnClickListener { showDialog(cat) }
-                            setOnLongClickListener {
-                                MaterialAlertDialogBuilder(requireContext())
-                                    .setTitle("Delete Category").setMessage("Delete \"${cat.name}\"?")
-                                    .setPositiveButton("Delete") { _, _ -> deleteItem(cat.id) }
-                                    .setNegativeButton("Cancel", null).show()
-                                true
-                            }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                when (val r = api.getCategories()) {
+                    is AdminApi.ApiResult.Success -> {
+                        val items = r.data.filterIsInstance<CategoryItem>()
+                        if (items.isEmpty()) listContainer.addView(TextView(requireContext()).apply {
+                            text = "No categories"; setPadding(8, 24, 8, 8)
                         })
+                        items.forEach { cat ->
+                            listContainer.addView(TextView(requireContext()).apply {
+                                text = "${cat.name} · ${if (cat.isVisible) "Visible" else "Hidden"} · Sort: ${cat.sortOrder}"
+                                setPadding(12, 12, 12, 12); setBackgroundColor(0x1412121a.toInt())
+                                setTextColor(0xFFE0E6ED.toInt()); textSize = 13f
+                                setOnClickListener { showDialog(cat) }
+                                setOnLongClickListener {
+                                    MaterialAlertDialogBuilder(requireContext())
+                                        .setTitle("Delete Category").setMessage("Delete \"${cat.name}\"?")
+                                        .setPositiveButton("Delete") { _, _ -> deleteItem(cat.id) }
+                                        .setNegativeButton("Cancel", null).show()
+                                    true
+                                }
+                            })
+                        }
                     }
+                    is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
                 }
-                is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
             }
         }
     }
@@ -88,21 +92,25 @@ class CategoriesFragment : Fragment() {
                     put("isVisible", cb.isChecked)
                     put("sortOrder", cat?.sortOrder ?: 0)
                 }
-                lifecycleScope.launch {
-                    val r = if (cat != null) api.updateCategory(cat.id, json) else api.createCategory(json)
-                    when (r) {
-                        is AdminApi.ApiResult.Success -> load()
-                        is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                        val r = if (cat != null) api.updateCategory(cat.id, json) else api.createCategory(json)
+                        when (r) {
+                            is AdminApi.ApiResult.Success -> load()
+                            is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
+                        }
                     }
                 }
             }.setNegativeButton("Cancel", null).show()
     }
 
     private fun deleteItem(id: String) {
-        lifecycleScope.launch {
-            when (val result = api.deleteCategory(id)) {
-                is AdminApi.ApiResult.Success -> load()
-                is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(result.message)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                when (val result = api.deleteCategory(id)) {
+                    is AdminApi.ApiResult.Success -> load()
+                    is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(result.message)
+                }
             }
         }
     }

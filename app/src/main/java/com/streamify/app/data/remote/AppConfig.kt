@@ -1,5 +1,6 @@
 package com.streamify.app.data.remote
 
+import com.streamify.app.BuildConfig
 import com.streamify.app.security.RuntimeStringProvider
 
 /**
@@ -55,11 +56,20 @@ data class AppConfig(
         fun defaults() = AppConfig(
             apiBaseUrl      = RuntimeStringProvider.getString("API_BASE_URL"),
             updateUrl       = RuntimeStringProvider.getString("UPDATE_URL"),
-            latestVersion   = "1.0.0",
+            // post-v1.1.0 fix — bind defaults() to BuildConfig.VERSION_NAME
+            // so an unreachable /api/config (network failure, no cache)
+            // never produces a false-pass verdict in [VersionGate]. The
+            // `minAppVersion == latestVersion == currentVersion` triple
+            // means "no update required"; any genuine "you must update"
+            // gate can only fire after a successful /api/config fetch.
+            // The historical hard-coded "1.0.0" would have permitted a
+            // 1.1.0 client to bypass its own update gate if the config
+            // endpoint was unreachable, a real backward-compat hole.
+            latestVersion   = BuildConfig.VERSION_NAME,
             telegramLink    = RuntimeStringProvider.getString("TELEGRAM_LINK"),
             noticeText      = "",
             maintenanceMode = false,
-            minAppVersion   = "1.0.0",
+            minAppVersion   = BuildConfig.VERSION_NAME,
             featureFlags    = emptyMap()
         )
     }

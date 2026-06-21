@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Phase 3 · Step 3.2 — Navigation graph for the post-splash Main screen.
-    Hosts the 4 bottom-nav destinations (Home / Categories / Favorites / Settings)
+    Hosts the 3 bottom-nav destinations (Home / Categories / Favorites)
     + a Stack-Pushed Search destination (Phase 5 · Step 5.6) reachable from the
     main Toolbar's search icon. Destinations IDs MUST match bottom-nav menu IDs.
 -->
@@ -29,12 +29,6 @@
         android:name="com.streamify.app.ui.fragments.FavoritesFragment"
         android:label="@string/main_nav_favorites"
         tools:layout="@layout/fragment_favorites" />
-
-    <fragment
-        android:id="@+id/settingsFragment"
-        android:name="com.streamify.app.ui.fragments.SettingsFragment"
-        android:label="@string/main_nav_settings"
-        tools:layout="@layout/fragment_settings" />
 
     <!--
         Phase 3 · Step 3.5 — Highlights destination.

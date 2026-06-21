@@ -3,6 +3,9 @@ package com.streamify.app.security
 import android.content.Context
 import android.util.Log
 import okhttp3.Request
+import java.nio.ByteBuffer
+import java.nio.CharBuffer
+import java.nio.charset.StandardCharsets
 import java.util.UUID
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -117,22 +120,49 @@ object RequestSigner {
             .header("X-Request-Timestamp", timestamp)
             .header("X-Request-Nonce", nonce)
 
-        val secretString = secretChars?.concatToString().orEmpty()
-        if (secretString.isNotBlank()) {
-            val payload = buildString {
-                append(request.method)
-                append('\n')
-                append(request.url.encodedPath)
-                append('\n')
-                append(timestamp)
-                append('\n')
-                append(nonce)
-                append('\n')
-                append(bodyHash)
+        // post-v1.1.1 hardening — Encode the secret bytes directly
+        // from the CharArray. We deliberately do NOT call
+        // concatToString() because that allocates a `String`, which
+        // gets copied into the JVM string-intern pool and remains
+        // visible in heap dumps / logcat / debugger output until
+        // the next GC. The byte-array stays in a local variable
+        // and is wiped at end of frame (see [StringEncryptor.wipe]).
+        val secretBytes: ByteArray = secretChars?.let { chars ->
+            // Worst-case UTF-8 footprint is 4 bytes/char; allocate
+            // the buffer generously and shrink via ByteBuffer.flip().
+            ByteBuffer.allocate((chars.size + 1) * 4).also { bb ->
+                StandardCharsets.UTF_8.newEncoder().encode(
+                    CharBuffer.wrap(chars), bb, true
+                )
+                bb.flip()
+            }.let { bb ->
+                ByteArray(bb.remaining()).also { bb.get(it) }
             }
-            val signature = hmacSha256(secretString, payload)
-            builder.header("X-Request-Signature", signature)
-            Log.d(TAG, "Signed request ${request.method} ${request.url.encodedPath}")
+        } ?: ByteArray(0)
+
+        if (secretBytes.isNotEmpty()) {
+            try {
+                val payload = buildString {
+                    append(request.method)
+                    append('\n')
+                    append(request.url.encodedPath)
+                    append('\n')
+                    append(timestamp)
+                    append('\n')
+                    append(nonce)
+                    append('\n')
+                    append(bodyHash)
+                }
+                val signature = hmacSha256(secretBytes, payload)
+                builder.header("X-Request-Signature", signature)
+                Log.d(TAG, "Signed request ${request.method} ${request.url.encodedPath}")
+            } finally {
+                // Zero the secret bytes regardless of HMAC outcome
+                // (success, AEAD exception, etc.) so a heap dump
+                // taken right after this frame returns doesn't
+                // expose the raw key material until the next GC.
+                java.util.Arrays.fill(secretBytes, 0)
+            }
         } else {
             Log.d(TAG, "No signing secret configured; emitted unsigned headers only")
         }
@@ -166,9 +196,9 @@ object RequestSigner {
         }
     }
 
-    private fun hmacSha256(secret: String, data: String): String {
+    private fun hmacSha256(secretBytes: ByteArray, data: String): String {
         val mac = Mac.getInstance(HMAC_ALGORITHM)
-        mac.init(SecretKeySpec(secret.toByteArray(Charsets.UTF_8), HMAC_ALGORITHM))
+        mac.init(SecretKeySpec(secretBytes, HMAC_ALGORITHM))
         val hash = mac.doFinal(data.toByteArray(Charsets.UTF_8))
         return hash.joinToString("") { "%02x".format(it) }
     }

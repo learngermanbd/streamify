@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.streamify.admin.data.AdminApi
 import com.streamify.admin.data.ChannelItem
@@ -44,30 +46,32 @@ class ChannelsFragment : Fragment() {
 
     private fun loadChannels() {
         listContainer.removeAllViews()
-        lifecycleScope.launch {
-            when (val r = api.getChannels()) {
-                is AdminApi.ApiResult.Success -> {
-                    channels = r.data.filterIsInstance<ChannelItem>()
-                    if (channels.isEmpty()) listContainer.addView(TextView(requireContext()).apply {
-                        text = "No channels"; setPadding(8, 24, 8, 8)
-                    })
-                    channels.forEach { ch ->
-                        listContainer.addView(TextView(requireContext()).apply {
-                            text = "${ch.name} · ${ch.categoryName} · ${if (ch.isActive) "Active" else "Inactive"}"
-                            setPadding(12, 12, 12, 12); setBackgroundColor(0x1412121a.toInt())
-                            setTextColor(0xFFE0E6ED.toInt()); textSize = 13f
-                            setOnClickListener { showDialog(ch) }
-                            setOnLongClickListener {
-                                MaterialAlertDialogBuilder(requireContext())
-                                    .setTitle("Delete Channel").setMessage("Delete \"${ch.name}\"?")
-                                    .setPositiveButton("Delete") { _, _ -> delete(ch.id) }
-                                    .setNegativeButton("Cancel", null).show()
-                                true
-                            }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                when (val r = api.getChannels()) {
+                    is AdminApi.ApiResult.Success -> {
+                        channels = r.data.filterIsInstance<ChannelItem>()
+                        if (channels.isEmpty()) listContainer.addView(TextView(requireContext()).apply {
+                            text = "No channels"; setPadding(8, 24, 8, 8)
                         })
+                        channels.forEach { ch ->
+                            listContainer.addView(TextView(requireContext()).apply {
+                                text = "${ch.name} · ${ch.categoryName} · ${if (ch.isActive) "Active" else "Inactive"}"
+                                setPadding(12, 12, 12, 12); setBackgroundColor(0x1412121a.toInt())
+                                setTextColor(0xFFE0E6ED.toInt()); textSize = 13f
+                                setOnClickListener { showDialog(ch) }
+                                setOnLongClickListener {
+                                    MaterialAlertDialogBuilder(requireContext())
+                                        .setTitle("Delete Channel").setMessage("Delete \"${ch.name}\"?")
+                                        .setPositiveButton("Delete") { _, _ -> delete(ch.id) }
+                                        .setNegativeButton("Cancel", null).show()
+                                    true
+                                }
+                            })
+                        }
                     }
+                    is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
                 }
-                is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
             }
         }
     }
@@ -88,11 +92,13 @@ class ChannelsFragment : Fragment() {
                     fields.forEach { (k, v) -> put(k, v.text.toString()) }
                     if (ch != null) put("categoryId", ch.categoryId)
                 }
-                lifecycleScope.launch {
-                    val r = if (ch != null) api.updateChannel(ch.id, json) else api.createChannel(json)
-                    when (r) {
-                        is AdminApi.ApiResult.Success -> loadChannels()
-                        is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                        val r = if (ch != null) api.updateChannel(ch.id, json) else api.createChannel(json)
+                        when (r) {
+                            is AdminApi.ApiResult.Success -> loadChannels()
+                            is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
+                        }
                     }
                 }
             }
@@ -100,10 +106,12 @@ class ChannelsFragment : Fragment() {
     }
 
     private fun delete(id: String) {
-        lifecycleScope.launch {
-            when (val result = api.deleteChannel(id)) {
-                is AdminApi.ApiResult.Success -> loadChannels()
-                is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(result.message)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                when (val result = api.deleteChannel(id)) {
+                    is AdminApi.ApiResult.Success -> loadChannels()
+                    is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(result.message)
+                }
             }
         }
     }

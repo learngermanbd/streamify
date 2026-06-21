@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.streamify.admin.data.AdminApi
 import com.streamify.admin.data.HighlightItem
@@ -40,31 +42,33 @@ class HighlightsFragment : Fragment() {
 
     private fun load() {
         listContainer.removeAllViews()
-        lifecycleScope.launch {
-            when (val r = api.getHighlights()) {
-                is AdminApi.ApiResult.Success -> {
-                    val items = r.data.filterIsInstance<HighlightItem>()
-                    if (items.isEmpty()) listContainer.addView(TextView(requireContext()).apply {
-                        text = "No highlights"; setPadding(8, 24, 8, 8)
-                    })
-                    items.forEach { h ->
-                        val min = h.duration / 60; val sec = (h.duration % 60).toString().padStart(2, '0')
-                        listContainer.addView(TextView(requireContext()).apply {
-                            text = "${h.title} · $min:$sec · ${h.views} views"
-                            setPadding(12, 12, 12, 12); setBackgroundColor(0x1412121a.toInt())
-                            setTextColor(0xFFE0E6ED.toInt()); textSize = 13f
-                            setOnClickListener { showDialog(h) }
-                            setOnLongClickListener {
-                                MaterialAlertDialogBuilder(requireContext())
-                                    .setTitle("Delete Highlight").setMessage("Delete \"${h.title}\"?")
-                                    .setPositiveButton("Delete") { _, _ -> deleteItem(h.id) }
-                                    .setNegativeButton("Cancel", null).show()
-                                true
-                            }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                when (val r = api.getHighlights()) {
+                    is AdminApi.ApiResult.Success -> {
+                        val items = r.data.filterIsInstance<HighlightItem>()
+                        if (items.isEmpty()) listContainer.addView(TextView(requireContext()).apply {
+                            text = "No highlights"; setPadding(8, 24, 8, 8)
                         })
+                        items.forEach { h ->
+                            val min = h.duration / 60; val sec = (h.duration % 60).toString().padStart(2, '0')
+                            listContainer.addView(TextView(requireContext()).apply {
+                                text = "${h.title} · $min:$sec · ${h.views} views"
+                                setPadding(12, 12, 12, 12); setBackgroundColor(0x1412121a.toInt())
+                                setTextColor(0xFFE0E6ED.toInt()); textSize = 13f
+                                setOnClickListener { showDialog(h) }
+                                setOnLongClickListener {
+                                    MaterialAlertDialogBuilder(requireContext())
+                                        .setTitle("Delete Highlight").setMessage("Delete \"${h.title}\"?")
+                                        .setPositiveButton("Delete") { _, _ -> deleteItem(h.id) }
+                                        .setNegativeButton("Cancel", null).show()
+                                    true
+                                }
+                            })
+                        }
                     }
+                    is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
                 }
-                is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
             }
         }
     }
@@ -90,21 +94,25 @@ class HighlightsFragment : Fragment() {
                     put("views", fields["views"]?.text.toString().toIntOrNull() ?: 0)
                     put("date", System.currentTimeMillis())
                 }
-                lifecycleScope.launch {
-                    val r = if (h != null) api.updateHighlight(h.id, json) else api.createHighlight(json)
-                    when (r) {
-                        is AdminApi.ApiResult.Success -> load()
-                        is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                        val r = if (h != null) api.updateHighlight(h.id, json) else api.createHighlight(json)
+                        when (r) {
+                            is AdminApi.ApiResult.Success -> load()
+                            is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(r.message)
+                        }
                     }
                 }
             }.setNegativeButton("Cancel", null).show()
     }
 
     private fun deleteItem(id: String) {
-        lifecycleScope.launch {
-            when (val result = api.deleteHighlight(id)) {
-                is AdminApi.ApiResult.Success -> load()
-                is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(result.message)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                when (val result = api.deleteHighlight(id)) {
+                    is AdminApi.ApiResult.Success -> load()
+                    is AdminApi.ApiResult.Failure -> (requireActivity() as DashboardActivity).toast(result.message)
+                }
             }
         }
     }

@@ -2,6 +2,7 @@ package com.streamify.app.data.remote
 
 import android.content.Context
 import com.streamify.app.BuildConfig
+import com.streamify.app.security.TokenManager
 import okhttp3.OkHttpClient
 
 /**
@@ -26,8 +27,25 @@ class NetworkModule(
     private val baseUrl: String = ApiClient.defaultBaseUrl()
 ) {
 
+    /**
+     * post-v1.1.1 hardening — TokenManager is now wired through
+     * OkHttp so [com.streamify.app.data.remote.AuthInterceptor]
+     * can stamp a Bearer Authorization header on every authenticated
+     * call. Constructed lazily with `applicationContext` so no
+     * Activity leaks; the inner
+     * [com.streamify.app.security.TokenStore.initFromContext] is
+     * idempotent and reuses the existing singleton on repeat calls.
+     */
+    val tokenManager: TokenManager by lazy {
+        TokenManager(context.applicationContext)
+    }
+
     val httpClient: OkHttpClient by lazy {
-        ApiClient.buildHttpClient(context.applicationContext, debug = BuildConfig.DEBUG)
+        ApiClient.buildHttpClient(
+            context = context.applicationContext,
+            debug = BuildConfig.DEBUG,
+            tokenManager = tokenManager,
+        )
     }
 
     val apiClient: ApiClient by lazy {

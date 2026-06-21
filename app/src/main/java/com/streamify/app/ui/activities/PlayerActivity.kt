@@ -414,12 +414,17 @@ class PlayerActivity : AppCompatActivity() {
         // could fire and access a frozen View tree.
         indicatorHideJob?.cancel()
         indicatorHideJob = null
+        // post-v1.1.0 fix — DO NOT release ExoPlayer in onStop. Historically we
+        // released when `!isInPictureInPictureMode` to free decoders early,
+        // but `isInPictureInPictureMode` can be FALSE during onStop because
+        // the OS PiP handshake has not yet completed — tapping Home while
+        // playing then released the player mid-PiP-entry and the user saw
+        // playback stop inside the new PiP surface. Keep the player alive
+        // across onStop; onDestroy still releases it. The OS reclaims memory
+        // if the process is killed.
         exoPlayer?.let {
             currentPlaybackPosition = it.currentPosition
             playWhenReady = it.playWhenReady
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !isInPictureInPictureMode) {
-            releasePlayer()
         }
     }
 
@@ -559,6 +564,43 @@ class PlayerActivity : AppCompatActivity() {
         super.onConfigurationChanged(newConfig)
         // PiP-enter/exit causes config changes; surfacing back here is
         // handled by [onPictureInPictureModeChanged] above.
+    }
+
+    /**
+     * post-v1.1.0 review follow-up — release ExoPlayer under memory
+     * pressure. The onStop fix removed the unconditional release that
+     * broke PiP entry, so we now rely on the OS interrupting us via
+     * onTrimMemory when the user leaves the app idle for long enough.
+     * Without this hook we'd keep the decoders + media buffers allocated
+     * indefinitely in backgrounded sessions.
+     *
+     *  - TRIM_MEMORY_UI_HIDDEN (~ UI hidden, foreground app elsewhere):
+     *    PAUSE only — playback survives a quick app-switch roundtrip.
+     *  - TRIM_MEMORY_BACKGROUND+ (genuine background, low pressure):
+     *    full release if not in PiP so we don't tax the OS memory pool.
+     *    On re-entry, onStart rebuilds via [initializePlayer] from the
+     *    saved [currentPlaybackPosition].
+     */
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        // post-v1.1.0 fix - only react at TRIM_MEMORY_BACKGROUND or above.
+        // We deliberately do NOT pause at TRIM_MEMORY_UI_HIDDEN because that
+        // level fires any time the UI is no longer the foremost surface
+        // (notification shade pulled, recents opened, PiP entered). Pausing
+        // playback on those triggers would be a UX regression: the user
+        // expects playback to continue while they peek at notifications or
+        // switch apps momentarily. Release the heavy ExoPlayer decoder
+        // resources only when the OS reports real background memory pressure
+        // (BACKGROUND=40 and above). On re-entry, onStart rebuilds via
+        // [initializePlayer] from the saved [currentPlaybackPosition].
+        val p = exoPlayer ?: return
+        val inPip = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInPictureInPictureMode
+        if (level >= TRIM_MEMORY_BACKGROUND && !inPip) {
+            currentPlaybackPosition = p.currentPosition
+            playWhenReady = p.playWhenReady
+            p.release()
+            exoPlayer = null
+        }
     }
 
     /**
@@ -918,7 +960,25 @@ class PlayerActivity : AppCompatActivity() {
             showError(getString(R.string.player_error_no_url))
             return
         }
-        val player = exoPlayer ?: initializePlayer().let { exoPlayer!! }
+        // Lazy-init the player on first link submit and read it back through
+        // `run { ... }` (without `!!`). If `initializePlayer()` throws partway
+        // through ExoPlayer.Builder / listener wiring, the field can stay
+        // null and the previous `.let { exoPlayer!! }` would mask the
+        // original exception with an NPE. Falling through to a guarded
+        // return surfaces the real failure instead.
+        val player = exoPlayer
+            ?: initializePlayer().run { exoPlayer }
+            ?: run {
+                // No `showError` here — the URL was valid; if init failed
+                // ExoPlayer's own listener (playerListener.onPlayerError)
+                // will surface the real cause. We just abort this link
+                // submit so we don't touch a null player.
+                android.util.Log.w(
+                    "PlayerActivity",
+                    "submitCurrentLink: ExoPlayer init failed; aborting link submit"
+                )
+                return
+            }
         val builder = MediaItem.Builder()
             .setUri(url)
             .setMediaMetadata(

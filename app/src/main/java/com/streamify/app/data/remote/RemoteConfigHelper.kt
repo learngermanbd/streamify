@@ -3,6 +3,7 @@ package com.streamify.app.data.remote
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.streamify.app.BuildConfig
 import com.streamify.app.StreamifyApp.Companion.remoteConfigDataStore
 import com.streamify.app.security.RuntimeStringProvider
 import kotlinx.coroutines.CancellationException
@@ -32,8 +33,18 @@ object RemoteConfigHelper {
     /** 30 minutes in milliseconds. */
     private const val REFRESH_INTERVAL_MS = 30L * 60L * 1000L
 
-    /** X-App-Version header sent on every fetch. Read via BuildConfig.VERSION_NAME in 6.5. */
-    private const val APP_VERSION = "1.0.0"
+    /**
+     * X-App-Version header sent on every fetch. Wired straight from
+     * [com.streamify.app.BuildConfig.VERSION_NAME] (compile-time
+     * `const val` in the AGP-generated BuildConfig) so the /api/config
+     * handshake reports the SAME version the OkHttp [AuthInterceptor]
+     * stamps on every other outbound request — previously this was a
+     * hard-coded "1.0.0" while gradle tracks 1.1.0, so the backend
+     * saw a STALE version on the config endpoint and an up-to-date
+     * version on content endpoints. Always-match guarantee requires
+     * both call sites reading the same source of truth.
+     */
+    private const val APP_VERSION = BuildConfig.VERSION_NAME
 
     private val CACHE_KEY = stringPreferencesKey("cached_config_json")
     private val CACHE_TIMESTAMP_KEY = stringPreferencesKey("cached_config_timestamp")

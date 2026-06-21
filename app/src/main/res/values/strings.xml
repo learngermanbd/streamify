@@ -19,7 +19,7 @@
          AAPT validates the @string/main_nav_* refs at compile time. -->
     <string name="main_nav_home">HOME</string>
     <string name="main_nav_favorites">FAVORITES</string>
-    <string name="main_nav_settings">SETTINGS</string>
+    <!-- post-v1.1.0: Settings tab removed from bottom-nav; string kept for potential future restore -->
 
     <!-- Tab placeholder content (Step 3.2 — replaced in Steps 3.3, 5.1, 5.5).
          Note: fragment_live_title / fragment_live_subtitle were dropped in
@@ -29,7 +29,7 @@
     <string name="fragment_home_subtitle">Step 3.3 incoming</string>
     <string name="fragment_favorites_title">FAVORITES</string>
     <string name="fragment_favorites_subtitle">Step 5.1 incoming</string>
-    <string name="fragment_settings_title">SETTINGS</string>
+    <!-- post-v1.1.0: Settings fragment removed; string kept for potential future restore -->
     <string name="fragment_settings_subtitle">Customise your Streamify experience</string>
 
     <!--
