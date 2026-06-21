@@ -188,17 +188,22 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Fall back to the debug signing config when signing.properties
-            // is absent. We deliberately do NOT pick the empty `release`
-            // signing config because AGP's `packageRelease` task REQUIRES
-            // `storeFile` to be set — if we don't guard, the build fails
-            // at the packaging stage with "SigningConfig release is
-            // missing required property storeFile". The `takeIf` check
-            // ensures we only adopt the release config when its
-            // configuration block actually populated the keystore.
-            signingConfig = signingConfigs.findByName("release")
-                ?.takeIf { it.storeFile != null }
-                ?: signingConfigs.getByName("debug")
+            // Resolve release-variant signing config based on the
+            // `-PallowUnsignedRelease` flag OR signing.properties contents:
+            //   * allowUnsignedRelease=true → signingConfig=null (produces
+            //     `app-release-unsigned.apk`; test-install only)
+            //   * signing.properties has RELEASE_STORE_FILE → use the release
+            //     signing config (production / Play-store build)
+            //   * signing.properties absent OR empty → fall back to debug
+            //     signing; verifyReleaseSecrets pre-flight will then throw
+            //     GradleException listing every missing key (above)
+            signingConfig = if (rootProject.findProperty("allowUnsignedRelease") == "true") {
+                null
+            } else {
+                signingConfigs.findByName("release")
+                    ?.takeIf { it.storeFile != null }
+                    ?: signingConfigs.getByName("debug")
+            }
         }
         debug {
             isMinifyEnabled = false
@@ -485,11 +490,20 @@ tasks.configureEach {
 // The check itself runs at `doFirst` of `assembleRelease` so it sees
 // the full task graph but executes before any R8 / signing / Sentry
 // work has begun.
-// -----------------------------------------------------------------
-afterEvaluate {
-    tasks.named("assembleRelease").configure {
-        doFirst {
-            val errors = mutableListOf<String>()
+// -----------------------------------------------------------------    afterEvaluate {
+        tasks.named("assembleRelease").configure {
+            doFirst {
+                // Production builds enforce all 10 secrets. Use
+                // `-PallowUnsignedRelease=true` to opt out — produces an
+                // *unsigned* release APK that still runs R8/minification, but
+                // skips the credentials gate. Use case: sandbox test-installs
+                // or CI artifacts where signing/api/sentry secrets don't matter.
+                // NEVER set this flag for Play-store-shippable builds.
+                if (rootProject.findProperty("allowUnsignedRelease") == "true") {
+                    logger.lifecycle("verifyReleaseSecrets: SKIPPED (-PallowUnsignedRelease=true)")
+                    return@doFirst
+                }
+                val errors = mutableListOf<String>()
 
             // ── signing.properties ─────────────────────────────────────
             val signingProps = Properties()
