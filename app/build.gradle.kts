@@ -166,7 +166,7 @@ android {
     // -----------------------------------------------------------------
     sentry {
         org = "streamify-0p"
-        projectName = "android"
+        projectName = "streamify"
         authToken = (rootSigningProps.getProperty("SENTRY_AUTH_TOKEN") ?: "").trim()
         autoUploadProguardMapping = true
         includeSourceContext = true
