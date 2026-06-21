@@ -41,7 +41,7 @@ const eventsController = {
       ]);
 
       return res.json({
-        events,
+        events: events.map(formatEvent),
         pagination: {
           page: Math.max(1, parseInt(page, 10)),
           limit: take,
@@ -68,7 +68,7 @@ const eventsController = {
         return res.status(404).json({ error: 'event not found' });
       }
 
-      return res.json({ event });
+      return res.json({ event: formatEvent(event) });
     } catch (err) {
       console.error('[events/getById]', err);
       return res.status(500).json({ error: 'internal server error' });
@@ -100,7 +100,7 @@ const eventsController = {
         include: { streams: true, category: { select: { id: true, name: true } } }
       });
 
-      return res.status(201).json({ event });
+      return res.status(201).json({ event: formatEvent(event) });
     } catch (err) {
       console.error('[events/create]', err);
       return res.status(500).json({ error: 'internal server error' });
@@ -141,7 +141,7 @@ const eventsController = {
         include: { streams: true, category: { select: { id: true, name: true } } }
       });
 
-      return res.json({ event });
+      return res.json({ event: formatEvent(event) });
     } catch (err) {
       console.error('[events/update]', err);
       return res.status(500).json({ error: 'internal server error' });
@@ -170,3 +170,15 @@ const eventsController = {
 };
 
 module.exports = eventsController;
+
+/**
+ * Flatten the PgPrisma response so the Android client can parse it.
+ * PgPrisma loads relations as nested objects (e.g. category = {id, name}),
+ * but the Android Event model expects `category` as a plain String.
+ */
+function formatEvent(e) {
+  return {
+    ...e,
+    category: e.category?.name || e.category || '',
+  };
+}
