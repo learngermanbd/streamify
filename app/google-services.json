@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "000000000000",
-    "project_id": "streamify-placeholder",
-    "storage_bucket": "streamify-placeholder.appspot.com"
+    "project_number": "815915395043",
+    "project_id": "sports-live-9e218",
+    "storage_bucket": "sports-live-9e218.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "mobilesdk_app_id": "1:815915395043:android:09d882f5fad4fff9dce2d6",
         "android_client_info": {
           "package_name": "com.streamify.app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXX"
+          "current_key": "AIzaSyDJmxxvSEAqtR9hhGWHl7WdYinp6SZbIBM"
         }
       ],
       "services": {
