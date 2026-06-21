@@ -185,6 +185,7 @@ dependencies {
     implementation(libs.media3.ui)
     implementation(libs.media3.session)
     implementation(libs.media3.datasource.okhttp)
+    implementation(libs.media3.exoplayer.hls)
 
     // ── OkHttp — networking (used by ApiClient and Media3 HLS/DASH source) ──
     implementation(libs.okhttp)
