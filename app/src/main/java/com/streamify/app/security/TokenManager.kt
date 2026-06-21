@@ -142,9 +142,9 @@ class TokenManager(private val context: Context) {
      * v1.1.1 hardening: failures from `tokenStore.store` are no
      * longer silently swallowed (review issue #3). They are
      * logged with cause + re-thrown so StreamifyApp's CrashHandler
-     * routes the cause to Sentry. Silent swallowing would leave the
-     * user logged out on next launch with no traceback tying the
-     * cause to a Keystore exception.
+     * routes the cause to the recovery flow. Silent swallowing
+     * would leave the user logged out on next launch with no
+     * traceback tying the cause to a Keystore exception.
      */
     fun setTokens(accessToken: String, refreshToken: String, expiresInMs: Long = DEFAULT_ACCESS_TOKEN_LIFETIME_MS) {
         cachedAccessToken = accessToken

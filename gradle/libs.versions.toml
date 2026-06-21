@@ -11,12 +11,6 @@ media3 = "1.6.0"
 okhttp = "4.12.0"
 room = "2.7.0"
 firebaseBom = "34.0.0"
-sentry = "7.16.0"
-# Step 6.5 — sentry-android-gradle-plugin auto-uploads the R8 mapping.txt
-# to Sentry on `assembleRelease`. Plugin 8.x is the train that pairs with
-# SDK 8.x; they ship on separate release trains so MISMATCH here causes
-# NoSuchMethodError in the upload task at the very last step of a release.
-sentry-gradle-plugin = "5.7.0"
 lottie = "6.6.0"
 material = "1.13.0"
 navigation = "2.9.0"
@@ -84,7 +78,7 @@ room-runtime  = { module = "androidx.room:room-runtime",  version.ref = "room" }
 room-ktx      = { module = "androidx.room:room-ktx",      version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 
-# Firebase — messaging ONLY (Remote Config replaced by /api/config; Crashlytics replaced by Sentry)
+# Firebase — messaging ONLY (Remote Config replaced by /api/config)
 firebase-bom       = { module = "com.google.firebase:firebase-bom",          version.ref = "firebaseBom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }  # version managed by BoM
 # Step 7.10 — Play Integrity (bumped to 1.5.0 for Android 16-compatible GMS 25.x)
@@ -95,9 +89,6 @@ play-integrity     = { module = "com.google.android.play:integrity",        vers
 # at requestIntegrityToken. Pinned 18.5.0 to match firebase-bom 34.0.0's
 # transitive version exactly, eliminating AGP dedup warning on AGP 8.9.
 play-services-base = { module = "com.google.android.gms:play-services-base", version = "18.5.0" }
-
-# Sentry — crash reporting (replaces Crashlytics)
-sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry" }
 
 # Lottie — animations
 lottie = { module = "com.airbnb.android:lottie", version.ref = "lottie" }
@@ -151,6 +142,3 @@ android-application = { id = "com.android.application",                  version
 kotlin-android      = { id = "org.jetbrains.kotlin.android",             version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp",                 version.ref = "ksp" }
 google-services     = { id = "com.google.gms.google-services",           version.ref = "google-services" }
-# Step 6.5 — Sentry Gradle plugin (autoProguardConfig=true sends
-# mapping.txt + InApp frames so release crash reports deobfuscate).
-sentry-android      = { id = "io.sentry.android.gradle",                 version.ref = "sentry-gradle-plugin" }

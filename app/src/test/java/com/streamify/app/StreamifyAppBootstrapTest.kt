@@ -39,7 +39,7 @@ import org.robolectric.annotation.Config
 @Config(
     application = StreamifyApp::class,
     // Robolectric 4.13 fully supports SDK levels up to 34; SDK 33 is the
-    // safest floor that still exposes the APIs Sentry 7.16 / DataStore
+    // safest floor that still exposes the APIs DataStore 1.1.x /
     // 1.1.x / WorkManager 2.10 / OkHttp 4.12 need. SDK 36 would force a
     // missing-shadow path we don't want to debug mid-test.
     sdk = [33],

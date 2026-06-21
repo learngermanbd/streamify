@@ -6,16 +6,7 @@
 
 This guide walks through every credential a developer needs to drop in to take
 the Streamify Android app from a freshly-cloned repo to a Play-shippable
-release build that uploads Sentry `mapping.txt` on every release.
-
-> ⏱️ If you only want to RUN THE APP for development (debug builds calling
-> the test API), skip **Steps 4–7**. Step 3 is still required because the
-> `io.sentry.android.gradle` plugin reads its `sentry { org = …; projectName = … }`
-> configuration at file-evaluation time regardless of whether any
-> `SENTRY_AUTH_TOKEN` is present; if Step 3 is missing the
-> `uploadSentryProguardMappingsRelease` task will 404 on every release build.
-> Steps 4–7 themselves are only required for `:app:assembleRelease`
-> (Play-shippable) builds.
+release build.
 
 ---
 
@@ -25,12 +16,121 @@ release build that uploads Sentry `mapping.txt` on every release.
 |---|---|---|---|
 | `app/google-services.json` | Firebase project config (`project_id`, API key, `mobilesdk_app_id`) | ✅ Yes | Only when migrating to a different Firebase project |
 | `gradle/libs.versions.toml` | `firebaseBom` + `google-services` plugin versions | ✅ Yes | Firebase SDK upgrades |
-| `app/build.gradle.kts` `sentry { }` block | Sentry `org` slug + `projectName` slug | ✅ Yes | Sentry org or project renames |
-| `signing.properties` (repo root) | Release keystore path + 4 password/alias fields + Sentry DSN + Sentry auth token | ❌ NO — gitignored | Every secret rotation |
+| `signing.properties` (repo root) | Release keystore path + 4 password/alias fields | ❌ NO — gitignored | Every secret rotation |
 | `secrets.properties` (repo root) | API_BASE_URL, API_CONFIG_URL, UPDATE_URL, TELEGRAM_LINK | ❌ NO — gitignored | Backend URL changes |
+| `local.properties` (repo root) | `sdk.dir` pointing at the Android SDK install | ❌ NO — gitignored | Reinstall the SDK elsewhere |
+| `gradle.properties` (repo root) | `org.gradle.java.installations.paths` (Temurin JDK 17) + `org.gradle.java.installations.auto-download=false` (Gradle toolchain mechanism) | ✅ Yes | Major AGP / AS upgrade or JDK 17 patch bump (must update path to exact `hostedtoolcache` patch) |
 
 `signing.properties` and `secrets.properties` are gitignored for security.
 `.example` templates sibling to them show the structure (also tracked).
+
+### User-level environment variables (Windows)
+
+These were set on **2026-06-21** as part of the Android Studio SDK
+migration. They live in `HKCU\Environment` so they apply to every process
+this user launches (AS, Cmdline Tools, adb, aapt, this project's Gradle
+daemon).
+
+| Variable | Value | Read by |
+|---|---|---|
+| `ANDROID_HOME` | `C:\Users\RDP\AppData\Local\Android\Sdk` | AS, Gradle, sdkmanager, AGP — first precedence over `local.properties` |
+| `ANDROID_SDK_ROOT` | `C:\Users\RDP\AppData\Local\Android\Sdk` | Older build-tools, adb, AVD manager |
+
+If you wipe the SDK and reinstall elsewhere, re-run these two `setx`
+commands and update both. The Gradle daemon picks them up on next launch.
+
+### Gradle Java toolchain (dual JDK — Temurin 17 for compile, JetBrains 21 for daemon)
+
+**Always run `./gradlew --stop` after editing this file.** A Gradle daemon
+that was started BEFORE a `gradle.properties` edit keeps its original JVM
+choice for the rest of its lifetime; the new `installations.paths` only
+applies to daemons spawned after the property change. Without `--stop`,
+the old daemon JVM silently continues and you can't tell from a build
+success that the new toolchain even kicked in.
+
+Gradle 8.13's daemon distribution ships a `gradle-daemon-jvm.properties`
+that **requires** the daemon host process to spawn on a JetBrains JDK 21.
+This is separate from anything AGP needs for its compile actions. To
+satisfy both without going to the foojay network, both JDKs are listed
+in `gradle.properties`:
+
+```
+org.gradle.java.installations.paths=\
+  C:/hostedtoolcache/windows/Java_Temurin-Hotspot_jdk/17.0.19-10/x64,\
+  C:/Program Files/Android/Android Studio/jbr
+```
+
+| Path | JDK | Used for |
+|---|---|---|
+| `hostedtoolcache/...Temurin-Hotspot_jdk/17.0.19-10/x64` | Eclipse Adoptium Temurin 17.0.19+10 | AGP 8.9.2 Java/Kotlin compile (per `compileOptions VERSION_17` + `kotlinOptions jvmTarget 17`) |
+| `C:/Program Files/Android/Android Studio/jbr` | JetBrains Runtime 21.0.10 (bundled with Android Studio) | Gradle 8.13 daemon JVM (matches the `{languageVersion=21, vendor=JetBrains}` spec in `gradle-daemon-jvm.properties`) |
+
+The companion setting `org.gradle.java.installations.auto-download=false`
+forces the build to fail loud (instead of silently foojay-downloading
+a third JDK 21 into `~/.gradle/jdks/`) if EITHER path ever goes
+missing — preserving hermeticity.
+
+#### Path fragility — exact patch version + AS install required
+
+`C:/hostedtoolcache/windows/Java_Temurin-Hotspot_jdk/17.0.19-10/x64`
+is hard-coded to a specific Temurin patch release. If the holding
+environment ships a different patch (`17.0.20-7`, `17.0.21-8`, etc.),
+the path is gone and `auto-download=false` causes a hard failure.
+Update the path string to match the actual patch on whichever
+machines run the build (dev / CI / build-server).
+
+**Android Studio 2024.2 (Meerkat) or later is REQUIRED.** The daemon-side
+path points at `C:/Program Files/Android/Android Studio/jbr`, which AS
+shipped JetBrains Runtime 21 starting with Meerkat (2024.2). Earlier AS
+versions (Koala 2024.1 = JBR 17, Hedgehog 2023.1.1 = JBR 17, etc.) provide
+JBR 17 instead, which doesn't match Gradle 8.13's daemon-JVM spec
+(`{languageVersion=21, vendor=JetBrains}`) — and the build will then fail
+with `Cannot find a Java installation matching {languageVersion=21, vendor=JetBrains}`
+during the very first daemon spawn. Uninstalling Android Studio entirely
+also breaks the daemon. If you can't use a recent AS install, the fallback
+is `--no-daemon` on every Gradle invocation, but that defeats most of
+the speed benefit of the toolchain switch.
+
+#### Why no explicit `java { toolchain { languageVersion = 17 } }`
+
+A direct `languageVersion` declaration would be the most hermetic
+form, but in this Gradle wrapper version the Kotlin DSL script
+compiler surfaces an `Unresolved reference: JavaLanguageVersion`
+error on any `import org.gradle.api.JavaLanguageVersion` in module
+`build.gradle.kts` files (and even when hoisted to root via
+`subprojects { java { toolchain { ... } } }`, where the `java {}`
+accessor is also unavailable on the Subprojects container). The
+minimal configuration (installations.paths + auto-download=false +
+per-module `compileOptions VERSION_17 / kotlinOptions jvmTarget 17`)
+is what ships today. Future Gradle wrapper upgrades that resolve
+this should re-introduce a typed toolchain block. Do **not** file a
+"missing explicit toolchain spec" review comment without first
+testing whether the import resolves in the current wrapper.
+
+#### Cached JetBrains JDK 21 in `~/.gradle/jdks/` — keep or evict
+
+The `~/.gradle/jdks/` cache may still contain a JetBrains 21 that
+Gradle auto-downloaded BEFORE `auto-download=false` was set. With
+the AS-bundled JBR now in `installations.paths`, this cached JBR is
+REDUNDANT — Gradle's daemon can find JetBrains 21 at the AS path.
+You may evict the cache to reclaim 1.6 GB of disk space:
+
+```bash
+./gradlew --stop             # kill any running daemon so its locks release
+rm -rf ~/.gradle/jdks/       # safe; auto-download=false blocks re-downloads
+./gradlew --version          # Launcher = Temurin 17, Daemon = JetBrains 21 (AS path)
+```
+
+If you DON'T evict, builds still work — Gradle picks the required
+JDK from any source. If you DO evict, verify `:app:tasks` still
+exits 0 to confirm the daemon was happy spawning on the AS path.
+
+#### Verified end-state (2026-06-21)
+
+- `./gradlew --version` → Launcher JVM: `17.0.19 (Eclipse Adoptium 17.0.19+10)`; Daemon JVM: `JetBrains 21` (matched to AS bundled JBR).
+- `./gradlew :app:tasks` exit 0; `./gradlew :admin:tasks` exit 0.
+- `./gradlew javaToolchains` lists both Temurin 17 and JetBrains 21 as enabled.
+- AGP compile-actions run on Temurin 17 via toolchain resolution against `installations.paths`.
 
 ---
 
@@ -76,98 +176,7 @@ project ID, not a placeholder like `streamify-placeholder`.
 
 ---
 
-## 3. Sentry — `sentry { org = ...; projectName = ... }`
-
-### When this is needed
-The `io.sentry.android.gradle` plugin targets uploads at this org/project pair.
-If they don't match the actual project that owns your DSN, every release build
-will log a `404 Not Found` from `sentry.io` even with a valid auth token.
-
-### What's expected
-Two slugs as they appear in your Sentry URL bar:
-- `https://sentry.io/settings/<org>/projects/<project>/`
-
-### How to obtain them
-Open Sentry → top-left org switcher → the name there is the **org slug** →
-click **Settings ⚙** (bottom of left sidebar) → click **Projects** → find the
-project whose DSN matches the one you'll paste in Step 4 → that name is the
-**project slug**.
-
-### What to edit
-In `app/build.gradle.kts`, the `sentry { }` extension block:
-
-```kotlin
-sentry {
-    org = "<your-org-slug>"          // e.g. "streamify-0p"
-    projectName = "<your-project>"   // e.g. "android"
-    ...
-}
-```
-
-Commit this edit — it's tracked in git. The auth-token line below is read
-from `signing.properties` at build time and stays out of git.
-
----
-
-## 4. Sentry auth token — `SENTRY_AUTH_TOKEN`
-
-### When this is needed
-The `uploadSentryProguardMappingsRelease` task authenticates to Sentry's REST
-API using this token. Without it, release builds still produce an APK but the
-mapping.txt upload fails and Kotlin stack traces in your Sentry dashboard
-won't be deobfuscated.
-
-### Three token flavors Sentry exposes
-
-| Type | Path | Required role | Survives user deletion? |
-|---|---|---|---|
-| Org-level | Org Settings → API → Auth Tokens | Owner / Manager | ✅ Yes |
-| Project-level | Project Settings → Security & API | Owner / Manager / Admin | ✅ Yes |
-| Personal | Settings → Account → API → Personal Tokens | Any user | ❌ No |
-
-**Pick Org-level** if your role allows. Personal as fallback works but is tied
-to your user account (and dies with it if you leave the org).
-
-### How to mint
-1. Sentry → Auth Tokens → **Create New Token**
-2. Name it `streamify-android-build-pipeline`
-3. Scopes: ✅ **`project:releases`** + ✅ **`project:write`** — nothing else
-4. Click **Create Token**; Sentry displays the value **once** — copy immediately
-
-### Token format reference
-Sentry tokens start with `sntr` followed by a single lowercase letter that
-indicates the kind:
-- `sntrys_…` — **org-scoped** auth token (recommended for build pipelines)
-- `sntrys_` base64 payload decodes to `{"iat":...,"org":"...","region_url":...}`
-- `sntryu_…` — **user-scoped** personal auth token (typically 64-char hex after the prefix in current Sentry SaaS)
-
-The logged copy-pasteable plaintext (e.g., `sntrys_eyJpYXQ….Mp2Qw` from a
-typical org token) is what gradle reads from `signing.properties`. Length
-varies — the org-token payload after `sntrys_` is a base64 JSON object that
-runs 100–250 chars depending on Sentry server version.
-
-### Where it goes
-In your terminal, edit `C:\Users\RDP\Desktop\streamify\signing.properties`:
-```
-SENTRY_AUTH_TOKEN=sntr[a-z]+_<your-token-here>
-```
-No quotes around the value, no spaces around `=`.
-
-### 🔒 CRITICAL security rule
-**NEVER paste auth tokens (or DSNs) into chat, GitHub issues, Notion, or any
-other conversational surface.** If an attacker obtains your Sentry Auth Token
-they can act as your build pipeline against Sentry: pollute crashes, read
-breadcrumbs (which may contain user PII), modify issue assignments, and
-trigger upstream GitHub alerts tied to webhook integrations.
-
-If you ever leak one: Sentry UI → Settings → API → the leaked token's row →
-**Revoke** (instant; CDN-cached table refreshes within ~30 s) → mint a fresh
-one with a v2-suffixed name so you can spot prior leak-attributable traffic in
-audit logs.
-
----
-
-## 5. Release keystore
+## 3. Release keystore
 
 ### Why you need one
 Without a real release keystore, `app/build.gradle.kts`'s
@@ -185,7 +194,7 @@ cp signing.properties.example signing.properties
 cp secrets.properties.example   secrets.properties
 ```
 
-Then run **Steps 4–6** below to fill them.
+Then run **Steps 4–5** below to fill them.
 
 ### Generate the keystore (Windows git-bash)
 ```bash
@@ -219,7 +228,7 @@ cygpath -w ~/keystores/streamify-release.jks
 
 ---
 
-## 6. `signing.properties` — all 6 keys
+## 4. `signing.properties` — all 4 keys
 
 Open `C:\Users\RDP\Desktop\streamify\signing.properties` in your local editor
 (NOT this chat — gitignored, secrets stay local). Set each:
@@ -230,35 +239,17 @@ RELEASE_STORE_FILE=C:/Users/<you>/keystores/streamify-release.jks
 RELEASE_STORE_PASSWORD=<your-strong-store-password>
 RELEASE_KEY_ALIAS=release
 RELEASE_KEY_PASSWORD=<your-strong-key-password>
-
-# ── Sentry crash reporting ──
-APP_SENTRY_DSN=https://<public-key>@o<org-id>.ingest.<region>.sentry.io/<project-id>
-
-# ── Sentry mapping.txt upload auth token ──
-SENTRY_AUTH_TOKEN=sntr[a-z]+_<your-minted-token-here>
 ```
-
-### `<region>` in the DSN template
-Real DSNs can use any of:
-- `ingest.us.sentry.io` (US-region Sentry SaaS)
-- `ingest.eu.sentry.io` (EU-region)
-- `ingest.de.sentry.io` (Germany-region)
-- `ingest.sentry.io` (region-agnostic legacy self-hosted)
-Use whichever region your Sentry org is hosted in. The region is encoded in
-the DSN itself, so copy it verbatim from your Sentry UI.
 
 ### Acceptance check
 - No quotes around the value
 - No spaces around `=`
-- All 6 keys non-empty
+- All 4 keys non-empty
 - `RELEASE_STORE_FILE` is a Windows absolute path with forward slashes
-- `APP_SENTRY_DSN` matches the URL format
-  `https://<32hex>@o<digits>.ingest.<region>.sentry.io/<digits>`
-- `SENTRY_AUTH_TOKEN` starts with `sntr` (org `sntrys_` or user `sntryu_`)
 
 ---
 
-## 7. `secrets.properties` — all 4 keys
+## 5. `secrets.properties` — all 4 keys
 
 If you cloned fresh, create the file (it's gitignored):
 
@@ -284,10 +275,30 @@ gitignored at repo root.
 
 ---
 
-## 8. Build verification
+## 6. Build verification
 
 After all four files exist with real values, run from your terminal (where
 `signing.properties` and `secrets.properties` live):
+
+### Preflight: confirm Gradle toolchain resolves
+
+Before running the full assemble, verify both JDKs are reachable at the
+paths declared in `gradle.properties`. This catches the "different Temurin
+patch on CI" or "AS not installed" failure modes early, with a much clearer
+error than waiting for `assembleRelease` to fail mid-build:
+
+```bash
+cd 'C:\Users\RDP\Desktop\streamify'
+./gradlew --stop            # always — kill any stale daemon before reading toolchain
+./gradlew javaToolchains    # lists Temurin 17 + AS-bundled JetBrains 21 when both are reachable
+```
+
+Expected output: a table with two rows — Temurin-Hotspot-JDK-17 (enabled,
+located at the `hostedtoolcache` path) and JetBrains Runtime 21 (enabled,
+located at the AS bundle path). If either row is missing, see the
+`### Gradle Java toolchain` subsection of §1 above for recovery.
+
+### Full assemble
 
 ```bash
 cd 'C:\Users\RDP\Desktop\streamify'
@@ -297,7 +308,7 @@ cd 'C:\Users\RDP\Desktop\streamify'
 ### Expected happy path
 ```
 > Task :app:verifyReleaseSecrets
-verifyReleaseSecrets: signing.properties (6/6 keys) + secrets.properties (4/4 keys) all present ✓
+verifyReleaseSecrets: signing.properties (4/4 keys) + secrets.properties (4/4 keys) all present ✓
 > Task :app:packageRelease
 > Task :app:assembleRelease
 BUILD SUCCESSFUL in 4m 12s
@@ -305,7 +316,7 @@ BUILD SUCCESSFUL in 4m 12s
 ```
 
 The `verifyReleaseSecrets` task above is a pre-flight guard that short-circuits
-the build with a clear error if any of the 10 keys is missing. Its reference
+the build with a clear error if any of the 8 keys is missing. Its reference
 to `assembleRelease` is wrapped in `afterEvaluate { }` (in this same series
 of commits) to avoid AGP's variant-task registration ordering — never call
 `tasks.named("assembleRelease")` at file evaluation time without that wrapper.
@@ -316,46 +327,19 @@ the exact commit introducing this guard.
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `:app:assembleRelease pre-flight failed.` listing gaps | One of the 10 keys is missing/blank | Edit the named `.properties` file, fill the key |
-| `Task 'uploadSentryProguardMappingsRelease' FAILED` `401 Unauthorized` | Token revoked OR wrong scope | Sentry UI → Revoke leaked token → create fresh one with `project:releases` + `project:write` scopes |
-| Same task `403 Forbidden` | Your user role below required | Skip auth token for v1.1.0 (set `SENTRY_AUTH_TOKEN=` empty); ship without deobfuscated stack traces |
-| Same task `404 Not Found` on `…/projects/<org>/<project>/…` | Gradle's `projectName` doesn't match the actual Sentry project slug | Edit `app/build.gradle.kts` `sentry { projectName = ... }` |
-| `SigningConfig "release" is missing required property storeFile` (during `packageRelease`) | `RELEASE_STORE_FILE` is non-blank, but the path doesn't exist | Generate the keystore first (Step 5) |
+| `:app:assembleRelease pre-flight failed.` listing gaps | One of the 8 keys is missing/blank | Edit the named `.properties` file, fill the key |
+| `SigningConfig "release" is missing required property storeFile` (during `packageRelease`) | `RELEASE_STORE_FILE` is non-blank, but the path doesn't exist | Generate the keystore first (Step 3) |
 | `keytool -genkeypair` doesn't print `[Storing …]` | Permission issue on `~/keystores/` | Run with `sudo`, or move to a path you can write |
 
 ---
 
-## 9. Security checklist
+## 7. Security checklist
 
 | Do ✅ | Don't ❌ |
 |---|---|
 | Generate keystore + store in `~/keystores/` | Commit `*.jks` or `*.keystore` to git |
-| Paste real DSN into `signing.properties` | Paste DSN into chat / Slack / GitHub issues |
-| Mint and paste Sentry auth token locally | Paste `SENTRY_AUTH_TOKEN` into chat for any reason |
-| Rotate (revoke + recreate) any leaked token immediately | Reuse the leaked token — assume it was harvested |
+| Rotate (revoke + recreate) any leaked token immediately | Reuse a leaked token — assume it was harvested |
 | Tail `git status` before every `git add -A` | `git push --force` to remote — could surface previously-leaked `signing.properties` in history |
-
-### Token threat model (clarified)
-Anyone who obtains a Sentry Auth Token can act as your build pipeline
-against Sentry's API: write events, read breadcrumbs (which may contain
-snippets of user PII from beforeSend scrub), modify issue assignments,
-trigger upstream webhook alerts. The token is the only secret required to
-AD as your build. Treat it like a GitHub PAT: never paste into chat,
-review git history before pushing, rotate on any suspected leak.
-
-### If you accidentally leak a token
-1. **Revoke immediately**: Sentry UI → Settings → API → find the token row →
-   click **Revoke**. Sentry's CDN-cached token table refreshes within ~30
-   seconds, so the old token becomes useless fast.
-2. **Mint a fresh one** with same scopes, different name (e.g., add a v2
-   suffix so audit logs can attribute any post-leak traffic to this incident).
-3. **Update `signing.properties → SENTRY_AUTH_TOKEN=`** locally with the new
-   value.
-4. **Audit Sentry's event timeline** for unusual activity in the leak window:
-   Audit Log → Token Use, and Issues → new errors with payloads that don't
-   match your codebase.
-5. **Notify your team** if multiple devs share the org — a leaked token
-   affects audit log integrity for everyone.
 
 ### If you accidentally commit a `.properties` file
 1. `git rm --cached signing.properties` (removes from index, not the file on disk)
@@ -367,7 +351,7 @@ review git history before pushing, rotate on any suspected leak.
 
 ---
 
-## 10. Local-development shortcut (skip most above)
+## 8. Local-development shortcut (skip most above)
 
 If you only want to run the app for dev/debug work:
 
@@ -378,8 +362,6 @@ cd 'C:\Users\RDP\Desktop\streamify'
 
 The debug build:
 - ✅ Uses the debug keystore (auto-managed, no setup)
-- ✅ Reads `BuildConfig.SENTRY_DSN = ""` if `signing.properties` is absent, so
-   the Sentry SDK no-ops (no crashes are reported)
 - ✅ Reads `AppConfig.defaults().apiBaseUrl = "https://learngermanwith.fun"`
    when `secrets.properties` is absent (placeholder host — UI shows "no data
    loaded" gracefully)
@@ -390,9 +372,9 @@ This is enough to explore the codebase and run UI flows.
 
 ---
 
-## 11. Where to go from here
+## 9. Where to go from here
 
-After all 6 secrets.properties + signing.properties keys are real and the
+After all 8 secrets.properties + signing.properties keys are real and the
 build is green, ship v1.1.0:
 
 ### Build APK + AAB for Play
@@ -428,7 +410,7 @@ git push origin v1.1.0
 ```
 
 ### CI side
-Mirror Steps 4–7 of this guide against your runner's secret store (GitHub
+Mirror Steps 4–5 of this guide against your runner's secret store (GitHub
 Actions → encrypted secrets, GitLab CI → masked variables, etc.). The
 `.example` files in the repo are also CI-friendly placeholders; just
 materialise the values from the runner's `env` at build time.
@@ -440,11 +422,10 @@ materialise the values from the runner's `env` at build time.
 | Path | What |
 |---|---|
 | `app/google-services.json` | Firebase project export (tracked) |
-| `signing.properties` | Release keystore + Sentry DSN + Sentry auth token (gitignored) |
+| `signing.properties` | Release keystore (4 keys, gitignored) |
 | `signing.properties.example` | Empty template, committed |
 | `secrets.properties` | 4 backend URLs (gitignored) |
 | `secrets.properties.example` | Empty template, committed |
-| `app/build.gradle.kts` | `sentry { org = ; projectName = }` block, tracked |
 | `app/src/main/java/com/streamify/app/security/SecretsValidator.kt` | Boot-time placeholder detector |
 | `app/build.gradle.kts` — end of file | `verifyReleaseSecrets` pre-flight (commit `6f3e7f7`) |
 | `app/build/outputs/apk/release/app-release.apk` | Final Play-shippable APK |

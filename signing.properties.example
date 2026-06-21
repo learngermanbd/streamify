@@ -1,9 +1,8 @@
-# signing.properties — REAL release keystore + Sentry DSN / auth-token
+# signing.properties — REAL release keystore for production builds.
 #
 # Place a copy of this file at the repo root as `signing.properties`
 # (gitignored — see the project's .gitignore). Filling these in makes
-# `:app:assembleRelease` produce a Play-shippable APK and lets the
-# `io.sentry.android.gradle` plugin upload mapping.txt + InApp frames.
+# `:app:assembleRelease` produce a Play-shippable APK.
 #
 # Where each value comes from:
 #
@@ -21,21 +20,10 @@
 #                            the same as the keystore password unless
 #                            you split them.
 #
-#   APP_SENTRY_DSN           Sentry → Settings → Projects → [project]
-#                            → Client Keys (DSN).
-#                            Looks like `https://<key>@o<org>.ingest
-#                            .sentry.io/<project>`.
-#
-#   SENTRY_AUTH_TOKEN        Sentry → Settings → API → Auth Tokens.
-#                            Scopes required: project:releases +
-#                            project:write (so the uploadSentry
-#                            ProguardMappingsRelease task does not
-#                            401).
-#
 # When this file is missing, the build falls back to the debug
-# signing config (Sentry upload no-ops). Real values MUST be in
-# place BEFORE the production release pipeline ships to Play.
-# DO NOT commit this file — it's in .gitignore.
+# signing config. Real values MUST be in place BEFORE the production
+# release pipeline ships to Play. DO NOT commit this file — it's
+# in .gitignore.
 
 # Path to the release keystore (relative to repo root; not committed).
 RELEASE_STORE_FILE=path/to/your-release.jks
@@ -43,9 +31,3 @@ RELEASE_STORE_FILE=path/to/your-release.jks
 RELEASE_STORE_PASSWORD=
 RELEASE_KEY_ALIAS=release
 RELEASE_KEY_PASSWORD=
-
-# Sentry DSN.
-APP_SENTRY_DSN=
-
-# Sentry auth token (Settings → API → Auth Tokens).
-SENTRY_AUTH_TOKEN=

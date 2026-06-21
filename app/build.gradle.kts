@@ -11,7 +11,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)                    // Room compiler + future annotation processors
     alias(libs.plugins.google.services)    // Firebase Messaging only (BoM)
-    alias(libs.plugins.sentry.android)      // Step 6.5 — auto-uploads R8 mapping.txt + InApp frames on assembleRelease
 }
 
 import java.security.SecureRandom
@@ -34,12 +33,10 @@ android {
     ndkVersion = "27.3.13750724"  // r27c; AGP-injected 16 KB linker defaults
 
     // -----------------------------------------------------------------
-    // Phase 6 · Step 6.5 — Hoisted signing.properties read so both the
-    // release keystore AND the Sentry DSN/auth-token come from one
-    // gitignored file. The .example lives at repo root
-    // (`signing.properties.example`); real values drop into
-    // `signing.properties` (also gitignored) which Gradle reads at
-    // configuration time.
+    // Hoisted signing.properties read for the release keystore.  The
+    // .example lives at repo root (`signing.properties.example`); real
+    // values drop into `signing.properties` (also gitignored) which
+    // Gradle reads at configuration time.
     //
     // Falls back to an empty Properties when the file is missing so
     // `assembleDebug` still works for developers without prod creds.
@@ -60,18 +57,6 @@ android {
         targetSdk = 36
         versionCode = 2
         versionName = "1.1.0"
-
-        // Step 6.5 — Sentry DSN. When blank (debug install or local CI
-        // without props), BuildConfig.SENTRY_DSN is the empty string and
-        // StreamifyApp's `takeIf { isNotBlank() }` short-circuits the
-        // SDK init. We deliberately do NOT throw — a developer running
-        // `assembleRelease` locally to verify obfuscation should not
-        // need to drop credentials into a file.
-        buildConfigField(
-            "String",
-            "SENTRY_DSN",
-            "\"" + (rootSigningProps.getProperty("APP_SENTRY_DSN") ?: "") + "\""
-        )
 
         // Phase 7 · Step 7.5 + Step 7.13 — APK signing certificate SHA-256.
         // Production release builds read the actual signing cert from the
@@ -186,40 +171,11 @@ android {
         }
     }
 
-    // -----------------------------------------------------------------
-    // Phase 6 · Step 6.5 — Sentry Gradle plugin extension.
-    //
-    // authToken is the SECRET (Settings → API → Auth Tokens, scope:
-    // `project:releases` + `project:write`). Blank => upload task is
-    // a no-op so a developer with no production creds still produces a
-    // working APK. `org` + `projectName` are project slugs (NOT secrets)
-    // and are hardcoded so the upload task names are stable across runs.
-    // `autoProguardConfig` keeps the SDK's consumer rules in place;
-    // `includeSourceContext` decorates release events with file:line of
-    // the user-code frame (improves triage speed by ~20%).
-    //
-    // `uploadNativeSymbols = false` because the project does NOT depend
-    // on `io.sentry:sentry-android-ndk` — enabling it would crash the
-    // upload task with `NoSuchMethodError`.
-    // -----------------------------------------------------------------
-    sentry {
-        org = "streamify-0p"
-        projectName = "streamify"
-        authToken = (rootSigningProps.getProperty("SENTRY_AUTH_TOKEN") ?: "").trim()
-        autoUploadProguardMapping = true
-        includeSourceContext = true
-        uploadNativeSymbols = false
-        // We deliberately do NOT set `proguardMappings` / `manifestPath`
-        // — the plugin's auto-detect already points at the AGP-generated
-        // paths for our standard layout. Setting them manually is a
-        // foot-gun if AGP renames the artifact path in a future release.
-    }
-
     buildTypes {
         release {
             // R8 / ProGuard enabled — see `proguard-rules.pro` for the
             // keep rules that protect the reflection-driven entry
-            // points (Sentry, Room, Gson, Glide, Media3, OkHttp, etc.).
+            // points (Room, Gson, Glide, Media3, OkHttp, etc.).
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -291,15 +247,11 @@ dependencies {
 
     // ── Firebase — messaging ONLY (FCM push notifications) ──
     // Remote Config intentionally replaced by our own /api/config endpoint (Phase 8).
-    // Crashlytics intentionally replaced by Sentry (below).
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.play.integrity)          // Step 7.10 — Play Integrity API & device attestation
     // Step 7.10 — see [libraries]/play-services-base note in libs.versions.toml for firebase-bom dedup rationale
     implementation(libs.play.services.base)
-
-    // ── Sentry — crash reporting (replaces Firebase Crashlytics) ──
-    implementation(libs.sentry.android)
 
     // ── Lottie — animations (splash loader, player overlays) ──
     implementation(libs.lottie)
@@ -372,7 +324,6 @@ dependencies {
 //
 // Reads sensitive strings from secrets.properties (gitignored) with
 // fallback defaults so assembleDebug works without prod creds.
-// SENTRY_DSN comes from signing.properties (shared with Sentry plugin).
 //
 // Generates EncryptedConstants.kt in build/generated/source/encryption/
 // with AES-256-GCM encrypted byte arrays + XOR-obfuscated key.
@@ -414,12 +365,7 @@ val encryptSecrets by tasks.registering {
                 ?: "https://learngermanwith.fun/update"),
             "TELEGRAM_LINK" to (props.getProperty("TELEGRAM_LINK")
                 ?: "https://t.me/streamify"),
-            "SENTRY_DSN" to (
-                signingProps.getProperty("APP_SENTRY_DSN")
-                    ?: props.getProperty("SENTRY_DSN")
-                    ?: ""
-                ),
-            // Phase 7 · Step 7.7 — HMAC signing secret consumed by
+            // Phase 7 · Step 7.13 — HMAC signing secret consumed by
             // RequestSigner.v1.1.1. Build-time encrypted so the literal
             // never appears in the APK's strings table. Optional:
             // debug builds without secrets.properties get an empty
@@ -544,7 +490,6 @@ tasks.withType<Test>().configureEach {
 // Verifies signing.properties + secrets.properties exist with all
 // required keys BEFORE `:app:assembleRelease` runs. Without this
 // guard a missing key was silently falling through to:
-//   - log-only Sentry SDK warnings (empty DSN → SDK no-ops)
 //   - hard Gradle failures deep inside a packaging task
 //   - signingConfig falling back to debug (since the `release`
 //     config block's `storeFile` resolves to null when the path
@@ -563,17 +508,18 @@ tasks.withType<Test>().configureEach {
 // task is registered and named lookup is safe.
 //
 // The check itself runs at `doFirst` of `assembleRelease` so it sees
-// the full task graph but executes before any R8 / signing / Sentry
-// work has begun.
+// the full task graph but executes before any R8 / signing work
+// has begun.
 // -----------------------------------------------------------------
 afterEvaluate {
         tasks.named("assembleRelease").configure {
             doFirst {
-                // Production builds enforce all 10 secrets. Use
+                // Production builds enforce all 8 secrets (4 from signing.properties
+                // + 4 from secrets.properties). Use
                 // `-PallowUnsignedRelease=true` to opt out — produces an
                 // *unsigned* release APK that still runs R8/minification, but
                 // skips the credentials gate. Use case: sandbox test-installs
-                // or CI artifacts where signing/api/sentry secrets don't matter.
+                // or CI artifacts where signing/api secrets don't matter.
                 // NEVER set this flag for Play-store-shippable builds.
                 if (rootProject.findProperty("allowUnsignedRelease") == "true") {
                     logger.lifecycle("verifyReleaseSecrets: SKIPPED (-PallowUnsignedRelease=true)")
@@ -593,8 +539,6 @@ afterEvaluate {
                 "RELEASE_STORE_PASSWORD",
                 "RELEASE_KEY_ALIAS",
                 "RELEASE_KEY_PASSWORD",
-                "APP_SENTRY_DSN",
-                "SENTRY_AUTH_TOKEN",
             )) {
                 if (signingProps.getProperty(k).isNullOrBlank()) {
                     errors += "signing.properties: missing $k"
@@ -626,7 +570,7 @@ afterEvaluate {
                 )
             }
             logger.lifecycle(
-                "verifyReleaseSecrets: signing.properties (6/6 keys) + " +
+                "verifyReleaseSecrets: signing.properties (4/4 keys) + " +
                     "secrets.properties (4/4 keys) all present ✓"
             )
         }

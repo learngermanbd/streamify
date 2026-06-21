@@ -16,7 +16,7 @@ import com.streamify.app.data.remote.AppConfig
  * ## Why this exists
  *
  * Before this validator the boot-time symptoms of a placeholder
- * Firebase / Sentry / API config were either:
+ * Firebase / API config were either:
  *   - **Silent**: the placeholder values entered the JNI realm
  *     cleanly and an API call later 401'd / 404'd; OR
  *   - **Auto-closing**: the placeholder `mobilesdk_app_id`'d project
@@ -25,9 +25,8 @@ import com.streamify.app.data.remote.AppConfig
  *
  * The fix is non-destructive: detect the placeholder at boot and log
  * a single Log.w breadcrumb so the misconfiguration is surfaced in
- * Logcat (and in any Sentry event the app captures while the bug is
- * still small). Placeholders are NOT fatal — the app continues to
- * launch with FCM / Sentry / live-API disabled. Operators can ship
+ * Logcat. Placeholders are NOT fatal — the app continues to
+ * launch with FCM / live-API disabled. Operators can ship
  * the APK to Internal Testing while they source the real credentials.
  *
  * ## Where it runs
@@ -45,10 +44,7 @@ import com.streamify.app.data.remote.AppConfig
  *     `000000000000`.
  *  2. **Firebase API key** — read from `R.string.google_api_key`.
  *     The shipped placeholder starts with `AIzaSyXXXX…`.
- *  3. **Sentry DSN / AuthToken** — read from [BuildConfig.SENTRY_DSN]
- *     (populated by gradle from `signing.properties → APP_SENTRY_DSN`).
- *     Blank when `signing.properties` is absent.
- *  4. **API base URL** — `AppConfig.defaults().apiBaseUrl`. Falls
+ *  3. **API base URL** — `AppConfig.defaults().apiBaseUrl`. Falls
  *     back to `https://learngermanwith.fun` (placeholder host) when
  *     `secrets.properties` is absent.
  */
@@ -108,13 +104,7 @@ object SecretsValidator {
             Log.w(TAG, "Firebase config detection failed", t)
         }
 
-        // ── 2. Sentry DSN detection (signing.properties) ──────────
-        if (BuildConfig.SENTRY_DSN.isBlank()) {
-            issues += "Sentry DSN is empty (signing.properties not present or " +
-                "APP_SENTRY_DSN not set). Crash reporting will no-op."
-        }
-
-        // ── 3. API Base URL detection (secrets.properties) ────────
+        // ── 2. API Base URL detection (secrets.properties) ────────
         try {
             val apiBase = AppConfig.defaults().apiBaseUrl
             if (apiBase.contains(SECRETS_FALLBACK_HOST)) {
@@ -128,7 +118,7 @@ object SecretsValidator {
 
         // ── Log result ────────────────────────────────────────────
         if (issues.isEmpty()) {
-            Log.i(TAG, "OK — Firebase + Sentry + API endpoints all configured.")
+            Log.i(TAG, "OK — Firebase + API endpoints all configured.")
         } else {
             Log.w(TAG, "Setup check found ${issues.size} placeholder value(s):")
             issues.forEachIndexed { i, msg -> Log.w(TAG, "  ${i + 1}. $msg") }

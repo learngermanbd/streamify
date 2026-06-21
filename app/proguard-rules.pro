@@ -35,7 +35,8 @@
 # ── Strip source-file information ────────────────────────────────────────
 # Removes SourceFile + LineNumberTable attributes from class files.
 # Stack traces will show obfuscated names with no file/line info.
-# Sentry's uploaded mapping.txt still allows deobfuscation server-side.
+# Stack traces keep obfuscated names; original file/line is unavailable
+# unless an additional mapping.txt is generated and stored out-of-band.
 -keepattributes !SourceFile,!LineNumberTable
 -renamesourcefileattribute ''
 
@@ -64,11 +65,6 @@
 -keepclassmembers class * {
     @androidx.room.* <methods>;
 }
-
-# ── Sentry ───────────────────────────────────────────────────────────────
-# Keep Sentry event classes that are serialized via reflection.
--keep class io.sentry.SentryEvent { *; }
--keep class io.sentry.protocol.** { *; }
 
 # ── Phase 7 · Step 7.2 — Security package ────────────────────────────────
 # EncryptedConstants is accessed directly (no reflection) so R8 will keep
@@ -109,8 +105,9 @@
 # ── Phase 7 · Step 7.5 — Integrity / Tamper / SelfHealing ──────────────
 # IntegrityChecker and TamperDetector use PackageManager reflection
 # and ZipFile iteration (no reflection-based field access).  SelfHealing
-# references BuildConfig.DEBUG and Sentry.captureEvent (kept by Sentry
-# rules above).  No additional keep rules needed — direct calls only.
+# referenced from the IntegrityChecker / TamperDetector / SelfHealing
+# modules. None of those use reflection, so direct-call optimization
+# handles them. No additional keep rules needed.
 
 # ── Phase 7 · Step 7.7 ── SSL pinner reflection probe ──────────────────────────────────────
 # SSLPinner.initialize probes `BuildConfig.SSL_PINS_LEARNGERMANWITH_FUN`

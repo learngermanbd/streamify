@@ -55,12 +55,16 @@ object SSLPinner {
      * `SSL_PINS_<UPPER_DOMAIN>` field) can override the
      * placeholder pins per build.
      */
+    // Pins regenerated 2026-06-21 from the live cert chain via openssl
+    // s_client -connect learngermanwith.fun:443. Order: leaf first,
+    // backup is the GTS WE1 intermediate so a leaf-cert renewal is
+    // survivable without an app update.
     private val PINS: MutableMap<String, MutableList<String>> = mutableMapOf(
         "learngermanwith.fun" to mutableListOf(
-            // Primary: Let's Encrypt Authority X3
-            "sha256/YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=",
-            // Backup: ISRG Root X1 (Let's Encrypt root CA)
-            "sha256/Vjs8r4z+80wjNcr1YKepWQboSIRi63WsWXhIMN+eWys=",
+            // Primary: leaf (CN=learngermanwith.fun)
+            "sha256/IGIlXMkDynwXVTT3GmncxsWOhz5LUyeVTiN/U/ouGeo=",
+            // Backup: GTS WE1 intermediate
+            "sha256/kIdp6NNEd8wsugYyyIYFsi1ylMCED3hZbSR8ZFsa/A4=",
         )
     )
 

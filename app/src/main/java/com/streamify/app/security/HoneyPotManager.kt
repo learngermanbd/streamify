@@ -87,19 +87,11 @@ object HoneyPotManager {
      */
     fun triggerCanary(canaryId: String) {
         canaryStates[canaryId] = true
-        Log.e(TAG, "CANARY TRIGGERED: $canaryId — possible attack!")
-
-        // Report to Sentry
-        try {
-            io.sentry.Sentry.captureMessage(
-                "Honeypot canary triggered: $canaryId"
-            ) { scope ->
-                scope.setExtra("canaryId", canaryId)
-                scope.setExtra("timestamp", System.currentTimeMillis().toString())
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to report canary: ${e.message}")
-        }
+        Log.e(
+            TAG,
+            "CANARY TRIGGERED: $canaryId — possible attack! " +
+                "timestamp=${System.currentTimeMillis()}"
+        )
     }
 
     /**

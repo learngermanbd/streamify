@@ -39,7 +39,7 @@ import kotlin.coroutines.resume
  *  - **Tri-state verdictState propagation** — the cached
  *    [IntegrityVerdict] now carries an explicit
  *    `verdictState` so [com.streamify.app.security.SecurityGate]
- *    can distinguish CELSEPARATE-CLEAN from INCONCLUSIVE in Sentry
+ *    can distinguish CLEAN from INCONCLUSIVE in security-gate
  *    breadcrumbs (without affecting the local risk score).
  *
  * ## Flow
@@ -288,7 +288,7 @@ object PlayIntegrityManager {
      * Convenience used by the catch-all path in [requestToken] —
      * maps an exception into an INCONCLUSIVE verdict with the
      * exception's message preserved in the device-recognition
-     * verdict slot for Sentry traces.
+     * verdict slot for forensic review.
      */
     private fun inconclusiveFromException(t: Throwable): IntegrityVerdict =
         IntegrityVerdict.inconclusive(

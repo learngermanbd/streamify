@@ -16,7 +16,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    // alias(libs.plugins.sentry.android)  // Step 6.5 — deferred until admin module is actively developed
 }
 
 import java.util.Properties
@@ -25,7 +24,6 @@ android {
     namespace = "com.streamify.admin"
     compileSdk = 35
 
-    // Step 6.5 — same hoisted properties pattern as :app.
     val rootSigningProps = Properties()
     rootProject.file("signing.properties").takeIf { it.exists() }?.let { f ->
         f.inputStream().use { stream -> rootSigningProps.load(stream) }
@@ -37,14 +35,6 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
-
-        // Step 6.5 — separate DSN slot for the admin app. Two Sentry
-        // projects so admin crashes don't pollute user-app release health.
-        buildConfigField(
-            "String",
-            "SENTRY_DSN",
-            "\"" + (rootSigningProps.getProperty("ADMIN_SENTRY_DSN") ?: "") + "\""
-        )
     }
 
     buildFeatures {
@@ -83,21 +73,6 @@ android {
         }
     }
 
-    // -----------------------------------------------------------------
-    // Step 6.5 — Sentry Gradle plugin extension. Distinct `projectName`
-    // so admin crash mappings end up under a separate Sentry project
-    // (admin events should NOT tangle with user-app release health).
-    // -----------------------------------------------------------------
-    // Sentry plugin config — deferred until admin module is actively developed.
-    // sentry {
-    //     org = "sportstream-app"
-    //     projectName = "sportstream-admin-android"
-    //     authToken = (rootSigningProps.getProperty("SENTRY_AUTH_TOKEN") ?: "").trim()
-    //     autoUploadProguardMapping = true
-    //     includeSourceContext = true
-    //     uploadNativeSymbols = false
-    // }
-
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -130,9 +105,6 @@ android {
 dependencies {
     // -- Material 3 (orange theme for admin) --
     implementation(libs.material)
-
-    // -- Sentry (same as :app -- admins crash too) --
-    implementation(libs.sentry.android)
 
     // -- ViewModel + LiveData (login state, dashboard state) --
     implementation(libs.lifecycle.viewmodel.ktx)

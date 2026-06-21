@@ -13,15 +13,6 @@
 -keep public class com.streamify.admin.ui.login.LoginActivity { *; }
 -keep public class com.streamify.admin.ui.dashboard.DashboardActivity { *; }
 
-# --- Sentry ---
--keep class io.sentry.android.core.SentryAndroid { *; }
--keep class io.sentry.Sentry { *; }
--keep class io.sentry.SentryOptions { *; }
--keep class io.sentry.protocol.** { *; }
--keep class io.sentry.event.Event { *; }
--dontwarn io.sentry.**
-# Same reasoning as :app: admin does not host native NDK.
-
 # --- OkHttp + Okio ---
 -dontwarn okhttp3.**
 -dontwarn okio.**

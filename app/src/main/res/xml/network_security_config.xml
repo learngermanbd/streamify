@@ -30,17 +30,18 @@
         </trust-anchors>
     </base-config>
 
-    <!-- Certificate pinning for the API domain. -->
+    <!-- Certificate pinning for the API domain.
+         Pins regenerated 2026-06-21 from the live cert chain via openssl
+         s_client -connect learngermanwith.fun:443. Chain: leaf signed by
+         GTS WE1 intermediate; root GTS Root R4 (cross-signed by GlobalSign).
+         Primary = leaf. Backup = WE1 intermediate — survives leaf renewal. -->
     <domain-config>
         <domain includeSubdomains="true">learngermanwith.fun</domain>
-        <pin-set expiration="2027-01-01">
-            <!-- Primary pin: Let's Encrypt Authority X3
-                 (generated from the current certificate chain).
-                 TODO(Phase 7): replace with real pin from production cert. -->
-            <pin digest="SHA-256">YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=</pin>
-            <!-- Backup pin: ISRG Root X1 (Let's Encrypt root CA)
-                 Survives intermediate CA rotation. -->
-            <pin digest="SHA-256">Vjs8r4z+80wjNcr1YKepWQboSIRi63WsWXhIMN+eWys=</pin>
+        <pin-set expiration="2026-10-15">
+            <!-- Primary pin: leaf cert (CN=learngermanwith.fun) -->
+            <pin digest="SHA-256">IGIlXMkDynwXVTT3GmncxsWOhz5LUyeVTiN/U/ouGeo=</pin>
+            <!-- Backup pin: Google Trust Services WE1 intermediate -->
+            <pin digest="SHA-256">kIdp6NNEd8wsugYyyIYFsi1ylMCED3hZbSR8ZFsa/A4=</pin>
         </pin-set>
     </domain-config>
 </network-security-config>

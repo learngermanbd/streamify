@@ -24,16 +24,13 @@ import com.streamify.app.security.SecurityGate
 import com.streamify.app.security.SecurityModule
 import com.streamify.app.security.TokenStore
 import com.streamify.app.services.UpdateWorker
-import io.sentry.SentryEvent
-import io.sentry.SentryOptions
-import io.sentry.android.core.SentryAndroid
 import kotlinx.coroutines.runBlocking
 
 /**
  * Application entry-point. Initialised once per process.
  *
  * Phase 0 ✓ — environment wired (JDK 17 · Android SDK 35 · Gradle 8.11.1).
- * Phase 1 ✓ — Project scaffold, dependencies, theme, FCM+Sentry init.
+ * Phase 1 ✓ — Project scaffold, dependencies, theme, FCM init.
  * Phase 2 ✓ — Network + Local + Repository DI seams.
  * Phase 3 ✓ — Activities + Fragments + Adapters + UI flows.
  * Phase 4 ✓ — ExoPlayer + PiP + gestures + SubTitle/Quality selectors.
@@ -47,133 +44,23 @@ import kotlinx.coroutines.runBlocking
  */
 class StreamifyApp : Application() {
 
-    /**
-     * Phase 6 · Step 6.5 — Sentry first: captures initialization crashes
-     * of downstream steps. DSN is injected from [BuildConfig.SENTRY_DSN]
-     * (populated by `app/build.gradle.kts` from
-     * `signing.properties → APP_SENTRY_DSN`). When blank (debug install
-     * without prod creds) the SDK no-ops and falls through to Logcat's
-     * native stack trace. We deliberately do NOT throw — `assembleRelease`
-     * should still succeed with no `signing.properties` present so that
-     * minification pipeline tests don't have to drop credentials.
-     *
-     * Crash-only reporting tuned for v1:
-     *   sampleRate        = 1.0   — always capture the crash or it never
-     *                              ships; Sentry's default for `error`
-     *                              events is already 1.0 but we set it
-     *                              explicitly so a future SDK change
-     *                              can't silently suppress crashes.
-     *   tracesSampleRate  = 0.0   — no perf spans (saves Sentry quota +
-     *                              avoids the player-overlay frame
-     *                              ingestion tax on ExoPlayer sessions).
-     *   sessionTracking   = !DEBUG — release builds don't tap into
-     *                              background telemetry the user has
-     *                              already opted out of at OS level.
-     *   attachStacktrace  = true
-     *   attachThreads     = true  — multi-thread crashes (the most      *                              common shape in this codebase — FCM
-     *                              + ExoPlayer render thread + DataStore
-     *                              IO) need the full thread dump.
-     *   attachViewHierarchy = false  — PiP overlay + crash-screen pixels
-     *                              would leak user state; we skip it.
-     */
-    private fun initSentry() {
-        SentryAndroid.init(this) { options ->
-            // v1.1.1 — align with KDoc: "When blank, SDK no-ops".
-            // The previous `takeIf { isNotBlank() }` returned null when
-            // APP_SENTRY_DSN was unset, which Sentry.init() throws
-            // "DSN is required" on (Sentry.java:396). Per Sentry's own
-            // guidance on that exception: "Use empty string or set
-            // enabled to false in SentryOptions to disable SDK". We
-            // choose `isEnabled = false` so the SDK no-ops silently
-            // (no warning log, no error breadcrumb).
-            if (BuildConfig.SENTRY_DSN.isBlank()) {
-                options.isEnabled = false
-            } else {
-                options.dsn = BuildConfig.SENTRY_DSN
-            }
-            options.isDebug = BuildConfig.DEBUG
-            options.sampleRate = 1.0
-            options.tracesSampleRate = 0.0
-            options.isEnableAutoSessionTracking = !BuildConfig.DEBUG
-            options.environment = if (BuildConfig.DEBUG) "debug" else "release"
-            options.release = "${BuildConfig.APPLICATION_ID}@${BuildConfig.VERSION_NAME}+${BuildConfig.VERSION_CODE}"
-            options.isAttachStacktrace = true
-            options.isAttachThreads = true
-            options.isAttachViewHierarchy = false
-            options.beforeSend = SentryOptions.BeforeSendCallback { event, _ -> scrubPii(event) }
-            options.setTag("versionName", BuildConfig.VERSION_NAME)
-            options.setTag("versionCode", BuildConfig.VERSION_CODE.toString())
-            options.setTag("process", "main")
-        }
-    }
-
-    /**
-     * Phase 6 · Step 6.5 — in-place PII scrub for any event Sentry is about
-     * to capture. Strips Bearer/JWT tokens, FCM tokens (≥140 chars that
-     * look like firebase registration tokens), Android-IDs and cookie
-     * values from message text, breadcrumb data + HTTP request headers.
-     * We never drop the event (returning null would silence the crash)
-     * — we ALWAYS scrub in place and let the report ship.
-     */
-    private fun scrubPii(event: SentryEvent): SentryEvent? {
-        val piiPatterns = listOf(
-            // RFC 6750 Bearer scheme + RFC 7519 base64url chars
-            Regex("(?i)(Bearer\\s+)[A-Za-z0-9\\-._~+/]+=*"),
-            // FCM registration tokens (140+ char base64)
-            Regex("(?i)(FCM[_-]?Token[:= ]?)[A-Za-z0-9_\\-]{140,}"),
-            // Advertising-ID / ANDROID_ID style hex
-            Regex("(?i)(android[_-]?id[:= ]?)[A-Fa-f0-9\\-]{8,}"),
-            // Cookie header value
-            Regex("(?i)(Cookie[:= ]?)[^\\s;]+"),
-        )
-        fun redact(input: String?): String? {
-            if (input.isNullOrBlank()) return input
-            var scrubbed: String = input
-            piiPatterns.forEach { scrubbed = scrubbed.replace(it, "$1[Filtered]") }
-            return scrubbed
-        }
-        event.message?.message?.let { event.message?.message = redact(it) }
-        event.breadcrumbs?.forEach { bc ->
-            bc.message?.let { bc.message = redact(it) }
-            bc.data?.keys?.toList()?.forEach { k ->
-                bc.data?.get(k)?.let { v ->
-                    bc.data?.put(k, redact(v?.toString()) ?: v)
-                }
-            }
-        }
-        event.request?.headers?.let { headers ->
-            headers.keys.toList().forEach { k ->
-                if (k.equals("Authorization", true) ||
-                    k.contains("Token", true) ||
-                    k.contains("Cookie", true)
-                ) {
-                    headers[k] = "[Filtered]"
-                }
-            }
-        }
-        return event
-    }
-
     override fun onCreate() {
         super.onCreate()
 
         // -----------------------------------------------------------------
         // Phase 6 · Step 6.4 — CrashHandler MUST be installed as the FIRST
-        // non-trivial step.  Any subsequent failure (initSentry, BuildConfig
-        // read, DataStore write, R8-stripped class lookup, etc.) lands in
+        // non-trivial step.  Any subsequent failure (BuildConfig read,
+        // DataStore write, R8-stripped class lookup, etc.) lands in
         // CrashActivity instead of killing the process with no recovery
         // surface — this converts the user-visible "auto-closing" symptom
         // into a real error screen they can React to.  Wrapped in
         // try/catch because we cannot tolerate CrashHandler itself
         // throwing — that would leave the app with no recovery path.
         //
-        // Ordering note (the previous flow installed AFTER Sentry).  The
-        // chained order is now: Sentry (installed by initSentry below) →
-        // our CrashHandler → Android KillApplicationHandler.  Sentry's
-        // handler calls `previous.uncaughtException` which still routes
-        // to us, so the on-disk dump + CrashActivity launch still
-        // happens — and the Sentry capture happens first, which is what
-        // we actually want for a release build.
+        // Ordering note.  The chained order is now: our CrashHandler →
+        // Android KillApplicationHandler.  CrashHandler writes the local
+        // dump + launches CrashActivity, then forwards to the OS default
+        // which terminates the process.
         // -----------------------------------------------------------------
         try {
             CrashHandler.install(applicationContext)
@@ -186,7 +73,7 @@ class StreamifyApp : Application() {
         // on CrashActivity). When the dying main process's handler
         // forks the recovery Activity, a new Application instance is
         // created in the `:crash` process. We must skip the heavy
-        // initialisation so we don't duplicate Sentry telemetry or
+        // initialisation so we don't duplicate telemetry or
         // accidentally fire any of the receivers/wires the dying main
         // process just tore down.
         try {
@@ -203,8 +90,6 @@ class StreamifyApp : Application() {
         // (with Retry) rather than a silent process death.  Each `runStep`
         // rethrows CancellationException so structured concurrency survives.
         // -----------------------------------------------------------------
-        runStep("initSentry") { initSentry() }
-
         // Phase 7 · Step 7.2 — initialise string-encryption subsystem.
         // Registers a ComponentCallbacks2 that wipes the decrypted-value
         // cache when the app enters the background (onTrimMemory).
@@ -301,9 +186,9 @@ class StreamifyApp : Application() {
         }
 
         // Setup-completeness audit (v1.1.0 maintenance) — detect
-        // placeholder Firebase / Sentry / API configs at boot and log
+        // placeholder Firebase / API configs at boot and log
         // ONE clear breadcrumb per gap. Non-fatal: the app continues
-        // to launch. Operators reading Logcat / Sentry see exactly
+        // to launch. Operators reading Logcat see exactly
         // which credential blocks production. See SecretsValidator.kt.
         runStep("SecretsValidator.validate") {
             SecretsValidator.validate(applicationContext)
@@ -312,10 +197,10 @@ class StreamifyApp : Application() {
 
     /**
      * Phase 6 · Step 6.4 — Run a single launch step with defensive
-     * guarding. Failures are LOGGED so Sentry (once `initSentry()` has
-     * run) can pick them up, but the launch proceeds normally so the
-     * user still reaches SplashActivity and sees the existing error
-     * card UI (with Retry) instead of the process silently dying.
+     * guarding. Failures are LOGGED so CrashHandler can pick them up,
+     * but the launch proceeds normally so the user still reaches
+     * SplashActivity and sees the existing error card UI (with Retry)
+     * instead of the process silently dying.
      *
      * `CancellationException` is rethrown so structured concurrency
      * survives — a coroutine cancellation in `runBlocking` must NOT be
@@ -414,13 +299,5 @@ class StreamifyApp : Application() {
         val Context.remoteConfigDataStore by preferencesDataStore(
             name = "streamify_remote_config"
         )
-
-        // Sentry DSN flows from BuildConfig.SENTRY_DSN (populated by
-        // app/build.gradle.kts from `signing.properties → APP_SENTRY_DSN`).
-        // The companion's old `private const val SENTRY_DSN = ""` placeholder
-        // is gone — BuildConfig is the single source of truth.
-        // (Step 6.5 ships the `io.sentry.android.gradle` plugin alongside
-        //  so `assembleRelease` auto-uploads mapping.txt for deobfuscated
-        //  stack traces.)
     }
 }

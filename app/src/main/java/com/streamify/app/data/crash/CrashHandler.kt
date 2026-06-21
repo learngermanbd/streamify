@@ -18,9 +18,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Phase 6 \u00b7 Step 6.4 \u2014 global UncaughtExceptionHandler.
  *
- * Installed once from
- * [com.streamify.app.StreamifyApp.onCreate] right after the Sentry SDK
- * initialises. The handler:
+ * Installed once from [com.streamify.app.StreamifyApp.onCreate]
+ * as the FIRST non-trivial step of the launch sequence. The handler:
  *
  *   1. atomic re-entry guard \u2014 if a crash fires while we are still
  *      inside the previous `uncaughtException` call (e.g. the chain itself
@@ -31,21 +30,12 @@ import java.util.concurrent.atomic.AtomicBoolean
  *   3. Launch [CrashActivity] via a NEW_TASK | CLEAR_TASK Intent so the
  *      recovery surface appears in the foreground.
  *   4. Chain to whatever `Thread.getDefaultUncaughtExceptionHandler()`
- *      returned at install time \u2014 in this project that's the Sentry
- *      SDK's chain, which captures the event synchronously and forwards
- *      to Android's KillApplicationHandler.
- *
- * IMPORTANT: we DO NOT call `Sentry.captureException` ourselves. Sentry's
- * own handler (chained at install) does that already; if we also call it,
- * a single crash would be reported twice and log noise multiplies.
+ *      returned at install time \u2014 normally Android's
+ *      `KillApplicationHandler`, which terminates the process so
+ *      the OS doesn't ANR.
  *
  * IMPORTANT: we DO NOT broadcast to `FloatingPlayerService`. The OS
  * already reaps a dying process's foreground services cleanly.
- *
- * IMPORTANT: we DO NOT chain to a process-kill manually because the
- * Sentry handler chain forwards to KillApplicationHandler; if Sentry is
- * disabled (DSN blank), the previous default will be the system's
- * KillApplicationHandler which still does the right thing.
  */
 class CrashHandler private constructor(private val appContext: Context) :
     Thread.UncaughtExceptionHandler {
@@ -84,10 +74,10 @@ class CrashHandler private constructor(private val appContext: Context) :
             Log.e(TAG, "could not start CrashActivity", t)
         }
 
-        // 4. Forward to whatever was installed before us. In the
-        // StreamifyApp wiring order that is Sentry's handler \u2014
-        // which calls Sentry.captureException synchronously, flushes,
-        // and forwards to Android's KillApplicationHandler.
+        // 4. Forward to whatever was installed before us. With the
+        // current launch wiring that is Android's default
+        // `KillApplicationHandler`, which terminates the process so
+        // the OS doesn't ANR.
         chain(thread, throwable)
     }
 

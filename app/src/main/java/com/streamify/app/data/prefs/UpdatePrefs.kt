@@ -10,14 +10,13 @@ import kotlinx.coroutines.flow.map
 
 /**
  * Phase 6 · Step 6.2 — DataStore wrapper for update-related preferences.
- *
- * Two keys are persisted:
- *  - [DISMISSED_LATEST] — the version the user tapped "Later" on. We
- *    won't surface that optional-update nag again until the server bumps
- *    `latestVersion` to something the user hasn't dismissed yet.
- *  - [LAST_FORCED] — the last forced minVersion we routed the user through
- *    UpdateActivity for. Currently used only for Sentry breadcrumbs
- *    (Phase 7 hooks); not blocking.
+ *     * Two keys are persisted:
+     *  - [DISMISSED_LATEST] — the version the user tapped "Later" on. We
+     *    won't surface that optional-update nag again until the server bumps
+     *    `latestVersion` to something the user hasn't dismissed yet.
+     *  - [LAST_FORCED] — the last forced minVersion we routed the user through
+     *    UpdateActivity for. Currently used only for logcat forensics
+     *    (Phase 7 hooks); not blocking.
  *
  * `updatePrefs` extension lives on Context (one instance per process).
  * `MutablePreferences.edit { ... }` is null-safe — if the underlying

@@ -42,7 +42,7 @@ object RuntimeStringProvider {
      * stores the result.
      *
      * @param key  One of the keys defined in [EncryptedConstants.ENTRIES]
-     *             (e.g. "API_BASE_URL", "SENTRY_DSN").
+     *             (e.g. "API_BASE_URL", "SIGNING_SECRET").
      * @throws IllegalArgumentException if [key] is not in [EncryptedConstants.ENTRIES].
      */
     fun get(key: String): CharArray {

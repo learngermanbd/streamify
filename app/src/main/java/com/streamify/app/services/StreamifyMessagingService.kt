@@ -68,7 +68,7 @@ class StreamifyMessagingService : FirebaseMessagingService() {
      * The endpoint shape is `{ "token": "...", "platform": "android" }`;
      * the backend maps token → user-id → targeted push later.
      *
-     * We do NOT log raw token bytes — Sentry breadcrumbs and adb logcat
+     * We do NOT log raw token bytes — adb logcat
      * both leak to anyone with USB debugging access. Only the rotation
      * timestamp + length are recorded.
      */

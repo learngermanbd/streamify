@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.streamify.app.BuildConfig
 import kotlin.system.exitProcess
 
 /**
@@ -14,8 +15,8 @@ import kotlin.system.exitProcess
  * their tamper was detected), this class implements a **gradual
  * degradation** strategy:
  *
- *  1. **Silent logging** — report to Sentry (if available) so the
- *     team can track tampered installs.
+ *  1. **Silent logging** — log to logcat so the team can track
+ *     tampered installs through normal log forwarding.
  *  2. **Feature degradation** — progressively disable high-value
  *     features (streaming, favorites, push) via feature flags.
  *  3. **Deceptive errors** — show generic network/server errors
@@ -73,11 +74,24 @@ object SelfHealing {
      */
     fun onTamperDetected(context: Context, result: TamperResult) {
         if (isTampered) return // Already handling
+
+        // 2026-06-21 — In DEBUG builds we deliberately suppress the
+        // gradual-degradation + deceptive-error sequence so dev/test
+        // runs on emulators / rooted devices / Frida-instrumented
+        // builds don't surface the "Server is under maintenance"
+        // message users were seeing. Production builds keep the
+        // full pipeline so att&ckers can't correlate tampering with
+        // a sudden soft failure.
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Tamper detected in DEBUG build — suppression: $result")
+            return
+        }
+
         isTampered = true
 
         Log.w(TAG, "Tamper detected: $result")
 
-        // Level 1: Silent logging
+        // Level 1: Silent logging (handled inside escalateTo via logcat)
         escalateTo(DegradationLevel.LOGGING, context, result)
 
         // Level 2: Feature degradation after a short delay
@@ -153,32 +167,12 @@ object SelfHealing {
         currentLevel = level
 
         Log.w(TAG, "Escalated to degradation level: $level (cause: $result)")
-
-        // Report to Sentry (if available)
-        reportToSentry(context, level, result)
-    }
-
-    private fun reportToSentry(
-        context: Context,
-        level: DegradationLevel,
-        result: TamperResult
-    ) {
-        try {
-            val sentryLevel = io.sentry.SentryLevel.WARNING
-            val event = io.sentry.SentryEvent().apply {
-                message = io.sentry.protocol.Message().apply {
-                    message = "APK tamper detected — escalation to ${level.name}"
-                }
-                this.level = sentryLevel
-                setTag("tamper_type", result::class.simpleName ?: "unknown")
-                setTag("degradation_level", level.name)
-                setExtra("tamper_detail", result.toString())
-            }
-            io.sentry.Sentry.captureEvent(event)
-        } catch (e: Exception) {
-            // Sentry might not be initialized in debug builds.
-            Log.d(TAG, "Sentry report failed (expected in debug): ${e.message}")
-        }
+        Log.w(
+            TAG,
+            "Tamper detected — level=${level.name}, " +
+                "type=${result::class.simpleName ?: "unknown"}, " +
+                "detail=${result}"
+        )
     }
 
     /** Features disabled at [DegradationLevel.FEATURES_DISABLED]. */
