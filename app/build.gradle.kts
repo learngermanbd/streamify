@@ -490,7 +490,8 @@ tasks.configureEach {
 // The check itself runs at `doFirst` of `assembleRelease` so it sees
 // the full task graph but executes before any R8 / signing / Sentry
 // work has begun.
-// -----------------------------------------------------------------    afterEvaluate {
+// -----------------------------------------------------------------
+afterEvaluate {
         tasks.named("assembleRelease").configure {
             doFirst {
                 // Production builds enforce all 10 secrets. Use
