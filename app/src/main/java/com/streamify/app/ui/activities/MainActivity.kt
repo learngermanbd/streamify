@@ -2,6 +2,7 @@ package com.streamify.app.ui.activities
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -14,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.streamify.app.R
 import com.streamify.app.StreamifyApp
@@ -26,6 +28,7 @@ import com.streamify.app.ui.update.showUpdateDialog
 import com.streamify.app.ui.viewmodels.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Phase 3 · Step 3.2 — Main host Activity.
@@ -152,8 +155,46 @@ class MainActivity : AppCompatActivity() {
             mainVm.load()
         }
 
+        // Android 16 (API 36) migration · v1.1.0 — silent forced-logout
+        // UX cue. See SecurityPrefs.kt + strings.xml (reauth_v11_*) for
+        // the rationale. Two code-review invariants enforced here:
+        //   (1) write-then-show: markV11ReauthSeen() runs BEFORE the
+        //       dialog is shown so a process-death or Activity-STOP
+        //       between them cannot re-prompt the user on next launch.
+        //   (2) inside repeatOnLifecycle(STARTED): the suspending
+        //       DataStore read+write runs in one continuous STARTED
+        //       window so an Activity STOP cannot cancel the write
+        //       mid-flight.  CancellationException is rethrown so
+        //       structured concurrency survives; the catch-all is
+        //       Log.w-only so a corrupted DataStore blob can never
+        //       block app launch.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                try {
+                    val app = application as StreamifyApp
+                    if (!app.tokenManager.isLoggedIn() &&
+                        !app.securityPrefs.hasSeenV11Reauth()
+                    ) {
+                        // Tighten the race window: `repeatOnLifecycle(STARTED)`
+                        // cancels its coroutine on Activity STOP so a user
+                        // backgrounding the app between this suspending
+                        // read+write could cancel `markSeen()` mid-flight
+                        // and re-prompt them on next launch. Wrapping the
+                        // DataStore write in NonCancellable guarantees the
+                        // flag flip either completes or throws — never
+                        // silently dropped. `showReAuthV11Dialog()` stays
+                        // OUTSIDE the wrap so Activity-STOP can still
+                        // dismiss the dialog naturally.
+                        withContext(kotlinx.coroutines.NonCancellable) {
+                            app.securityPrefs.markV11ReauthSeen()
+                        }
+                        showReAuthV11Dialog()
+                    }
+                } catch (t: kotlinx.coroutines.CancellationException) {
+                    throw t
+                } catch (t: Throwable) {
+                    Log.w(TAG, "v1.1.0 re-auth explanation check failed", t)
+                }
                 mainVm.state.collectLatest { state ->
                     if (state is UiState.Error) {
                         Snackbar.make(binding.root, state.message, Snackbar.LENGTH_INDEFINITE)
@@ -244,5 +285,28 @@ class MainActivity : AppCompatActivity() {
             putExtra(Intent.EXTRA_TEXT, getString(R.string.drawer_share_message))
         }
         startActivity(Intent.createChooser(sendIntent, getString(R.string.drawer_share)))
+    }
+
+    /**
+     * Android 16 (API 36) migration · v1.1.0 — Material You re-auth
+     * explanation. Shown exactly once per install to users whose
+     * `streamify_secure_prefs` (EncryptedSharedPreferences) refresh
+     * token is no longer readable because
+     * `androidx.security:security-crypto` 1.1.0-alpha06 was removed
+     * in this migration. The OK button just dismisses; the
+     * underlying MainActivity continues unchanged (logged-out users
+     * are routed to the standard login flow by the rest of the app).
+     */
+    private fun showReAuthV11Dialog() {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.reauth_v11_title)
+            .setMessage(R.string.reauth_v11_body)
+            .setCancelable(false)
+            .setPositiveButton(R.string.reauth_v11_dismiss) { d, _ -> d.dismiss() }
+            .show()
+    }
+
+    private companion object {
+        private const val TAG = "MainActivity"
     }
 }

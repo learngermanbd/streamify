@@ -327,6 +327,25 @@
     <string name="notice_v2_subtitle">Multi-section updates from the SportStream team</string>
 
     <!--
+        Android 16 (API 36) migration · v1.1.0 — first-time re-auth UX cue.
+
+        Streamify v1.1.0 migrated the auth-token storage backend
+        (`androidx.security:security-crypto` 1.1.0-alpha06, used by
+        the now-deleted SecurePreferences.kt, was removed because it
+        can throw KeyStoreException on Android 16's stricter keystore
+        rules). Existing v1.0.x users see this dialog ONCE on first
+        launch of v1.1.0 to explain why they need to sign in again
+        before the existing "not logged in" routing kicks in.
+
+        See:
+          - com.streamify.app.data.prefs.SecurityPrefs (the one-shot bool)
+          - com.streamify.app.ui.activities.MainActivity.onCreate (consumer)
+    -->
+    <string name="reauth_v11_title">Sign in again</string>
+    <string name="reauth_v11_body">We\'ve updated Streamify for Android 16. For your security, your saved session can no longer be read — please sign in once more to continue.</string>
+    <string name="reauth_v11_dismiss">OK</string>
+
+    <!--
         Phase 6 · Step 6.2 — Auto-Update strings.
 
         Used by:

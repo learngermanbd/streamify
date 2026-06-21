@@ -321,6 +321,31 @@ class StreamifyApp : Application() {
         ThemePrefs(applicationContext)
     }
 
+    /**
+     * Android 16 (API 36) migration · v1.1.0 — Persisted storage for
+     * security-related preference flags (currently just
+     * `has_seen_v11_reauth`). Lazily constructed; read once at the
+     * tail of [MainActivity.onCreate] so we can show the one-shot
+     * "please sign in again" explanation to users whose encrypted
+     * refresh tokens became unreadable when we dropped
+     * `androidx.security:security-crypto`.
+     */
+    val securityPrefs: com.streamify.app.data.prefs.SecurityPrefs by lazy {
+        com.streamify.app.data.prefs.SecurityPrefs(applicationContext)
+    }
+
+    /**
+     * Android 16 (API 36) migration · v1.1.0 — Shared singleton
+     * accessor for [com.streamify.app.security.TokenManager].  Exposed
+     * here so MainActivity (and any future consumer) doesn't have to
+     * construct their own; keeps the `context.getSharedPreferences`
+     * wrapping in one place so the file name `\"streamify_auth\"` stays
+     * consistent.  Lazy; first-access constructs the instance.
+     */
+    val tokenManager: com.streamify.app.security.TokenManager by lazy {
+        com.streamify.app.security.TokenManager(applicationContext)
+    }
+
     companion object {
         private const val TAG = "StreamifyApp"
 
