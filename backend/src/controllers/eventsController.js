@@ -29,16 +29,13 @@ const eventsController = {
       const skip = (Math.max(1, parseInt(page, 10)) - 1) * Math.max(1, Math.min(100, parseInt(limit, 10)));
       const take = Math.max(1, Math.min(100, parseInt(limit, 10)));
 
-      const [events, total] = await Promise.all([
-        prisma.event.findMany({
-          where,
-          include: { streams: true, category: { select: { id: true, name: true } } },
-          orderBy: { [sort === 'title' ? 'title' : sort === 'createdAt' ? 'createdAt' : 'scheduledFor']: order === 'desc' ? 'desc' : 'asc' },
-          skip,
-          take
-        }),
-        prisma.event.count({ where })
-      ]);
+      const events = await prisma.event.findMany({
+        where,
+        include: { streams: true, category: { select: { id: true, name: true } } },
+        orderBy: { [sort === 'title' ? 'title' : sort === 'createdAt' ? 'createdAt' : 'scheduledFor']: order === 'desc' ? 'desc' : 'asc' },
+        skip,
+        take
+      });
 
       return res.json(events.map(formatEvent));
     } catch (err) {

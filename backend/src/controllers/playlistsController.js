@@ -35,8 +35,6 @@ const playlistsController = {
         take: take ? parseInt(take, 10) : undefined,
       });
 
-      const totalCount = await prisma.playlist.count({ where });
-
       res.json(playlists.map(formatPlaylist));
     } catch (err) {
       console.error('[playlists] list error:', err.message);

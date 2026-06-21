@@ -17,16 +17,13 @@ const channelsController = {
       const skip = (Math.max(1, parseInt(page, 10)) - 1) * Math.max(1, Math.min(100, parseInt(limit, 10)));
       const take = Math.max(1, Math.min(100, parseInt(limit, 10)));
 
-      const [channels, total] = await Promise.all([
-        prisma.channel.findMany({
-          where,
-          include: { category: { select: { id: true, name: true } } },
-          orderBy: { sortOrder: 'asc' },
-          skip,
-          take
-        }),
-        prisma.channel.count({ where })
-      ]);
+      const channels = await prisma.channel.findMany({
+        where,
+        include: { category: { select: { id: true, name: true } } },
+        orderBy: { sortOrder: 'asc' },
+        skip,
+        take
+      });
 
       return res.json(channels.map(formatChannel));
     } catch (err) {
