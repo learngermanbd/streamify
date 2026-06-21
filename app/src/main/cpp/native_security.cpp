@@ -265,11 +265,11 @@ static jboolean xs_verify_sig(JNIEnv *env, jobject /* thiz */,
 
     // Convert hash to hex string
     jmethodID hexMethod = env->GetStaticMethodID(
-        env->FindClass("com/sportstream/app/security/NativeSecurityManager"),
+        env->FindClass("com/streamify/app/security/NativeSecurityManager"),
         "bytesToHex", "([B)Ljava/lang/String;"
     );
     jstring actualHash = (jstring)env->CallStaticObjectMethod(
-        env->FindClass("com/sportstream/app/security/NativeSecurityManager"),
+        env->FindClass("com/streamify/app/security/NativeSecurityManager"),
         hexMethod, hash
     );
     if (actualHash == nullptr) return JNI_FALSE;
@@ -337,7 +337,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void * /* reserved */) {
 
     // Register native methods
     jclass clazz = env->FindClass(
-        "com/sportstream/app/security/NativeSecurityManager"
+        "com/streamify/app/security/NativeSecurityManager"
     );
     if (clazz == nullptr) {
         LOGW("JNI_OnLoad: NativeSecurityManager class not found");

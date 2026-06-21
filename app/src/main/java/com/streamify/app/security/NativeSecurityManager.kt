@@ -58,8 +58,17 @@ object NativeSecurityManager {
             System.loadLibrary("native_security")
             isLoaded = true
             Log.d(TAG, "libnative_security.so loaded successfully")
-        } catch (e: UnsatisfiedLinkError) {
-            Log.e(TAG, "Failed to load libnative_security.so", e)
+        } catch (t: Throwable) {
+            // Defensive: catch ANY Throwable (not just UnsatisfiedLinkError) so
+            // a JNI failure mode that leaves a pending Java exception in the
+            // env (e.g. NoClassDefFoundError from a wrong com/sportstream/...
+            // FindClass path in native_security.cpp) cannot surface as an
+            // ExceptionInInitializerError the first time this `object` is
+            // referenced from the SecurityGate-worker background thread \u2014
+            // an uncaught exception on any non-main thread tears down the
+            // entire Android process, which is the exact "auto-closing" symptom
+            // we observed on Android 16 + Redmi MIUI cold launches.
+            Log.e(TAG, "Failed to load libnative_security.so", t)
             isLoaded = false
         }
     }
