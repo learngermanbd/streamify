@@ -13,9 +13,9 @@ import android.view.View
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
 import android.widget.SeekBar
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
@@ -217,10 +217,12 @@ class PlayerActivity : AppCompatActivity() {
     // in CI builds; Step 4.7 closes the deviation.
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Android 16 (API 36) migration: call `enableEdgeToEdge()` BEFORE
+        // `super.onCreate()` so AppCompat reads the auto-contrast status-bar
+        // icon variant at theme-inflate time. Calling it AFTER produces a
+        // one-frame flash on launch.
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        // Edge-to-edge: status + nav bar transparent; we handle insets in
-        // the topBar / bottomBar paddings below.
-        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         binding = ActivityPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)

@@ -2,9 +2,9 @@ package com.streamify.app.ui.activities
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
@@ -60,7 +60,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Android 16 (API 36) migration: switch to `enableEdgeToEdge()` from
+        // androidx.activity:activity-ktx 1.9+. Handles system-bar scrim +
+        // transparent navigation contrast automatically; equivalent to
+        // `WindowCompat.setDecorFitsSystemWindows(window, false)` plus
+        // manual isAppearanceLightStatusBars wiring.
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)

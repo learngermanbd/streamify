@@ -24,8 +24,13 @@ import javax.crypto.spec.SecretKeySpec
 
 android {
     namespace = "com.streamify.app"
-    compileSdk = 35
-    ndkVersion = "27.3.13750724"  // Phase 7 · Step 7.4 — NDK r27c for native_security
+    // Android 16 (API 36) migration: compileSdk=36 required for AGP 8.9
+    // to validate AndroidManifest symbols against API 36. Existing NDK
+    // r27c is already 16 KB-page-size ready via AGP 8.5+ injecting the
+    // `-Wl,-z,max-page-size=16384` linker flag automatically — no NDK
+    // version bump was needed for this migration.
+    compileSdk = 36
+    ndkVersion = "27.3.13750724"  // r27c; AGP-injected 16 KB linker defaults
 
     // -----------------------------------------------------------------
     // Phase 6 · Step 6.5 — Hoisted signing.properties read so both the
@@ -46,9 +51,14 @@ android {
     defaultConfig {
         applicationId = "com.streamify.app"
         minSdk = 23
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        // Android 16 (API 36) migration: targetSdk=36 enforces the new
+        // platform behaviors (predictive back, edge-to-edge, 16 KB
+        // page alignment, restructured foreground-service types). Play
+        // Store requires targetSdk within one year of major Android
+        // release; deadline Aug 31, 2026.
+        targetSdk = 36
+        versionCode = 2
+        versionName = "1.1.0"
 
         // Step 6.5 — Sentry DSN. When blank (debug install or local CI
         // without props), BuildConfig.SENTRY_DSN is the empty string and
@@ -205,6 +215,21 @@ android {
 }
 
 dependencies {
+    // ── AndroidX Activity (Android 16 migration) ──
+    // `androidx.activity:activity-ktx` 1.9+ is required for the
+    // `enableEdgeToEdge()` extension function used in MainActivity +
+    // PlayerActivity. AppCompat 1.7+ pulls it in transitively at lower
+    // versions; pinned here to 1.9.3 to guarantee the symbol.
+    implementation(libs.activity.ktx)
+
+    // ── AndroidX Fragment (Android 16 migration) ──
+    // Pinned to 1.8.5 to match Navigation 2.9's expected fragment API floor.
+    // Without this pin, fragment-ktx resolves transitively at 1.6.2 which
+    // is below Navigation 2.9 → runtime NoSuchMethodError on Fragment 1.8+
+    // APIs (FragmentManager.registerFragmentLifecycleCallbacks overloads
+    // added in 1.8).
+    implementation(libs.fragment.ktx)
+
     // ── Media3 — video playback (Phase 4 surface; dep lands now so Step 1.3 build resolves) ──
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui)
@@ -265,8 +290,11 @@ dependencies {
     // ── WorkManager — daily background update check (Phase 6 · Step 6.2) ──
     implementation(libs.work.runtime)
 
-    // ── Security — EncryptedSharedPreferences (Phase 7 · Step 7.8) ──
-    implementation(libs.security.crypto)
+    // ── Security — EncryptedSharedPreferences removed in A16 migration ──
+    // (androidx.security:security-crypto 1.1.0-alpha06 had no production
+    // callers; MasterKey.Builder + EncryptedSharedPreferences can throw
+    // KeyStoreException unpredictably on Android 16. Token-class secrets
+    // are routed through KeystoreManager instead.)
 
     // ── Test dependencies (Phase 9 · Step 9.1) ──
     testImplementation(libs.junit.jupiter.api)

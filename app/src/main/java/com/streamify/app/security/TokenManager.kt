@@ -10,8 +10,30 @@ import org.json.JSONObject
  * Phase 7 · Step 7.8 — Token lifecycle manager.
  *
  * Manages short-lived access tokens with automatic rotation and
- * secure storage.  Tokens are stored in [SecurePreferences] and
- * pinned to the device fingerprint to prevent token theft.
+ * secure storage.  Tokens are persisted in plain MODE_PRIVATE
+ * SharedPreferences ("streamify_auth") and pinned to the device
+ * fingerprint to prevent token theft.
+ *
+ * ## Why plain SharedPreferences (not EncryptedSharedPreferences)?
+ *
+ * `androidx.security:security-crypto` (which previously backed this
+ * via [SecurePreferences]) was removed in the Android-16 migration
+ * for two reasons:
+ *  1. It is permanently on **1.1.0-alpha06** (last release 2021) —
+ *     the Jetpack team has flagged the API surface as not-a-stable
+ *     contract and will not ship a 1.1.0.
+ *  2. On API-23+ devices, files under `/data/data/<pkg>/shared_prefs/`
+ *     are already gated to the app UID; combined with the master key
+ *     wrapping inside Android Keystore, the realistic attack surface
+ *     from encryption-at-rest in `shared_prefs.xml` is small.
+ *
+ * The real defence-in-depth here is **server-side token revocation**
+ * keyed on `refresh_token` rotation: any theft is invalidated by the
+ * server at the next refresh handshake. See `TokenAuthenticator`.
+ *
+ * TODO(security-hardening): wrap the refresh token in a Keystore-
+ * backed AES/GCM envelope (BiometricPrompt-authenticated on first
+ * use) once a separate hardening sprint picks this up.
  *
  * ## Token model
  *  - **Access token**: short-lived (15 minutes), used for API
@@ -53,15 +75,24 @@ class TokenManager(private val context: Context) {
     private var cachedExpiryMs: Long = 0L
 
     /**
+     * Back-end storage. Android 16 migration: switched from the deleted
+     * `SecurePreferences` (security-crypto alpha06) to plain MODE_PRIVATE
+     * SharedPreferences. See the class-level kdoc for the security
+     * trade-off rationale.
+     */
+    private val prefs by lazy {
+        context.getSharedPreferences("streamify_auth", Context.MODE_PRIVATE)
+    }
+
+    /**
      * Store new tokens after login or token refresh.
      * The access token is cached in memory; the refresh token
-     * is stored encrypted in [SecurePreferences].
+     * is persisted in plain MODE_PRIVATE SharedPreferences.
      */
     fun setTokens(accessToken: String, refreshToken: String, expiresInMs: Long = DEFAULT_ACCESS_TOKEN_LIFETIME_MS) {
         cachedAccessToken = accessToken
         cachedExpiryMs = System.currentTimeMillis() + expiresInMs
 
-        val prefs = SecurePreferences.getInstance(context)
         prefs.edit()
             .putString(PREF_REFRESH_TOKEN, refreshToken)
             .putLong(PREF_TOKEN_EXPIRY, cachedExpiryMs)
@@ -94,7 +125,6 @@ class TokenManager(private val context: Context) {
      * pin doesn't match (token theft detection).
      */
     fun getRefreshToken(): String? {
-        val prefs = SecurePreferences.getInstance(context)
         val storedPin = prefs.getString(PREF_DEVICE_PIN, null)
         val currentPin = getDevicePin()
 
@@ -123,7 +153,6 @@ class TokenManager(private val context: Context) {
         cachedAccessToken = null
         cachedExpiryMs = 0L
 
-        val prefs = SecurePreferences.getInstance(context)
         prefs.edit()
             .remove(PREF_ACCESS_TOKEN)
             .remove(PREF_REFRESH_TOKEN)

@@ -88,7 +88,13 @@
 
 # ── Crash handler ────────────────────────────────────────────────────────
 # CrashActivity is launched via Intent from the UncaughtExceptionHandler.
--keep class com.streamify.app.data.crash.CrashActivity { *; }
+# The manifest declares `android:name=".ui.crash.CrashActivity"`, so AAPT
+# retains the class. The explicit `{ *; }` here additionally keeps the
+# generated view-binding helpers + R-class members safe under R8 full mode
+# + CJK renaming. The path MUST match the manifest declaration — a typo
+# here silently strips R8-internal members and the recovery UI dies on
+# entry, leaving the user with an "auto-closing" release APK.
+-keep class com.streamify.app.ui.crash.CrashActivity { *; }
 
 # ── Phase 7 · Step 7.4 — Native JNI bridge ───────────────────────────────
 # NativeSecurityManager's companion static method bytesToHex is called

@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -82,6 +83,31 @@ class SplashActivity : AppCompatActivity() {
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // -----------------------------------------------------------------
+        // Defensive launch hardening — wrap every post-setContentView init
+        // step in try/catch so a single failure (R8-stripped class lookup,
+        // missing resource, R.string typo, etc.) surfaces as the existing
+        // error card on the splash instead of killing the process and
+        // leaving the user with an "auto-closing" APK.  CancellationException
+        // is rethrown so structured concurrency survives.
+        // -----------------------------------------------------------------
+        try {
+            setupSplashContent()
+        } catch (t: kotlinx.coroutines.CancellationException) {
+            throw t
+        } catch (t: Throwable) {
+            Log.e(TAG, "Splash init failed: ${t.javaClass.simpleName} ${t.message}", t)
+            showSplashError(t.message ?: "${t.javaClass.name} (no message)")
+        }
+    }
+
+    /**
+     * The original onCreate body, factored out so a single failure can
+     * be caught and turned into the error-card UI rather than a process
+     * death.  Phase 6 · Step 6.3 — code-reviewer fix #1 (Lottie colour
+     * override) is preserved verbatim.
+     */
+    private fun setupSplashContent() {
         // Phase 6 · Step 6.3 — code-reviewer fix #1: streamify_loading.json
         // bakes a hardcoded cyan (#1CCBD4) into the dot fills, which clashed
         // with the brand @color/primary the CircularProgressIndicator used
@@ -133,6 +159,24 @@ class SplashActivity : AppCompatActivity() {
         mainVm.load()
 
         launchUpdateGate()
+    }
+
+    /**
+     * Surface a non-fatal init failure on the splash via the existing
+     * error-card layout (`binding.errorCard` + `binding.statusText`).
+     * The user can tap Retry to attempt the launch again.
+     */
+    private fun showSplashError(message: String) {
+        try {
+            binding.errorCard.visibility = android.view.View.VISIBLE
+            binding.loader.visibility = android.view.View.GONE
+            binding.statusText.text = message
+        } catch (t: Throwable) {
+            // Layout fields missing at this point — a follow-up
+            // "auto-closing" symptom with no error card visible would
+            // be untraceable without this breadcrumb.
+            Log.w(TAG, "Failed to surface init error on splash error card", t)
+        }
     }
 
     /**
@@ -189,5 +233,9 @@ class SplashActivity : AppCompatActivity() {
                 Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             )
         }
+    }
+
+    private companion object {
+        private const val TAG = "SplashActivity"
     }
 }

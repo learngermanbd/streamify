@@ -139,43 +139,66 @@ class StreamifyApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        // Phase 6 · Step 6.4 — early-return guard for the isolated 
-        // `:crash` process (AndroidManifest's `android:process=":crash"` 
-        // on CrashActivity). When the dying main process's handler 
-        // forks the recovery Activity, a new Application instance is 
-        // created in the `:crash` process. We must skip the heavy 
-        // initialisation (Sentry client + themePrefs DataStore + 
-        // network/module lazy seams) so we don't duplicate Sentry 
-        // telemetry, don't block the LAUNCH of CrashActivity on a 
-        // 10–50 ms DataStore read, and don't accidentally fire any of 
-        // the receivers/wiren that the dying main process just tore 
-        // down.
-        val processName = android.os.Process.myProcessName()
-        val isCrashProcess = processName.endsWith(":crash")
-        if (isCrashProcess) {
+
+        // -----------------------------------------------------------------
+        // Phase 6 · Step 6.4 — CrashHandler MUST be installed as the FIRST
+        // non-trivial step.  Any subsequent failure (initSentry, BuildConfig
+        // read, DataStore write, R8-stripped class lookup, etc.) lands in
+        // CrashActivity instead of killing the process with no recovery
+        // surface — this converts the user-visible "auto-closing" symptom
+        // into a real error screen they can React to.  Wrapped in
+        // try/catch because we cannot tolerate CrashHandler itself
+        // throwing — that would leave the app with no recovery path.
+        //
+        // Ordering note (the previous flow installed AFTER Sentry).  The
+        // chained order is now: Sentry (installed by initSentry below) →
+        // our CrashHandler → Android KillApplicationHandler.  Sentry's
+        // handler calls `previous.uncaughtException` which still routes
+        // to us, so the on-disk dump + CrashActivity launch still
+        // happens — and the Sentry capture happens first, which is what
+        // we actually want for a release build.
+        // -----------------------------------------------------------------
+        try {
             CrashHandler.install(applicationContext)
-            return
+        } catch (t: Throwable) {
+            Log.e(TAG, "CrashHandler install failed; continuing without recovery UI", t)
         }
 
-        initSentry()
+        // Phase 6 · Step 6.4 — early-return guard for the isolated
+        // `:crash` process (AndroidManifest's `android:process=":crash"`
+        // on CrashActivity). When the dying main process's handler
+        // forks the recovery Activity, a new Application instance is
+        // created in the `:crash` process. We must skip the heavy
+        // initialisation so we don't duplicate Sentry telemetry or
+        // accidentally fire any of the receivers/wires the dying main
+        // process just tore down.
+        try {
+            if (android.os.Process.myProcessName().endsWith(":crash")) return
+        } catch (t: Throwable) {
+            Log.w(TAG, "processName check failed; assuming main process", t)
+        }
+
+        // -----------------------------------------------------------------
+        // Defensive launch hardening — wrap every subsequent init step in
+        // try/catch so a single failure cannot derail the whole launch.
+        // Failures are LOGGED but do not abort; the app still proceeds to
+        // SplashActivity so the user sees the existing error-card UI
+        // (with Retry) rather than a silent process death.  Each `runStep`
+        // rethrows CancellationException so structured concurrency survives.
+        // -----------------------------------------------------------------
+        runStep("initSentry") { initSentry() }
 
         // Phase 7 · Step 7.2 — initialise string-encryption subsystem.
         // Registers a ComponentCallbacks2 that wipes the decrypted-value
         // cache when the app enters the background (onTrimMemory).
-        SecurityModule.init(this)
+        runStep("SecurityModule.init") { SecurityModule.init(this) }
 
-        // Phase 6 · Step 6.4 — install the global UncaughtExceptionHandler
-        // right after Sentry initialises so the chain is: this handler
-        // (writes local dump + spawns CrashActivity) -> Sentry's handler
-        // (sync-flush + capture) -> Android KillApplicationHandler
-        // (process death). Installing AFTER Sentry means Sentry's handler
-        // is captured as our `previous` and gets the syncing flush before
-        // the process exits.
-        CrashHandler.install(applicationContext)
         // We deliberately do NOT initialize Firebase here — FirebaseApp
         // auto-initializes from the `google-services.json` plugin and we
         // only rely on FirebaseMessaging (Phase 5 · Step 5.4).
-        Log.i(TAG, "Resolved API Base URL: ${AppConfig.defaults().apiBaseUrl}")
+        runStep("AppConfig.defaults (encrypted URL log)") {
+            Log.i(TAG, "Resolved API Base URL: ${AppConfig.defaults().apiBaseUrl}")
+        }
 
         // Phase 6 · Step 6.4 — apply persisted theme BEFORE any
         // Activity inflates so the first Activity launched after a
@@ -189,8 +212,10 @@ class StreamifyApp : Application() {
         // Application.onCreate, before StrictMode policies activate
         // at attachBaseContext()). For v1 we accept the main-thread
         // DataStore read since no StrictMode policy is active.
-        val themeMode = runBlocking { themePrefs.currentMode() }
-        AppCompatDelegate.setDefaultNightMode(themePrefs.toNightModeFlag(themeMode))
+        runStep("themePrefs apply") {
+            val themeMode = runBlocking { themePrefs.currentMode() }
+            AppCompatDelegate.setDefaultNightMode(themePrefs.toNightModeFlag(themeMode))
+        }
 
         // Touch the lazy seams so onCreate's cold start still gets the
         // same observable behaviour as the previous lateinit version
@@ -198,15 +223,19 @@ class StreamifyApp : Application() {
         // cache + auth interceptor already wired). Lazy access in
         // onCreate is equivalent to the old explicit assignment but
         // doesn't expose an uninitialised-property window to the
-        // UpdateDownloadReceiver.
-        network
-        local
-        repository
+        // UpdateDownloadReceiver.  We force-init each in its own
+        // defensive step so an R8-stripped class lookup (or any other
+        // Android 16-specific init issue) surfaces here — and gets
+        // attributed to the right module — instead of crashing later
+        // inside SplashActivity's ViewModel factory.
+        runStep("NetworkModule init")   { network }
+        runStep("LocalModule init")     { local }
+        runStep("RepositoryModule init") { repository }
 
         // Phase 6 · Step 6.2 — schedule a daily background update check.
         // WorkManager coalesces duplicates via KEEP policy so this is
         // safe to call on every cold start.
-        UpdateWorker.enqueue(this)
+        runStep("UpdateWorker.enqueue") { UpdateWorker.enqueue(this) }
 
         // Phase 7 · Step 7.6 — Security gate: risk-scoring orchestrator
         // that runs all security checks (integrity, tampering, root,
@@ -214,10 +243,33 @@ class StreamifyApp : Application() {
         // risk score that drives soft/hard/critical response via
         // SelfHealing gradual degradation.
         // Initialize honeypot canaries (Step 7.9)
-        HoneyPotManager.init()
+        runStep("HoneyPotManager.init") { HoneyPotManager.init() }
 
-        SecurityGate.runChecks(applicationContext) { result ->
-            Log.d(TAG, "Security gate: score=${result.score}, level=${result.level}")
+        runStep("SecurityGate.runChecks") {
+            SecurityGate.runChecks(applicationContext) { result ->
+                Log.d(TAG, "Security gate: score=${result.score}, level=${result.level}")
+            }
+        }
+    }
+
+    /**
+     * Phase 6 · Step 6.4 — Run a single launch step with defensive
+     * guarding. Failures are LOGGED so Sentry (once `initSentry()` has
+     * run) can pick them up, but the launch proceeds normally so the
+     * user still reaches SplashActivity and sees the existing error
+     * card UI (with Retry) instead of the process silently dying.
+     *
+     * `CancellationException` is rethrown so structured concurrency
+     * survives — a coroutine cancellation in `runBlocking` must NOT be
+     * silenced (it would mask lifecycle cancellation).
+     */
+    private fun runStep(stepName: String, block: () -> Unit) {
+        try {
+            block()
+        } catch (t: kotlinx.coroutines.CancellationException) {
+            throw t
+        } catch (t: Throwable) {
+            Log.e(TAG, "Init step '$stepName' failed: ${t.javaClass.simpleName} ${t.message}", t)
         }
     }
 
