@@ -16,6 +16,7 @@ import com.streamify.app.data.remote.RemoteConfigHelper
 import com.streamify.app.data.repository.RepositoryModule
 import com.streamify.app.data.update.AppUpdateManager
 import com.streamify.app.security.HoneyPotManager
+import com.streamify.app.security.SecretsValidator
 import com.streamify.app.security.SecurityGate
 import com.streamify.app.security.SecurityModule
 import com.streamify.app.services.UpdateWorker
@@ -249,6 +250,15 @@ class StreamifyApp : Application() {
             SecurityGate.runChecks(applicationContext) { result ->
                 Log.d(TAG, "Security gate: score=${result.score}, level=${result.level}")
             }
+        }
+
+        // Setup-completeness audit (v1.1.0 maintenance) — detect
+        // placeholder Firebase / Sentry / API configs at boot and log
+        // ONE clear breadcrumb per gap. Non-fatal: the app continues
+        // to launch. Operators reading Logcat / Sentry see exactly
+        // which credential blocks production. See SecretsValidator.kt.
+        runStep("SecretsValidator.validate") {
+            SecretsValidator.validate(applicationContext)
         }
     }
 
