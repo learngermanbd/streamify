@@ -471,62 +471,74 @@ tasks.configureEach {
 //     property is blank — the `takeIf { it.storeFile != null }`
 //     guard picks debug rather than failing loud)
 //
-// This catches the missing-key case BEFORE assembleRelease starts
-// with a single, actionable error message listing every gap. The
-// check runs at `doFirst` of `assembleRelease` so it sees the
-// full task graph but executes before any work begins.
+// The reference to `assembleRelease` is wrapped in `afterEvaluate { }`
+// because AGP registers the variant tasks (assembleRelease,
+// packageRelease, etc.) lazily during the Android block configuration.
+// Calling `tasks.named("assembleRelease")` at this point in the
+// build script — before AGP has finalized all variant tasks —
+// produced the runtime error:
+//   Task with name 'assembleRelease' not found in project ':app'
+// `afterEvaluate { }` is Gradle's standard "defer until after
+// project evaluation is complete" hook; by that point every variant
+// task is registered and named lookup is safe.
+//
+// The check itself runs at `doFirst` of `assembleRelease` so it sees
+// the full task graph but executes before any R8 / signing / Sentry
+// work has begun.
 // -----------------------------------------------------------------
-tasks.named("assembleRelease") {
-    doFirst {
-        val errors = mutableListOf<String>()
+afterEvaluate {
+    tasks.named("assembleRelease").configure {
+        doFirst {
+            val errors = mutableListOf<String>()
 
-        // ── signing.properties ─────────────────────────────────────
-        val signingProps = Properties()
-        rootProject.file("signing.properties").takeIf { it.exists() }?.let { f ->
-            f.inputStream().use { signingProps.load(it) }
-        } ?: run {
-            errors += "signing.properties missing at repo root"
-        }
-        for (k in listOf(
-            "RELEASE_STORE_FILE",
-            "RELEASE_STORE_PASSWORD",
-            "RELEASE_KEY_ALIAS",
-            "RELEASE_KEY_PASSWORD",
-            "APP_SENTRY_DSN",
-            "SENTRY_AUTH_TOKEN",
-        )) {
-            if (signingProps.getProperty(k).isNullOrBlank()) {
-                errors += "signing.properties: missing $k"
+            // ── signing.properties ─────────────────────────────────────
+            val signingProps = Properties()
+            rootProject.file("signing.properties").takeIf { it.exists() }?.let { f ->
+                f.inputStream().use { signingProps.load(it) }
+            } ?: run {
+                errors += "signing.properties missing at repo root"
             }
-        }
-
-        // ── secrets.properties ─────────────────────────────────────
-        val secretsProps = Properties()
-        rootProject.file("secrets.properties").takeIf { it.exists() }?.let { f ->
-            f.inputStream().use { secretsProps.load(it) }
-        } ?: run {
-            errors += "secrets.properties missing at repo root"
-        }
-        for (k in listOf(
-            "API_BASE_URL",
-            "API_CONFIG_URL",
-            "UPDATE_URL",
-            "TELEGRAM_LINK",
-        )) {
-            if (secretsProps.getProperty(k).isNullOrBlank()) {
-                errors += "secrets.properties: missing $k"
+            for (k in listOf(
+                "RELEASE_STORE_FILE",
+                "RELEASE_STORE_PASSWORD",
+                "RELEASE_KEY_ALIAS",
+                "RELEASE_KEY_PASSWORD",
+                "APP_SENTRY_DSN",
+                "SENTRY_AUTH_TOKEN",
+            )) {
+                if (signingProps.getProperty(k).isNullOrBlank()) {
+                    errors += "signing.properties: missing $k"
+                }
             }
-        }
 
-        if (errors.isNotEmpty()) {
-            throw GradleException(
-                ":app:assembleRelease pre-flight failed. Resolve the credential gaps below:\n  " +
-                    errors.joinToString("\n  ")
+            // ── secrets.properties ─────────────────────────────────────
+            val secretsProps = Properties()
+            rootProject.file("secrets.properties").takeIf { it.exists() }?.let { f ->
+                f.inputStream().use { secretsProps.load(it) }
+            } ?: run {
+                errors += "secrets.properties missing at repo root"
+            }
+            for (k in listOf(
+                "API_BASE_URL",
+                "API_CONFIG_URL",
+                "UPDATE_URL",
+                "TELEGRAM_LINK",
+            )) {
+                if (secretsProps.getProperty(k).isNullOrBlank()) {
+                    errors += "secrets.properties: missing $k"
+                }
+            }
+
+            if (errors.isNotEmpty()) {
+                throw GradleException(
+                    ":app:assembleRelease pre-flight failed. Resolve the credential gaps below:\n  " +
+                        errors.joinToString("\n  ")
+                )
+            }
+            logger.lifecycle(
+                "verifyReleaseSecrets: signing.properties (6/6 keys) + " +
+                    "secrets.properties (4/4 keys) all present ✓"
             )
         }
-        logger.lifecycle(
-            "verifyReleaseSecrets: signing.properties (6/6 keys) + " +
-                "secrets.properties (4/4 keys) all present ✓"
-        )
     }
 }
