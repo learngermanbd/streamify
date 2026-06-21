@@ -26,6 +26,7 @@ const highlightsRoute = require('./routes/highlights');
 const categoriesRoute = require('./routes/categories');
 const bannersRoute = require('./routes/banners');
 const configRoute = require('./routes/config');
+const playlistsRoute = require('./routes/playlists');
 const notificationsRoute = require('./routes/notifications');
 const analyticsRoute = require('./routes/analytics');
 const adminUsersRoute = require('./routes/adminUsers');
@@ -104,6 +105,7 @@ app.use('/api/highlights', highlightsRoute);
 app.use('/api/categories', categoriesRoute);
 app.use('/api/banners', bannersRoute);
 app.use('/api/config', configRoute);
+app.use('/api/playlists', playlistsRoute);
 app.use('/api/notifications', notificationsRoute);
 app.use('/api/analytics', analyticsRoute);
 app.use('/api', uploadRoute);
@@ -138,6 +140,7 @@ app.get('/', (_req, res) => {
       'GET  /api/banners',
       'GET  /api/config',
       'PUT  /api/config',
+      'GET  /api/playlists',
       'GET  /api/notifications',
       'POST /api/notifications/send',
       'POST /api/devices/register',
