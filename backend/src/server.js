@@ -20,6 +20,7 @@ const { rateLimiter } = require('./middleware/rateLimit');
 const healthRoute = require('./routes/health');
 const authRoute = require('./routes/auth');
 const eventsRoute = require('./routes/events');
+const liveRoute = require('./routes/live');
 const channelsRoute = require('./routes/channels');
 const highlightsRoute = require('./routes/highlights');
 const categoriesRoute = require('./routes/categories');
@@ -97,6 +98,7 @@ app.use('/api/health', healthRoute);
 app.use('/api/admin/auth', authRoute);
 app.use('/api/admin/users', adminUsersRoute);
 app.use('/api/events', eventsRoute);
+app.use('/api/live', liveRoute);
 app.use('/api/channels', channelsRoute);
 app.use('/api/highlights', highlightsRoute);
 app.use('/api/categories', categoriesRoute);
@@ -121,6 +123,7 @@ app.get('/', (_req, res) => {
       'GET  /api/admin/auth/me',
       'GET  /api/admin/users',
       'POST /api/admin/users',
+      'GET  /api/live',
       'GET  /api/events',
       'POST /api/events',
       'PUT  /api/events/:id',
@@ -145,6 +148,14 @@ app.get('/', (_req, res) => {
       'POST /api/upload'
     ]
   });
+});
+
+// --- Safety net: redirect /config -> /api/config (clients built with
+//     a misconfigured API_CONFIG_URL secret that omits the /api prefix
+//     will hit this path — see Render log GET /config 404 incident) ---
+app.get('/config', (req, res) => {
+  const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+  res.redirect(301, '/api/config' + qs);
 });
 
 // --- 404 ---
