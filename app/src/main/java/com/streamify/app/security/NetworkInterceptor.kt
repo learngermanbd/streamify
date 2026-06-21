@@ -39,16 +39,43 @@ internal object NetworkInterceptor : Interceptor {
         "127.0.0.1",
     )
 
+    /**
+     * Video streaming file extensions that are commonly served over
+     * HTTP by CDNs and origin servers.  HLS playlists (.m3u8) and
+     * MPEG-TS segments (.ts) are the two most common; progressive
+     * .mp4 is included for completeness.  Blocking these at the HTTP
+     * level kills video playback entirely since many stream providers
+     * don't offer HTTPS for segment URLs.
+     */
+    private val VIDEO_STREAM_EXTENSIONS = setOf(
+        ".ts",    // MPEG-TS  (HLS segment)
+        ".m3u8",  // HLS playlist
+        ".mp4",   // Progressive download
+    )
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
 
-        // ── 1. HTTPS enforcement (with debug loopback carve-out) ───
+        // ── 1. HTTPS enforcement (with debug loopback + video-stream carve-outs) ───
         val host = request.url.host.lowercase()
         val isLoopback = host in LOOPBACK_HOSTS
         // Release builds NEVER honour loopback — even on a stolen dev
         // device the attacker can't downgrade traffic to HTTP for prod.
         val allowCleartextLoopback = BuildConfig.DEBUG && isLoopback
-        if (!request.url.isHttps && !allowCleartextLoopback) {
+
+        // post-v1.1.2 — HLS & video-stream carve-out.  Many CDNs serve
+        // .ts segments and .m3u8 playlists exclusively over HTTP; if we
+        // block those the ExoPlayer / Media3 pipeline can never start.
+        // Includes extension-based matching (covers 99% of HLS CDNs) AND
+        // path-based matching for providers that serve extension-less
+        // segments under /live/, /stream/, or /hls/ prefixes.
+        val path = request.url.encodedPath.lowercase()
+        val isVideoStream = VIDEO_STREAM_EXTENSIONS.any { path.endsWith(it) }
+            || path.contains("/live/")
+            || path.contains("/stream/")
+            || path.contains("/hls/")
+
+        if (!request.url.isHttps && !allowCleartextLoopback && !isVideoStream) {
             Log.e(TAG, "BLOCKED non-HTTPS request: ${request.url}")
             throw SecurityException(
                 "Non-HTTPS request blocked: ${request.url}"
