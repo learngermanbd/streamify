@@ -28,10 +28,7 @@ const channelsController = {
         prisma.channel.count({ where })
       ]);
 
-      return res.json({
-        channels: channels.map(formatChannel),
-        pagination: { page: Math.max(1, parseInt(page, 10)), limit: take, total, totalPages: Math.ceil(total / take) }
-      });
+      return res.json(channels.map(formatChannel));
     } catch (err) {
       console.error('[channels/list]', err);
       return res.status(500).json({ error: 'internal server error' });

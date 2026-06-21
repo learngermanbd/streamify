@@ -25,7 +25,7 @@ const configController = {
           telegramLink: null,
           noticeText: null,
           maintenanceMode: false,
-          minAppVersion: null,
+          minAppVersion: '1.0.0',
           featureFlags: {}
         });
       }

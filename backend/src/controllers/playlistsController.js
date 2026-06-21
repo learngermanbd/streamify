@@ -37,14 +37,7 @@ const playlistsController = {
 
       const totalCount = await prisma.playlist.count({ where });
 
-      res.json({
-        playlists: playlists.map(formatPlaylist),
-        pagination: {
-          total: totalCount,
-          skip: skip ? parseInt(skip, 10) : 0,
-          take: take ? parseInt(take, 10) : playlists.length,
-        },
-      });
+      res.json(playlists.map(formatPlaylist));
     } catch (err) {
       console.error('[playlists] list error:', err.message);
       res.status(500).json({ error: 'internal server error' });

@@ -40,15 +40,7 @@ const eventsController = {
         prisma.event.count({ where })
       ]);
 
-      return res.json({
-        events: events.map(formatEvent),
-        pagination: {
-          page: Math.max(1, parseInt(page, 10)),
-          limit: take,
-          total,
-          totalPages: Math.ceil(total / take)
-        }
-      });
+      return res.json(events.map(formatEvent));
     } catch (err) {
       console.error('[events/list]', err);
       return res.status(500).json({ error: 'internal server error' });

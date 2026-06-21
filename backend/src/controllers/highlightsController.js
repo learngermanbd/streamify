@@ -16,12 +16,7 @@ const highlightsController = {
       const [highlights, total] = await Promise.all([
         prisma.highlight.findMany({ orderBy: { date: 'desc' }, skip, take }),
         prisma.highlight.count()
-      ]);
-
-      return res.json({
-        highlights,
-        pagination: { page: Math.max(1, parseInt(page, 10)), limit: take, total, totalPages: Math.ceil(total / take) }
-      });
+      ]);      return res.json(highlights);
     } catch (err) {
       console.error('[highlights/list]', err);
       return res.status(500).json({ error: 'internal server error' });
