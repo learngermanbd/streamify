@@ -10,7 +10,7 @@
         for a style named `Foo` as the implicit parent. Without these empty
         bases the linker would emit `style/SportStream not found`.
     -->
-    <style name="SportStream" />
+    <style name="Streamify" />
     <style name="Streamify.Text" />
 
     <!-- Pressed / focus ripple on glass surfaces -->
