@@ -98,6 +98,33 @@ const AUTO_MIGRATIONS = [
     "addedAt" TIMESTAMPTZ DEFAULT now()
   )`,
   `CREATE INDEX IF NOT EXISTS idx_playlistitem_playlist ON "PlaylistItem"("playlistId")`,
+
+  // Phase 8.21 — Seed sample events (idempotent)
+  // evt-001: LIVE match
+  `INSERT INTO "Event" ("id", "title", "categoryId", "teamAName", "teamALogoUrl", "teamBName", "teamBLogoUrl", "isLive", "status", "date", "time")
+   VALUES ('evt-001', 'Germany vs Brazil — Friendly', 'worldcup2026', 'Germany', 'https://flagcdn.com/w80/de.png', 'Brazil', 'https://flagcdn.com/w80/br.png', true, 'LIVE', '2026-06-21', '20:00 UTC')
+   ON CONFLICT ("id") DO NOTHING`,
+  `INSERT INTO "StreamLink" ("id", "eventId", "name", "url", "quality", "sortOrder")
+   VALUES ('str-001a', 'evt-001', 'HLS 1080p', 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8', 'HD', 0),
+          ('str-001b', 'evt-001', 'HLS 720p', 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8', 'SD', 1)
+   ON CONFLICT ("id") DO NOTHING`,
+
+  // evt-002: SCHEDULED match
+  `INSERT INTO "Event" ("id", "title", "categoryId", "teamAName", "teamALogoUrl", "teamBName", "teamBLogoUrl", "isLive", "status", "date", "time")
+   VALUES ('evt-002', 'Argentina vs France — World Cup', 'worldcup2026', 'Argentina', 'https://flagcdn.com/w80/ar.png', 'France', 'https://flagcdn.com/w80/fr.png', false, 'SCHEDULED', '2026-06-22', '18:00 UTC')
+   ON CONFLICT ("id") DO NOTHING`,
+  `INSERT INTO "StreamLink" ("id", "eventId", "name", "url", "quality", "sortOrder")
+   VALUES ('str-002a', 'evt-002', 'HLS 1080p', 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8', 'HD', 0)
+   ON CONFLICT ("id") DO NOTHING`,
+
+  // evt-003: LIVE match (second)
+  `INSERT INTO "Event" ("id", "title", "categoryId", "teamAName", "teamALogoUrl", "teamBName", "teamBLogoUrl", "isLive", "status", "date", "time")
+   VALUES ('evt-003', 'Spain vs England — UEFA Final', 'worldcup2026', 'Spain', 'https://flagcdn.com/w80/es.png', 'England', 'https://flagcdn.com/w80/gb.png', true, 'LIVE', '2026-06-21', '21:00 UTC')
+   ON CONFLICT ("id") DO NOTHING`,
+  `INSERT INTO "StreamLink" ("id", "eventId", "name", "url", "quality", "sortOrder")
+   VALUES ('str-003a', 'evt-003', 'HLS 1080p', 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8', 'HD', 0),
+          ('str-003b', 'evt-003', 'HLS Auto', 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8', 'AUTO', 1)
+   ON CONFLICT ("id") DO NOTHING`,
 ];
 
 async function runMigrations() {
