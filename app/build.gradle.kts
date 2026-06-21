@@ -21,6 +21,7 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import org.gradle.api.GradleException
 
 android {
     namespace = "com.streamify.app"
@@ -164,8 +165,8 @@ android {
     // upload task with `NoSuchMethodError`.
     // -----------------------------------------------------------------
     sentry {
-        org = "sportstream-app"
-        projectName = "sportstream-android"
+        org = "streamify-0p"
+        projectName = "android"
         authToken = (rootSigningProps.getProperty("SENTRY_AUTH_TOKEN") ?: "").trim()
         autoUploadProguardMapping = true
         includeSourceContext = true
@@ -454,5 +455,78 @@ android.sourceSets.getByName("main") {
 tasks.configureEach {
     if (name.matches(Regex("(compile|ksp).*Kotlin(?!Test).*"))) {
         dependsOn(encryptSecrets)
+    }
+}
+
+// -----------------------------------------------------------------
+// Phase 7 · Step 7.15 — Release Secrets Pre-Flight Verification
+//
+// Verifies signing.properties + secrets.properties exist with all
+// required keys BEFORE `:app:assembleRelease` runs. Without this
+// guard a missing key was silently falling through to:
+//   - log-only Sentry SDK warnings (empty DSN → SDK no-ops)
+//   - hard Gradle failures deep inside a packaging task
+//   - signingConfig falling back to debug (since the `release`
+//     config block's `storeFile` resolves to null when the path
+//     property is blank — the `takeIf { it.storeFile != null }`
+//     guard picks debug rather than failing loud)
+//
+// This catches the missing-key case BEFORE assembleRelease starts
+// with a single, actionable error message listing every gap. The
+// check runs at `doFirst` of `assembleRelease` so it sees the
+// full task graph but executes before any work begins.
+// -----------------------------------------------------------------
+tasks.named("assembleRelease") {
+    doFirst {
+        val errors = mutableListOf<String>()
+
+        // ── signing.properties ─────────────────────────────────────
+        val signingProps = Properties()
+        rootProject.file("signing.properties").takeIf { it.exists() }?.let { f ->
+            f.inputStream().use { signingProps.load(it) }
+        } ?: run {
+            errors += "signing.properties missing at repo root"
+        }
+        for (k in listOf(
+            "RELEASE_STORE_FILE",
+            "RELEASE_STORE_PASSWORD",
+            "RELEASE_KEY_ALIAS",
+            "RELEASE_KEY_PASSWORD",
+            "APP_SENTRY_DSN",
+            "SENTRY_AUTH_TOKEN",
+        )) {
+            if (signingProps.getProperty(k).isNullOrBlank()) {
+                errors += "signing.properties: missing $k"
+            }
+        }
+
+        // ── secrets.properties ─────────────────────────────────────
+        val secretsProps = Properties()
+        rootProject.file("secrets.properties").takeIf { it.exists() }?.let { f ->
+            f.inputStream().use { secretsProps.load(it) }
+        } ?: run {
+            errors += "secrets.properties missing at repo root"
+        }
+        for (k in listOf(
+            "API_BASE_URL",
+            "API_CONFIG_URL",
+            "UPDATE_URL",
+            "TELEGRAM_LINK",
+        )) {
+            if (secretsProps.getProperty(k).isNullOrBlank()) {
+                errors += "secrets.properties: missing $k"
+            }
+        }
+
+        if (errors.isNotEmpty()) {
+            throw GradleException(
+                ":app:assembleRelease pre-flight failed. Resolve the credential gaps below:\n  " +
+                    errors.joinToString("\n  ")
+            )
+        }
+        logger.lifecycle(
+            "verifyReleaseSecrets: signing.properties (6/6 keys) + " +
+                "secrets.properties (4/4 keys) all present ✓"
+        )
     }
 }
