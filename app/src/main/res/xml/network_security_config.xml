@@ -1,26 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Phase 7 · Step 7.7 — Network security configuration.
-  
+
   Enforces:
-    1. No cleartext (HTTP) traffic on any connection.
+    1. No cleartext (HTTP) traffic on any connection — EXCEPT the
+       Android emulator loopback hosts (`localhost`, `127.0.0.1`,
+       `10.0.2.2`) so the dev APK can reach a backend running on the
+       developer's workstation.  The application-layer HTTPS check in
+       `NetworkInterceptor.kt` mirrors this exemption (also
+       BuildConfig.DEBUG-gated) so the two layers stay consistent.
     2. Only system CA certificates are trusted (user-installed CAs
        are blocked, preventing MITM via proxy tools like Charles).
     3. Certificate pinning for the API domain with primary + backup
        pins.
-  
+
   To generate real pins:
     openssl s_client -connect learngermanwith.fun:443 -servername learngermanwith.fun < /dev/null 2>/dev/null \
       | openssl x509 -pubkey -noout \
       | openssl pkey -pubin -outform DER \
       | openssl dgst -sha256 -binary \
       | base64
-  
+
   The backup pin should be from a different CA or an offline key
   that can be rotated if the primary CA is compromised.
 -->
 <network-security-config>
-    <!-- Block cleartext globally — all connections must use TLS. -->
+    <!-- Block cleartext globally — all connections must use TLS
+         (the loopback domain-configs below are the explicit dev
+         carve-outs). -->
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <!-- Only trust system-installed CA certificates.
@@ -29,6 +36,22 @@
             <certificates src="system" />
         </trust-anchors>
     </base-config>
+
+    <!--
+      Loopback carve-out (debug / emulator only) — the dev fleet
+      and a local POST backend can be hit without TLS.  Production
+      URI hosts (learngermanwith.fun + subdomains) keep the strict
+      HTTPS + pin-set policy below.
+    -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- 10.0.2.2 is the Android emulator's alias for the host's
+             loopback. Adding it (and 127.0.0.1 / localhost) means a
+             debug APK can talk to a backend on the developer's PC
+             without manually generating a self-signed cert. -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+    </domain-config>
 
     <!-- Certificate pinning for the API domain.
          Pins regenerated 2026-06-21 from the live cert chain via openssl

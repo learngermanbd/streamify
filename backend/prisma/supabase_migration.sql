@@ -161,7 +161,14 @@ VALUES (
 ) ON CONFLICT (email) DO NOTHING;
 
 -- ─── Seed: default AppConfig ───
+-- Aligned with the runtime fallback in
+--   app/build.gradle.kts  → encryptSecrets fallback map
+--   app/.../security/NetworkInterceptor.kt  → HTTPS enforcement
+--   app/src/main/res/xml/network_security_config.xml  → cert pin set
+-- so the first /api/config fetch returns a URL the app can actually
+-- reach without an admin having to PUT /api/config immediately.
+-- Switch to a per-environment value once Supabase + custom domain land.
 INSERT INTO "AppConfig" ("id", "apiBaseUrl")
-VALUES (gen_random_uuid()::text, 'http://localhost:4000');
+VALUES (gen_random_uuid()::text, 'https://learngermanwith.fun/api');
 
 COMMIT;

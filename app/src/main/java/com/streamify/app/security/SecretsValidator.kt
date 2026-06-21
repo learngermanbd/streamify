@@ -47,6 +47,9 @@ import com.streamify.app.data.remote.AppConfig
  *  3. **API base URL** — `AppConfig.defaults().apiBaseUrl`. Falls
  *     back to `https://learngermanwith.fun` (placeholder host) when
  *     `secrets.properties` is absent.
+ *  4. **Composite network posture** — single Log.i breadcrumb listing
+ *     the resolved host, build variant, whether HTTPS is enforced, and
+ *     whether the host is in the cert-pin set.
  */
 object SecretsValidator {
 
@@ -123,5 +126,46 @@ object SecretsValidator {
             Log.w(TAG, "Setup check found ${issues.size} placeholder value(s):")
             issues.forEachIndexed { i, msg -> Log.w(TAG, "  ${i + 1}. $msg") }
         }
+
+        // ── 3. Composite network diagnostic line ───────────────────
+        // Single Log.i so logcat / Sentry / Firebase Crashlytics can
+        // aggregate one breadcrumb per cold launch — far easier to
+        // grep than the per-issue warnings above. Hard-codes the
+        // currently-pinned host + dev-loopback set; keep these in
+        // sync with SSLPinner.PINS and NetworkInterceptor.LOOPBACK_HOSTS
+        // whenever the production cert pin set changes.
+        try {
+            val apiBase = AppConfig.defaults().apiBaseUrl
+            val host = java.net.URI(apiBase).host ?: "?"
+            val pinned = host in PINNED_HOSTS
+            val isLoopbackDevHost = host in LOOPBACK_HOSTS_DEBUG
+            // HTTPS is enforced everywhere EXCEPT loopback in DEBUG
+            // builds — this mirrors NetworkInterceptor + network_security_config.xml.
+            val enforcesHttps = !(BuildConfig.DEBUG && isLoopbackDevHost)
+            Log.i(
+                TAG,
+                "Network: base=$apiBase host=$host " +
+                    "build=${if (BuildConfig.DEBUG) "debug" else "release"} " +
+                    "enforcesHttps=$enforcesHttps pinned=$pinned"
+            )
+        } catch (t: Throwable) {
+            Log.w(TAG, "Composite network diagnostic failed", t)
+        }
     }
+
+    /**
+     * Snapshot of cert-pin hosts (mirrors
+     * [com.streamify.app.security.SSLPinner.PINS] keys). Add new
+     * pinned hosts here in lock-step when [SSLPinner] changes.
+     */
+    private val PINNED_HOSTS = setOf("learngermanwith.fun")
+
+    /**
+     * Loopback hosts where HTTPS is unwieldy in dev: no DNS, no
+     * self-signed root on emulator. Mirrors
+     * [com.streamify.app.security.NetworkInterceptor.LOOPBACK_HOSTS].
+     * Release builds DO NOT honour these even if the host is in
+     * the set — the `enforcesHttps` calculation above gates that.
+     */
+    private val LOOPBACK_HOSTS_DEBUG = setOf("10.0.2.2", "localhost", "127.0.0.1")
 }
