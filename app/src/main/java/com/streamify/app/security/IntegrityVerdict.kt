@@ -44,8 +44,32 @@ data class IntegrityVerdict(
     /** Device recognition verdict. */
     val deviceRecognitionVerdict: String,
     /** Raw token for server-side verification. */
-    val rawToken: String = ""
+    val rawToken: String = "",
+    /**
+     * Phase 7 · Step 7.10 v1.1.1 hardening — tri-state classifier.
+     * Defaults to [VerdictState.CLEAN] so all existing callers
+     * (which construct via the canonical `fromToken(...)` factory)
+     * continue compiling + scoring identically. New callers can
+     * populate this from a GoogleApiAvailability + Task.await
+     * timeout boundary to flag offline / GMS-missing verdicts
+     * without leaking a hard-block score.
+     */
+    val verdictState: VerdictState = VerdictState.CLEAN
 ) {
+
+    /**
+     * The tri-state classifier for the verdict. Used at runtime to
+     * differentiate between an authentic "device meets CTS profile"
+     * reply, a "Google Play Services not available" degraded
+     * graceful path, and an explicit tamper / debug reply.
+     *
+     * Maps onto Phase 7 · Step 7.10's risk-scoring impact:
+     *  - **CLEAN**     — score +0, full trust, gate silent
+     *  - **WEAK_BUT_OK** — score +0, only MEETS_BASIC_INTEGRITY (log breadcrumb)
+     *  - **INCONCLUSIVE** — score +0, GMS missing / timeout / malformed (gate waits for server)
+     *  - **TAMPER**    — score +4 (debug signs, NOT_PLAY_EVALUATION, etc.)
+     */
+    enum class VerdictState { CLEAN, WEAK_BUT_OK, INCONCLUSIVE, TAMPER, GMS_UNAVAILABLE, TIMEOUT }
     /**
      * Compute a risk score from the verdict.
      * Higher score = more suspicious.
@@ -94,6 +118,33 @@ data class IntegrityVerdict(
         const val LICENSED = "LICENSED"
         const val UNLICENSED = "UNLICENSED"
         const val UNKNOWN = "UNKNOWN"
+
+        /**
+         * Phase 7 · Step 7.10 v1.1.1 — factory for the INCONCLUSIVE
+         * verdict surfaced by [com.streamify.app.security.PlayIntegrityManager]
+         * when:
+         *  - Google Play Services is not available (Huawei, AOSP Xiaomi, …)
+         *  - The 4-second PIA deadline elapses
+         *  - The Task itself fails with an ApiException we did not handle
+         *
+         * All `meetsXxx` booleans are false (no positive attestation) but
+         * the [verdictState] is set so the gate knows NOT to escalate.
+         */
+        fun inconclusive(gmsAvailable: Boolean, label: String): IntegrityVerdict =
+            IntegrityVerdict(
+                meetsDeviceIntegrity = false,
+                meetsBasicIntegrity = false,
+                meetsVirtualIntegrity = false,
+                appPackageNameValid = gmsAvailable,
+                appCertificateValid = gmsAvailable,
+                licensingVerdict = UNKNOWN,
+                deviceRecognitionVerdict = label,
+                rawToken = "",
+                verdictState = if (gmsAvailable)
+                    VerdictState.TIMEOUT
+                else
+                    VerdictState.GMS_UNAVAILABLE
+            )
 
         /**
          * Parse a Play Integrity JWS token client-side.
@@ -174,7 +225,8 @@ data class IntegrityVerdict(
             appCertificateValid = false,
             licensingVerdict = UNKNOWN,
             deviceRecognitionVerdict = "PARSE_FAILED",
-            rawToken = token
+            rawToken = token,
+            verdictState = VerdictState.INCONCLUSIVE
         )
     }
 }

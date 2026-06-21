@@ -16,9 +16,13 @@ import com.streamify.app.data.remote.RemoteConfigHelper
 import com.streamify.app.data.repository.RepositoryModule
 import com.streamify.app.data.update.AppUpdateManager
 import com.streamify.app.security.HoneyPotManager
+import com.streamify.app.security.IntegrityChecker
+import com.streamify.app.security.RequestSigner
+import com.streamify.app.security.SSLPinner
 import com.streamify.app.security.SecretsValidator
 import com.streamify.app.security.SecurityGate
 import com.streamify.app.security.SecurityModule
+import com.streamify.app.security.TokenStore
 import com.streamify.app.services.UpdateWorker
 import io.sentry.SentryEvent
 import io.sentry.SentryOptions
@@ -193,6 +197,38 @@ class StreamifyApp : Application() {
         // Registers a ComponentCallbacks2 that wipes the decrypted-value
         // cache when the app enters the background (onTrimMemory).
         runStep("SecurityModule.init") { SecurityModule.init(this) }
+
+        // Phase 7 · Step 7.8 — Boot the Keystore-backed refresh-token
+        // store BEFORE any token read (e.g. NetworkInterceptor reads
+        // during OkHttp bootstrap). initFromContext is idempotent.
+        runStep("TokenStore.init") { TokenStore.initFromContext(applicationContext) }
+
+        // Phase 7 · Step 7.7 — Boot request signer (lazy reads of
+        // SIGNING_SECRET from RuntimeStringProvider at first use).
+        runStep("RequestSigner.bootstrap") { RequestSigner.bootstrap(applicationContext) }
+
+        // Phase 7 · Step 7.7 — Apply real SSL pins from BuildConfig.
+        // SSL_PINS_LEARNGERMANWITH_FUN is a semicolon-separated list
+        // injected from gradle into BuildConfig; absent => placeholder.
+        runStep("SSLPinner.initialize") { SSLPinner.initialize(coldLaunch = true) }
+
+        // Phase 7 · Step 7.5 + 7.13 — seed IntegrityChecker with the expected
+        // signing-cert SHA-256. Per-entry hashing is LAZY inside
+        // IntegrityChecker.verifyFileIntegrity — runs on the SecurityGate
+        // worker thread, NOT on the main thread — so cold-launch splash is
+        // not blocked by zip iteration (review issue #1).
+        runStep("IntegrityChecker.bootstrap") {
+            val expectedSha = BuildConfig.APP_SIGNING_SHA256.takeIf { it.isNotBlank() }
+            if (expectedSha != null) {
+                IntegrityChecker.expectedSignatureSha256 = expectedSha
+                Log.i(TAG, "IntegrityChecker: signing-cert SHA-256 wired (${expectedSha.take(12)}…)")
+            } else {
+                Log.d(TAG, "IntegrityChecker: signing-cert SHA-256 blank; signature check will SKIP")
+            }
+            // v1.1.1 — per-entry hash seeding moved into IntegrityChecker.verifyFileIntegrity
+            // as a LAZY fallback (runs only on SecurityGate worker thread, NEVER here).
+            // Cold-launch splash is NOT blocked by zip iteration (review issue #1).
+        }
 
         // We deliberately do NOT initialize Firebase here — FirebaseApp
         // auto-initializes from the `google-services.json` plugin and we

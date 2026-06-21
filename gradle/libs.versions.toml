@@ -49,8 +49,16 @@ fragment-ktx = "1.8.5"
 
 # --- Test dependencies (Step 9.1) ---
 junit-jupiter = "5.11.0"
+junit-4 = "4.13.2"  # v1.1.1 — needed by RobolectricTestRunner (@RunWith)
 mockk = "1.13.12"
 truth = "1.4.2"
+# v1.1.1 — Robolectric host-JVM Android framework (sleeps fakes for
+# Application, Context, Log, SharedPreferences, etc.).  Used by
+# StreamifyAppBootstrapTest to exercise the v1.1.1 onCreate wiring
+# without booting an emulator — fast (sub-30 sec) and deterministic.
+# Compatible with compileSdk=36 / targetSdk=36 / minSdk=23.
+robolectric = "4.13"
+junit-vintage = "5.11.0"  # lets JUnit 4 tests run inside ./gradlew test alongside Jupiter
 
 [libraries]
 # Activity — ComponentActivity extension functions (Android 16 edge-to-edge)
@@ -81,6 +89,12 @@ firebase-bom       = { module = "com.google.firebase:firebase-bom",          ver
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }  # version managed by BoM
 # Step 7.10 — Play Integrity (bumped to 1.5.0 for Android 16-compatible GMS 25.x)
 play-integrity     = { module = "com.google.android.play:integrity",        version = "1.5.0" }
+# Step 7.10 — GoogleApiAvailability probe lives in play-services-base.
+# Used by IntegrityManager.queryWithTimeoutAndGms to fail-fast on
+# devices without GMS (Huawei, AOSP Xiaomi, etc.) instead of throwing
+# at requestIntegrityToken. Pinned 18.5.0 to match firebase-bom 34.0.0's
+# transitive version exactly, eliminating AGP dedup warning on AGP 8.9.
+play-services-base = { module = "com.google.android.gms:play-services-base", version = "18.5.0" }
 
 # Sentry — crash reporting (replaces Crashlytics)
 sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry" }
@@ -123,9 +137,14 @@ work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "workm
 # --- Test libraries (Step 9.1) ---
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
+junit = { module = "junit:junit", version.ref = "junit-4" }  # v1.1.1 — Robolectric runner
+junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine", version.ref = "junit-vintage" }  # v1.1.1 — bridge for JUnit 4 tests in Jupiter test task
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 truth = { module = "com.google.truth:truth", version.ref = "truth" }
+# v1.1.1 — Robolectric host-JVM Android framework stubs. Brings
+# `android-all-instrumented-*.jar` (~80 MB) at first test run (cached).
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 
 [plugins]
 android-application = { id = "com.android.application",                  version.ref = "agp" }

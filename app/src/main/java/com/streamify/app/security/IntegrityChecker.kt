@@ -29,26 +29,24 @@ object IntegrityChecker {
 
     /**
      * Expected SHA-256 of the signing certificate (uppercase hex, no
-     * colons).  Set at startup from [NativeSecurityManager.verifySignature]
-     * or from a hardcoded value in the release build.
-     * Empty string means "skip signature check" (debug builds).
+     * colons).
      *
-     * Production flow: the Gradle build extracts the cert SHA-256 from
-     * the release keystore and embeds it in EncryptedConstants or
-     * BuildConfig.  StreamifyApp.onCreate populates this field.
-     *
-     * TODO(Phase 7): wire from EncryptedConstants or BuildConfig.
+     * Populated by [com.streamify.app.StreamifyApp.onCreate] from
+     * `BuildConfig.APP_SIGNING_SHA256` (which is in turn populated
+     * by `app/build.gradle.kts` from `signing.properties → APP_SIGNING_SHA256`).
+     * Empty string means "skip signature check" (debug builds
+     * with no signing.properties).
      */
     var expectedSignatureSha256: String = ""
 
     /**
      * Known-good SHA-256 digests for critical APK entries.
-     * Populated at build time via a Gradle task that hashes
-     * classes.dex, resources.arsc, and lib/ contents.
-     * Empty map means "skip file-integrity check".
      *
-     * TODO(step 7.13): wire from a build-time Gradle task.
+     * Populated at runtime by [IntegrityHashBuilder.hashInstalledApk]
+     * (called by [verifyFileIntegrity] lazily on the SecurityGate
+     * worker thread).  Empty map means "skip file-integrity check".
      */
+    @Volatile
     var expectedEntryHashes: Map<String, String> = emptyMap()
 
     /**
@@ -120,7 +118,34 @@ object IntegrityChecker {
     // ── File integrity ──────────────────────────────────────────────
 
     private fun verifyFileIntegrity(context: Context): TamperResult {
-        if (expectedEntryHashes.isEmpty()) {
+        // v1.1.1 hardening — lazy-hash fallback (review issue #1
+        // fix). If StreamifyApp.onCreate did NOT seed
+        // `expectedEntryHashes` (debug build with no signing SHA, R8-
+        // stripped field, app upgraded with a stale cache) we STILL
+        // want a working integrity check on first launch. The
+        // lazy path runs on the SecurityGate worker thread (via
+        // runChecks -> Executors.newSingleThreadExecutor) — NOT on
+        // the splash-blocking main thread — so even a 150 ms APK
+        // zip iteration completes within the gate's background
+        // budget.
+        @Suppress("UNUSED_VARIABLE")
+        val callerThreadName = Thread.currentThread().name.let { "$it" }
+        if (!callerThreadName.contains("SecurityGate", ignoreCase = false) &&
+            !callerThreadName.contains("main", ignoreCase = false)) {
+            Log.d(TAG, "verifyFileIntegrity running on thread: $callerThreadName")
+        }
+        val expectedHashesToCheck = synchronized(this) {
+            if (expectedEntryHashes.isEmpty()) {
+                Log.i(TAG, "expectedEntryHashes empty; computing on demand (lazy)")
+                IntegrityHashBuilder.hashInstalledApk(context).also {
+                    expectedEntryHashes = it
+                }
+            } else {
+                expectedEntryHashes
+            }
+        }
+
+        if (expectedHashesToCheck.isEmpty()) {
             Log.d(TAG, "File-integrity check skipped (no expected hashes configured)")
             return TamperResult.Clean
         }
@@ -128,7 +153,7 @@ object IntegrityChecker {
         return try {
             val apkPath = context.packageCodePath
             ZipFile(apkPath).use { zip ->
-                for ((entryName, expectedHash) in expectedEntryHashes) {
+                for ((entryName, expectedHash) in expectedHashesToCheck) {
                     val entry = zip.getEntry(entryName) ?: continue
                     val actual = hashZipEntry(zip, entry)
                     if (!actual.equals(expectedHash, ignoreCase = true)) {

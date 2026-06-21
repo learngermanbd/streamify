@@ -73,6 +73,32 @@ android {
             "\"" + (rootSigningProps.getProperty("APP_SENTRY_DSN") ?: "") + "\""
         )
 
+        // Phase 7 · Step 7.5 + Step 7.13 — APK signing certificate SHA-256.
+        // Production release builds read the actual signing cert from the
+        // release keystore (populated below by computeReleaseSigningSha256)
+        // and inject it as a BuildConfig constant consumed by
+        // IntegrityChecker.expectedSignatureSha256 during StreamifyApp
+        // bootstrap. Empty string triggers the skip-signature path
+        // (debug builds, unsigned prod builds with -PallowUnsignedRelease).
+        buildConfigField(
+            "String",
+            "APP_SIGNING_SHA256",
+            "\"" + (rootSigningProps.getProperty("APP_SIGNING_SHA256") ?: "") + "\""
+        )
+
+        // Phase 7 · Step 7.7 — Real SSL pins for production domains.
+        // Format: semicolon-separated `sha256/<base64-der>` strings.  If
+        // blank, SSLPinner falls back to the baked-in Let's Encrypt
+        // placeholder + ISRG Root X1 backup.
+        // SSLPinner reads this via reflection in SSLPinner.initialize
+        // (rather than direct BuildConfig import) so additional domains
+        // can be added without forking SSLPinner.
+        buildConfigField(
+            "String",
+            "SSL_PINS_LEARNGERMANWITH_FUN",
+            "\"" + (rootSigningProps.getProperty("SSL_PINS_LEARNGERMANWITH_FUN") ?: "") + "\""
+        )
+
         // Phase 7 · Step 7.4 — NDK ABI targets + CMake compile flags.
         externalNativeBuild {
             cmake {
@@ -96,6 +122,18 @@ android {
     buildFeatures {
         viewBinding = true   // Step 1.2 — enables type-safe view binding across all UI screens
         buildConfig = true   // Step 2.2 — opt in to AGP-generated BuildConfig (DEBUG, VERSION_NAME, APPLICATION_ID)
+    }
+
+    // v1.1.1 — explicitly select the JUnit Platform test framework so BOTH
+    // the existing Jupiter tests AND the new JUnit 4 / Robolectric tests
+    // (bridged through junit-vintage-engine added above) get executed by
+    // AGP's `testDebugUnitTest` task.  The `useJUnitPlatform()` action is
+    // applied at the tasks-level (below) because AS's Tooling API probes
+    // `prepareKotlinBuildScriptModel` and `unitTests.all { ... }` inside
+    // `android.testOptions` is a known blocker for that task registration
+    // on AGP 8.9 / Kotlin Gradle Plugin 2.0.21 / KSP 2.0.21-1.0.28.
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
     }
 
     // -----------------------------------------------------------------
@@ -257,6 +295,8 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.play.integrity)          // Step 7.10 — Play Integrity API & device attestation
+    // Step 7.10 — see [libraries]/play-services-base note in libs.versions.toml for firebase-bom dedup rationale
+    implementation(libs.play.services.base)
 
     // ── Sentry — crash reporting (replaces Firebase Crashlytics) ──
     implementation(libs.sentry.android)
@@ -308,6 +348,23 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.truth)
+
+    // ── v1.1.1 — Robolectric host-JVM Android framework ──
+    // RoboletricTestRunner runs Application.onCreate in-process so we can
+    // verify the v1.1.1 security bootstrap (TokenStore.initFromContext,
+    // RequestSigner.bootstrap, SSLPinner.initialize, IntegrityChecker
+    // signing-cert wiring) without actually booting an Android emulator.
+    // Robolectric 4.13 needs JUnit 4 API + Vintage engine to coexist with
+    // our Jupiter test suite; AGP's `testDebugUnitTest` discovers both.
+    testImplementation(libs.robolectric)
+    testImplementation(libs.junit)
+    testRuntimeOnly(libs.junit.vintage.engine)
+    // v1.1.1 — Robolectric 4.13 declares `androidx.test:monitor` only at
+    // `runtime` scope, so Kotlin's test compilation doesn't see
+    // `androidx.test:core` (which provides `ApplicationProvider`).  We
+    // pin core-ktx explicitly to put it on the test compile classpath.
+    testImplementation("androidx.test:core-ktx:1.6.1")
+    testImplementation("androidx.test.ext:junit-ktx:1.2.1")
 }
 
 // ──────────────────────────────────────────────────────────────────────
@@ -362,6 +419,13 @@ val encryptSecrets by tasks.registering {
                     ?: props.getProperty("SENTRY_DSN")
                     ?: ""
                 ),
+            // Phase 7 · Step 7.7 — HMAC signing secret consumed by
+            // RequestSigner.v1.1.1. Build-time encrypted so the literal
+            // never appears in the APK's strings table. Optional:
+            // debug builds without secrets.properties get an empty
+            // string, which RequestSigner treats as "no signing path".
+            "SIGNING_SECRET" to (props.getProperty("SIGNING_SECRET")
+                ?: ""),
         )
 
         // ── Generate AES-256 key ───────────────────────────────────
@@ -461,6 +525,17 @@ tasks.configureEach {
     if (name.matches(Regex("(compile|ksp).*Kotlin(?!Test).*"))) {
         dependsOn(encryptSecrets)
     }
+}
+
+// v1.1.1 — Apply `useJUnitPlatform()` to every unit test task at the
+// top-level `tasks` registration so the IntelliJ/Android Studio Tooling
+// API successfully registers `prepareKotlinBuildScriptModel` (top-level
+// registration avoids the AGP-8.9-specific deadlock where
+// `android.testOptions.unitTests.all { ... }` interferes with the IDE
+// model probe). After this change, both the existing Jupiter tests AND
+// the new JUnit 4 / Robolectric tests execute under `testDebugUnitTest`.
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
 // -----------------------------------------------------------------

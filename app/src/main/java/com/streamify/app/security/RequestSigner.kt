@@ -1,5 +1,6 @@
 package com.streamify.app.security
 
+import android.content.Context
 import android.util.Log
 import okhttp3.Request
 import java.util.UUID
@@ -27,6 +28,23 @@ import javax.crypto.spec.SecretKeySpec
  *
  * The resulting signature is sent in the `X-Request-Signature` header.
  *
+ * ## v1.1.1 hardening — secret lifecycle
+ *
+ * As of v1.1.1 the `signingSecret` no longer sits in a mutable
+ * public field. Instead it is:
+ *
+ *  1. Encrypted at build time by `:app:encryptSecrets` →
+ *     `EncryptedConstants.SIGNING_SECRET`.
+ *  2. Fetched on demand by `RuntimeStringProvider.getString("SIGNING_SECRET")`
+ *     (AES-256-GCM with an XOR-obfuscated per-build key).
+ *  3. Held as a `CharArray` only for the lifetime of each
+ *     [signRequest] call, then wiped via `StringEncryptor.wipe`.
+ *
+ * The `signingSecret` property kept below is the **fallback**
+ * path used in debug builds where `SIGNING_SECRET` is missing
+ * from `secrets.properties`. Production paths always use
+ * [RuntimeStringProvider.getString].
+ *
  * ## Server-side verification
  * The server must:
  *  1. Check that the timestamp is within ±5 minutes of server time.
@@ -40,13 +58,28 @@ object RequestSigner {
     private const val TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000L // 5 minutes
 
     /**
-     * Signing secret.  In production, this should come from
-     * [RuntimeStringProvider] or [EncryptedConstants].
-     * Empty string disables signing (debug builds).
+     * Optional explicit override. Prefer [signWithSecret] which
+     * reads from [RuntimeStringProvider] directly so the secret
+     * never appears as a [String] in the JVM intern pool.
      *
-     * TODO(Phase 7): wire from EncryptedConstants.
+     * Empty by default; a non-empty value here bypasses
+     * [RuntimeStringProvider] entirely (used only in tests).
      */
-    internal var signingSecret: String = ""
+    @JvmStatic
+    var signingSecretOverride: String = ""
+
+    /**
+     * Boot the signer with an [Context]. The context is unused
+     * today (placeholder for future per-install derivation) but
+     * is required by [com.streamify.app.StreamifyApp]'s
+     * `runStep` lambda contract.
+     */
+    @JvmStatic
+    fun bootstrap(@Suppress("UNUSED_PARAMETER") context: Context) {
+        // RequestSigner lazily reads RuntimeStringProvider.getString("SIGNING_SECRET")
+        // on each sign call (see [signWithSecret]). No eagerly-stored state to bootstrap.
+        Log.d(TAG, "RequestSigner bootstrap (lazy-decrypt mode)")
+    }
 
     /**
      * Sign an outgoing OkHttp [Request] by adding security headers:
@@ -54,10 +87,28 @@ object RequestSigner {
      *  - `X-Request-Nonce` — UUID v4 (unique per request)
      *  - `X-Request-Signature` — HMAC-SHA256 of the request metadata
      *
-     * If [signingSecret] is empty (debug builds), only the timestamp
-     * and nonce are added (no signature).
+     * If no signing secret is configured (debug builds, missing
+     * `secrets.properties → SIGNING_SECRET`), only the timestamp
+     * and nonce are added (no signature). The secret is fetched
+     * via [RuntimeStringProvider] so it lives as a [CharArray] for
+     * the duration of this call only; the array is wiped on exit.
      */
     fun signRequest(request: Request): Request {
+        val explicitOverride = signingSecretOverride.takeIf { it.isNotBlank() }
+        val secretChars: CharArray? = explicitOverride?.toCharArray()
+            ?: runCatching {
+                RuntimeStringProvider.get("SIGNING_SECRET")
+            }.getOrNull()
+        // Build the request with timestamp + nonce (always)
+        return buildSigned(request, secretChars).also {
+            secretChars?.let { arr -> StringEncryptor.wipe(arr) }
+        }
+    }
+
+    private fun buildSigned(
+        request: Request,
+        secretChars: CharArray?
+    ): Request {
         val timestamp = System.currentTimeMillis().toString()
         val nonce = UUID.randomUUID().toString()
         val bodyHash = hashBody(request)
@@ -66,7 +117,8 @@ object RequestSigner {
             .header("X-Request-Timestamp", timestamp)
             .header("X-Request-Nonce", nonce)
 
-        if (signingSecret.isNotBlank()) {
+        val secretString = secretChars?.concatToString().orEmpty()
+        if (secretString.isNotBlank()) {
             val payload = buildString {
                 append(request.method)
                 append('\n')
@@ -78,8 +130,11 @@ object RequestSigner {
                 append('\n')
                 append(bodyHash)
             }
-            val signature = hmacSha256(signingSecret, payload)
+            val signature = hmacSha256(secretString, payload)
             builder.header("X-Request-Signature", signature)
+            Log.d(TAG, "Signed request ${request.method} ${request.url.encodedPath}")
+        } else {
+            Log.d(TAG, "No signing secret configured; emitted unsigned headers only")
         }
 
         return builder.build()

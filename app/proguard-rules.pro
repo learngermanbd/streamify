@@ -111,3 +111,29 @@
 # and ZipFile iteration (no reflection-based field access).  SelfHealing
 # references BuildConfig.DEBUG and Sentry.captureEvent (kept by Sentry
 # rules above).  No additional keep rules needed — direct calls only.
+
+# ── Phase 7 · Step 7.7 ── SSL pinner reflection probe ──────────────────────────────────────
+# SSLPinner.initialize probes `BuildConfig.SSL_PINS_LEARNGERMANWITH_FUN`
+# + `BuildConfig.APP_SIGNING_SHA256` via `Class.forName(...).getField(...)`.
+# Under R8 full mode `-keepclassmembers` does NOT reliably preserve unused
+# `public static final String` constants. Use `-keep` (class-level) to force
+# survival of the field as a reflective access surface.
+-keep class com.streamify.app.BuildConfig {
+    public static final java.lang.String SSL_PINS_LEARNGERMANWITH_FUN;
+    public static final java.lang.String APP_SIGNING_SHA256;
+}
+
+# ── Phase 7 · Step 7.10 — Play Integrity tri-state verdict ─────────────
+# IntegrityVerdict is referenced by SecurityGate's verdict-reducer and
+# by IntegrityManager.decodeLocally. Keep the data class + its Companion
+# + VerdictState enum so Reflection on the verdict code-path compiles.
+-keep class com.streamify.app.security.IntegrityVerdict { *; }
+-keep class com.streamify.app.security.IntegrityVerdict$Companion { *; }
+-keep class com.streamify.app.security.IntegrityVerdict$VerdictState { *; }
+
+# ── Phase 7 · Step 7.13 — Runtime integrity hash builder ──────────────
+# IntegrityHashBuilder hashes the installed APK via PackageManager
+# codePath + ZipFile iteration. No reflection, but the method name
+# is referenced from StreamifyApp.onCreate (string literal + call).
+# Keep the public surface for symbol stability.
+-keep class com.streamify.app.security.IntegrityHashBuilder { *; }
