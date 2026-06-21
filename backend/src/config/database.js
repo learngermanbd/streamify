@@ -75,6 +75,46 @@ async function ensureConnected() {
   console.log('[pg] Connected →', cl.host + ':' + cl.port);
 }
 
+// ── Auto-migration: idempotent CREATE TABLE IF NOT EXISTS ───────────
+//     Runs on first connection so new tables land automatically on
+//     Render deploy without manual SQL Editor runs.
+const AUTO_MIGRATIONS = [
+  // Phase 8.20 — Playlist + PlaylistItem
+  `CREATE TABLE IF NOT EXISTS "Playlist" (
+    "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    "name" TEXT NOT NULL,
+    "ownerId" TEXT NOT NULL,
+    "createdAt" TIMESTAMPTZ DEFAULT now(),
+    "updatedAt" TIMESTAMPTZ DEFAULT now()
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_playlist_owner ON "Playlist"("ownerId")`,
+  `CREATE TABLE IF NOT EXISTS "PlaylistItem" (
+    "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    "playlistId" TEXT NOT NULL REFERENCES "Playlist"("id") ON DELETE CASCADE,
+    "name" TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    "quality" TEXT DEFAULT 'AUTO' CHECK ("quality" IN ('AUTO', 'HD', 'SD')),
+    "sortOrder" INTEGER DEFAULT 0,
+    "addedAt" TIMESTAMPTZ DEFAULT now()
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_playlistitem_playlist ON "PlaylistItem"("playlistId")`,
+];
+
+async function runMigrations() {
+  await ensureConnected();
+  for (const sql of AUTO_MIGRATIONS) {
+    try {
+      await client.query(sql);
+    } catch (err) {
+      // Table or index already exists — safe to ignore
+      if (err.code !== '42P07' && err.code !== '42P16') {
+        console.warn('[pg] migration warning:', err.message);
+      }
+    }
+  }
+  console.log('[pg] migrations: checked', AUTO_MIGRATIONS.length, 'statements');
+}
+
 // ── Quote an identifier (table or column name) ────────────────────
 function qi(name) {
   return '"' + name.replace(/"/g, '""') + '"';
@@ -121,6 +161,7 @@ function buildOrderBy(orderBy) {
 // ── Map relation names to foreign-key info ────────────────────────
 const RELATIONS = {
   streams:    { table: 'StreamLink',  fk: 'eventId',   many: true },
+  items:      { table: 'PlaylistItem',fk: 'playlistId', many: true },
   category:   { table: 'Category',    fk: null,         many: false, reverseFk: 'id', localFk: 'categoryId' },
   sentBy:     { table: 'Admin',       fk: null,         many: false, reverseFk: 'id', localFk: 'sentById' },
   channels:   { table: 'Channel',     fk: 'categoryId', many: true },
@@ -417,6 +458,8 @@ const TABLE_MAP = {
   channel:         'Channel',
   category:        'Category',
   highlight:       'Highlight',
+  playlist:        'Playlist',
+  playlistItem:    'PlaylistItem',
   banner:          'Banner',
   appConfig:       'AppConfig',
   notification:    'Notification',
@@ -449,4 +492,4 @@ function getPrisma() {
   return pgPrisma;
 }
 
-module.exports = { getPrisma };
+module.exports = { getPrisma, runMigrations };

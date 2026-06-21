@@ -141,6 +141,9 @@ app.get('/', (_req, res) => {
       'GET  /api/config',
       'PUT  /api/config',
       'GET  /api/playlists',
+      'POST /api/playlists',
+      'PUT  /api/playlists/:id',
+      'DELETE /api/playlists/:id',
       'GET  /api/notifications',
       'POST /api/notifications/send',
       'POST /api/devices/register',
@@ -177,6 +180,12 @@ app.use((err, req, res, _next) => {
 });
 
 if (require.main === module) {
+  // Auto-migrate before listening — idempotent CREATE TABLE IF NOT EXISTS
+  const { runMigrations } = require('./config/database');
+  runMigrations().catch(err => {
+    console.warn('[streamify-backend] migration warning:', err.message);
+  });
+
   if (process.env.NODE_ENV !== 'production') {
     if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_PASSWORD) {
       console.warn('[streamify-backend] DEV mode — set DB_HOST, DB_USER, DB_PASSWORD in .env (direct pg connection)');

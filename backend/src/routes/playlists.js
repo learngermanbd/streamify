@@ -1,20 +1,26 @@
 /**
- * Phase 8 · Step 8.20 — /api/playlists route (stub).
+ * Phase 8 · Step 8.20 — /api/playlists route.
  *
- * Returns user playlists. Currently a placeholder — the Android client's
- * PlaylistsViewModel is local-only (Room) and does not call this endpoint
- * at runtime. The route exists so the full APK endpoint catalog returns
- * 200 instead of 404.
- *
- * Full playlist sync (POST/PUT/DELETE with ownerId scoping) lands in a
- * future phase when a Playlist Prisma model is added.
+ * Full CRUD for user playlists. Auth model:
+ *   GET /            — public
+ *   GET /:id         — public
+ *   POST /           — EDITOR+
+ *   PUT /:id         — EDITOR+
+ *   DELETE /:id      — SUPER_ADMIN
  */
 const express = require('express');
 const router = express.Router();
+const ctrl = require('../controllers/playlistsController');
+const { authRequired } = require('../middleware/auth');
+const { requireRole } = require('../middleware/rbac');
 
-// GET /api/playlists?ownerId=X — returns user's playlists (stub: empty)
-router.get('/', (_req, res) => {
-  res.json([]);
-});
+// Public
+router.get('/', ctrl.list);
+router.get('/:id', ctrl.getById);
+
+// Admin-only write operations
+router.post('/', authRequired, requireRole('EDITOR'), ctrl.create);
+router.put('/:id', authRequired, requireRole('EDITOR'), ctrl.update);
+router.delete('/:id', authRequired, requireRole('SUPER_ADMIN'), ctrl.delete);
 
 module.exports = router;

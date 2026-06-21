@@ -145,6 +145,30 @@ model Highlight {
   createdAt    DateTime @default(now())
 }
 
+model Playlist {
+  id        String         @id @default(cuid())
+  name      String
+  ownerId   String
+  items     PlaylistItem[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([ownerId])
+}
+
+model PlaylistItem {
+  id         String       @id @default(cuid())
+  playlistId String
+  playlist   Playlist     @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  name       String
+  url        String
+  quality    VideoQuality @default(AUTO)
+  sortOrder  Int          @default(0)
+  addedAt    DateTime     @default(now())
+
+  @@index([playlistId])
+}
+
 model Banner {
   id        String   @id @default(cuid())
   title     String

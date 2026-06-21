@@ -87,6 +87,28 @@ CREATE TABLE IF NOT EXISTS "Highlight" (
   "createdAt" TIMESTAMPTZ DEFAULT now()
 );
 
+-- ─── Playlist ───
+CREATE TABLE IF NOT EXISTS "Playlist" (
+  "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  "name" TEXT NOT NULL,
+  "ownerId" TEXT NOT NULL,
+  "createdAt" TIMESTAMPTZ DEFAULT now(),
+  "updatedAt" TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_playlist_owner ON "Playlist"("ownerId");
+
+-- ─── PlaylistItem ───
+CREATE TABLE IF NOT EXISTS "PlaylistItem" (
+  "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  "playlistId" TEXT NOT NULL REFERENCES "Playlist"("id") ON DELETE CASCADE,
+  "name" TEXT NOT NULL,
+  "url" TEXT NOT NULL,
+  "quality" TEXT DEFAULT 'AUTO' CHECK ("quality" IN ('AUTO', 'HD', 'SD')),
+  "sortOrder" INTEGER DEFAULT 0,
+  "addedAt" TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_playlistitem_playlist ON "PlaylistItem"("playlistId");
+
 -- ─── Banner ───
 CREATE TABLE IF NOT EXISTS "Banner" (
   "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
