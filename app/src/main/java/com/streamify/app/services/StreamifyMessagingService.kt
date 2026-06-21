@@ -216,29 +216,32 @@ class StreamifyMessagingService : FirebaseMessagingService() {
      * this is a no-op (the request will 404 but we don't surface the
      * failure to the user — the next FCM rotation retries).
      *
-     * URL construction uses [okhttp3.HttpUrl.newBuilder] on the parsed
-     * base URL. `newBuilder()` carries the existing scheme / host /
-     * port / path / query forward, so the `"/api"` prefix in
-     * `AppConfig.apiBaseUrl` is **preserved** (verified against the
-     * regression noted by the Step 5.4 code reviewer, pass 1: the prior
-     * manual scheme/host/port copy dropped the path).
+     * URL convention (matches [com.streamify.app.data.remote.ApiClient.joinUrl]):
+     *  - [com.streamify.app.data.remote.AppConfig.apiBaseUrl] is the
+     *    BARE host (e.g. `https://learngermanwith.fun` — no trailing
+     *    `/api`).
+     *  - Every resource path includes the `/api` prefix (see
+     *    [com.streamify.app.data.remote.ApiService.PATH_EVENTS] et al.).
+     *  - We concatenate base + path with a single `/` so the request
+     *    resolves to `https://<host>/api/fcm/register` — never
+     *    `/api/api/...`.
+     *
+     * Stripping a trailing `/api` defensively keeps this safe even if
+     * a future operator rotates `secrets.properties` back to a
+     * `/api`-suffixed value (no /api/api doubling either way).
      */
     private suspend fun postTokenToBackend(token: String) {
         val app = applicationContext as StreamifyApp
         val baseUrl = com.streamify.app.data.remote.AppConfig.defaults().apiBaseUrl
+        // De-dup `/api` so a future BARE-or-SUFFIXED rotation cannot
+        // produce a `/api/api/...` URL: trim any trailing `/api` from
+        // the base, then join `/api/fcm/register` to it.
+        val bareBase = baseUrl
+            .trimEnd('/')
+            .removeSuffix("/api")
+            .trimEnd('/')
         val url = runCatching {
-            baseUrl.toHttpUrl()
-                .newBuilder()
-                // apiBaseUrl typically ends with "/api"; the caller's intent
-                // is /api/fcm/register. We add the two segments one-at-a-time
-                // via the unambiguous single-string overload — OkHttp 4's
-                // `addPathSegments(String...)` resolves ambiguously when
-                // called with multiple string literals and the Kotlin
-                // compiler may pick an overload expecting a Boolean flag.
-                .addPathSegment("fcm")
-                .addPathSegment("register")
-                .build()
-                .toString()
+            "$bareBase/api/fcm/register".toHttpUrl().toString()
         }.getOrElse {
             Log.w("FCMService", "Token register skipped: invalid apiBaseUrl '$baseUrl'")
             return
