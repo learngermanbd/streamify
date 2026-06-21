@@ -137,7 +137,7 @@ android {
             // Step 6.5 — reuse the hoisted `rootSigningProps` from above
             // instead of re-reading the file (two disk opens avoided).
             if (rootSigningProps.isNotEmpty()) {
-                storeFile = file(rootSigningProps.getProperty("RELEASE_STORE_FILE") ?: "")
+                storeFile = rootProject.file(rootSigningProps.getProperty("RELEASE_STORE_FILE") ?: "")
                 storePassword = rootSigningProps.getProperty("RELEASE_STORE_PASSWORD")
                 keyAlias = rootSigningProps.getProperty("RELEASE_KEY_ALIAS")
                 keyPassword = rootSigningProps.getProperty("RELEASE_KEY_PASSWORD")
