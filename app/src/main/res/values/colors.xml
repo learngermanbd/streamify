@@ -1,69 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Phase 1 · Step 1.5 → Phase 6 · Step 6.4 — SportStream palette.
-
-    Source: sportzfy_build_plan.html.
-
-    Step 6.4 update: this `values/` file is now the LIGHT mode default;
-    `values-night/colors.xml` is the dark-mode override. Token NAMES
-    mirror across qualifiers so existing layouts referencing
-    `@color/dark_bg` resolve to white in day mode and dark navy in
-    night mode without any layout edits. The semantic of `dark_bg` is
-    "the main surface background", not "a literally dark colour".
--->
 <resources>
-    <!-- Brand palette — cyan reads well on either surface, kept constant. -->
-    <color name="primary">#1CCBD4</color>
-    <color name="primary_dark">#17a8b0</color>
-    <color name="secondary">#131931</color>
-
-    <!-- Surface (light variant). The label `dark_bg` is legacy; it
-         means "main surface background", not "literally a dark colour".
-         Pair with values-night/colors.xml. -->
-    <color name="dark_bg">#FFFFFF</color>
-    <color name="card_bg">#F5F8FB</color>
-    <color name="border_default">#D0DAE5</color>
-    <color name="text">#1A1F2E</color>
-    <color name="text_muted">#5C6B7A</color>
-
     <!--
-        on_primary — fixed-dark token that does NOT switch with the
-        qualifier. Used as `colorOnPrimary` in both themes so label
-        text drawn on cyan (#1CCBD4) primary buttons/chips stays dark
-        in BOTH modes (~7:1 contrast). Pointing colorOnPrimary at
-        `@color/dark_bg` would resolve to white in day mode and that's
-        unreadable on cyan.
+      Phase 1 · Step 1.3 v2 — Sportzfy-inspired color tokens.
+      Dark glass UI palette matching Sportzfy's premium aesthetic.
+      Night-qualified tokens live in values-night/colors.xml.
     -->
+
+    <!-- ── Brand ── -->
+    <color name="primary">#00E676</color>
+    <color name="primary_dark">#00C853</color>
+    <color name="secondary">#16213E</color>
     <color name="on_primary">#0A0F1A</color>
 
-    <!-- Glass primary fill: cyan at ~8% alpha (0x14 = 20/255 = 7.84%).
-         Constant — works as hover/pressed tint over either surface. -->
-    <color name="glass_primary">#141CCBD4</color>
-    <!-- Glass primary border at ~15% alpha (0x26 = 38/255 = 14.9%). -->
-    <color name="glass_primary_border">#261CCBD4</color>
-    <!-- Glass red fill: error card bg at ~8% alpha (0x14 = 20/255). -->
-    <color name="glass_red">#14EF4444</color>
+    <!-- ── Surfaces ── -->
+    <color name="dark_bg">#0D0D1A</color>
+    <color name="card_bg">#1A1A2E</color>
+    <color name="border_default">#2A2A3E</color>
 
-    <!-- Step 4.4 polish: 40% black overlay applied via lockDimOverlay
-         when isLocked=true. "Slightly dim the screen" per the strict
-         plan; deliberately translucent so subtitles @default 100%
-         white remain readable over the dimmed video. -->
+    <!-- ── Text ── -->
+    <color name="text">#F0F0F0</color>
+    <color name="text_muted">#7B8CA0</color>
+
+    <!-- ── Status ── -->
+    <color name="live_red">#FF1744</color>
+    <color name="success_green">#00E676</color>
+    <color name="warning_orange">#FFB300</color>
+
+    <!-- ── Glass overlays (green-tinted for Sportzfy) ── -->
+    <color name="glass_primary">#1A00E676</color>
+    <color name="glass_primary_border">#3300E676</color>
+    <color name="glass_red">#1AFF1744</color>
+    <color name="glass_surface">#CC0D0D1A</color>
+    <color name="glass_surface_light">#E61A1A2E</color>
+
+    <!-- ── Misc ── -->
     <color name="lock_dim">#66000000</color>
-
-    <!-- Semantic accents — mode-independent. -->
-    <color name="live_red">#EF4444</color>
-    <color name="success_green">#22C55E</color>
-    <color name="warning_orange">#F59E0B</color>
-
-    <!--
-        Phase 5 · Step 5.1 — swiped-row background for the Favorites
-        RecyclerView's ItemTouchHelper. 0x33 = 51/255 ≈ 20% alpha over
-        the live_red base so the user sees a clear red wash as the row
-        slides off-screen, but the row content stays legible mid-swipe.
-    -->
-    <color name="swipe_delete_background">#33E11D48</color>
-
-    <!-- Common. -->
+    <color name="swipe_delete_background">#33FF1744</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="shimmer_base">#1A1A2E</color>
+    <color name="shimmer_highlight">#252540</color>
 </resources>

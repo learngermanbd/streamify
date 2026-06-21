@@ -72,6 +72,7 @@
         <activity
             android:name=".ui.activities.PlayerActivity"
             android:exported="false"
+            android:screenOrientation="sensorLandscape"
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
