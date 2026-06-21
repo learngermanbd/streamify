@@ -29,7 +29,7 @@ const channelsController = {
       ]);
 
       return res.json({
-        channels,
+        channels: channels.map(formatChannel),
         pagination: { page: Math.max(1, parseInt(page, 10)), limit: take, total, totalPages: Math.ceil(total / take) }
       });
     } catch (err) {
@@ -47,7 +47,7 @@ const channelsController = {
         include: { category: true }
       });
       if (!channel) return res.status(404).json({ error: 'channel not found' });
-      return res.json({ channel });
+      return res.json({ channel: formatChannel(channel) });
     } catch (err) {
       console.error('[channels/getById]', err);
       return res.status(500).json({ error: 'internal server error' });
@@ -81,7 +81,7 @@ const channelsController = {
         },
         include: { category: { select: { id: true, name: true } } }
       });
-      return res.status(201).json({ channel });
+      return res.status(201).json({ channel: formatChannel(channel) });
     } catch (err) {
       console.error('[channels/create]', err);
       return res.status(500).json({ error: 'internal server error' });
@@ -100,7 +100,7 @@ const channelsController = {
         data: req.body,
         include: { category: { select: { id: true, name: true } } }
       });
-      return res.json({ channel });
+      return res.json({ channel: formatChannel(channel) });
     } catch (err) {
       console.error('[channels/update]', err);
       return res.status(500).json({ error: 'internal server error' });
@@ -123,3 +123,15 @@ const channelsController = {
 };
 
 module.exports = channelsController;
+
+/**
+ * Flatten the PgPrisma response so the Android client can parse it.
+ * PgPrisma loads relations as nested objects (e.g. category = {id, name}),
+ * but the Android Channel model expects `category` as a plain String.
+ */
+function formatChannel(c) {
+  return {
+    ...c,
+    category: c.category?.name || c.category || '',
+  };
+}
