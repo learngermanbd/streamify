@@ -22,6 +22,7 @@ import com.streamify.app.ui.adapters.EventAdapter
 import com.streamify.app.ui.common.UiState
 import com.streamify.app.ui.viewmodels.HomeViewModel
 import com.streamify.app.ui.viewmodels.MainViewModel
+import com.streamify.app.data.remote.RemoteConfigHelper
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -101,10 +102,11 @@ class HomeFragment : Fragment() {
         binding.homeRv.layoutManager = LinearLayoutManager(requireContext())
         binding.homeRv.adapter = adapter
 
-        // Setup dismissible ad banner
+        // Setup dismissible notice banner — loads admin-controlled text from backend.
         binding.adBannerClose.setOnClickListener {
             binding.adBannerCard.isVisible = false
         }
+        loadAdminNotice()
 
         // Setup circular category badges — store direct view references
         // for clean selection logic (no fragile parent/child traversal).
@@ -325,6 +327,33 @@ class HomeFragment : Fragment() {
             textView.isVisible = true
         } else {
             textView.isVisible = false
+        }
+    }
+
+    /**
+     * Load admin-controlled notice text from the backend (/api/config).
+     * If the admin set a non-blank noticeText, show it in the banner.
+     * Otherwise keep the default hardcoded promo text.
+     */
+    private fun loadAdminNotice() {
+        // Enable marquee scrolling for the default text too.
+        binding.noticeBar.isSelected = true
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val app = requireActivity().application as StreamifyApp
+                val config = RemoteConfigHelper.fetchConfig(
+                    context = requireContext(),
+                    httpClient = (app.network.httpClient as okhttp3.OkHttpClient)
+                )
+                if (config.noticeText.isNotBlank()) {
+                    binding.noticeBar.text = config.noticeText
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Keep default hardcoded notice text on failure.
+            }
         }
     }
 
