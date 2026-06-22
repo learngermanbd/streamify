@@ -19,7 +19,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/poppins_regular"
-            android:text="HEADERS & CONFIGURATION"
+            android:text="HEADERS &amp; CONFIGURATION"
             android:textColor="@color/text_muted"
             android:textSize="12sp"
             android:textStyle="bold" />
