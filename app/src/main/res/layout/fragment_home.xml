@@ -402,7 +402,7 @@
                 android:fontFamily="@font/poppins_regular"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="4dp"
-                android:text="All (0)"
+                android:text="✓ All Matches (0)"
                 android:textColor="@color/text_muted"
                 android:textSize="9sp" />
 

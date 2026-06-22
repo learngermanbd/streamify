@@ -16,6 +16,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import androidx.core.view.GravityCompat
 import com.google.android.material.snackbar.Snackbar
 import com.streamify.app.R
 import com.streamify.app.StreamifyApp
@@ -89,14 +90,24 @@ class MainActivity : AppCompatActivity() {
         val navController = navHost.navController
         binding.bottomNav.setupWithNavController(navController)
 
-        binding.mainToolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.main_toolbar_action_search -> {
-                    navController.navigate(R.id.searchFragment)
-                    true
-                }
-                else -> false
-            }
+        // Sportzfy top bar buttons.
+        binding.btnDrawerToggle.setOnClickListener {
+            binding.drawerRoot.openDrawer(androidx.core.view.GravityCompat.START)
+        }
+        binding.btnToolbarSearch.setOnClickListener {
+            navController.navigate(R.id.searchFragment)
+        }
+        binding.btnToolbarFavorites.setOnClickListener {
+            navController.navigate(R.id.favoritesFragment)
+        }
+        binding.btnToolbarRefresh.setOnClickListener {
+            // Call HomeFragment.refresh() which triggers mainVm.load().
+            supportFragmentManager.fragments
+                .filterIsInstance<com.streamify.app.ui.fragments.HomeFragment>()
+                .firstOrNull()?.refresh()
+        }
+        binding.btnToolbarNetwork.setOnClickListener {
+            navController.navigate(R.id.networkStreamFragment)
         }
 
         binding.navView.setNavigationItemSelectedListener { item ->

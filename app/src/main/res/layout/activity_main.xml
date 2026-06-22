@@ -52,19 +52,81 @@
             Toolbar.setOnMenuItemClickListener to keep the action-bar contract
             simple and the BottomNav's existing selection behavior intact).
         -->
-        <com.google.android.material.appbar.MaterialToolbar
+        <!-- Sportzfy custom top bar: ☰ hamburger | Sportzfy title | 🔍 [★] [🔄] [➔] -->
+        <LinearLayout
             android:id="@+id/mainToolbar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:background="@color/secondary"
             android:elevation="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="4dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:menu="@menu/main_toolbar_menu"
-            app:title="@string/app_name"
-            app:titleTextAppearance="@style/TextAppearance.Material3.TitleMedium"
-            app:titleTextColor="@color/text" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDrawerToggle"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="Open navigation menu"
+                app:icon="@drawable/ic_hamburger"
+                app:iconTint="@color/text" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:fontFamily="@font/poppins_regular"
+                android:text="Sportzfy"
+                android:textColor="@color/primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnToolbarSearch"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:contentDescription="@string/main_toolbar_search_desc"
+                app:icon="@drawable/ic_search"
+                app:iconSize="20dp"
+                app:iconTint="@color/text" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnToolbarFavorites"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:contentDescription="Favorites"
+                app:icon="@android:drawable/star_on"
+                app:iconSize="20dp"
+                app:iconTint="@color/text" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnToolbarRefresh"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:contentDescription="Refresh"
+                app:icon="@android:drawable/ic_menu_rotate"
+                app:iconSize="20dp"
+                app:iconTint="@color/text" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnToolbarNetwork"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:contentDescription="Network Stream"
+                app:icon="@android:drawable/ic_media_play"
+                app:iconSize="20dp"
+                app:iconTint="@color/text" />
+        </LinearLayout>
 
         <!-- NavHostFragment hosts res/navigation/main_nav_graph.xml
              (now 7 destinations: Home / Categories / Favorites /

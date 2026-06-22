@@ -316,7 +316,7 @@ class HomeFragment : Fragment() {
         b.filterRecent.text = "✓ Recent ($recentCount)"
         b.filterLive.text = "● Live ($liveCount)"
         b.filterUpcoming.text = "📅 Upcoming ($upcomingCount)"
-        b.filterAll.text = "All ($allCount)"
+        b.filterAll.text = "✓ All Matches ($allCount)"
     }
 
     private fun setBadgeCount(textView: TextView, count: Int) {
@@ -325,6 +325,17 @@ class HomeFragment : Fragment() {
             textView.isVisible = true
         } else {
             textView.isVisible = false
+        }
+    }
+
+    /**
+     * Public refresh method called by MainActivity's toolbar refresh button.
+     * Triggers a data reload via mainVm.load() which flows through to homeVm.
+     */
+    fun refresh() {
+        if (::adapter.isInitialized) {
+            binding.swipeRefresh.isRefreshing = true
+            mainVm.load()
         }
     }
 }

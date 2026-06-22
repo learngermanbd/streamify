@@ -20,9 +20,8 @@
         android:title="@string/main_nav_categories" />
 
     <item
-        android:id="@+id/favoritesFragment"
-        android:icon="@android:drawable/star_on"
-        android:title="@string/main_nav_favorites" />
-
+        android:id="@+id/highlightsFragment"
+        android:icon="@android:drawable/ic_media_play"
+        android:title="@string/main_nav_highlight" />
 
 </menu>
