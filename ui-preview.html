@@ -3,527 +3,755 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Streamify Redesign — Sportzfy Style Preview</title>
+<title>Sportzfy — Complete UI Design Preview</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Poppins', sans-serif; background: #0a0a1a; color: #f0f0f0; min-height: 100vh; }
 
-  .header { padding: 40px 20px 20px; text-align: center; }
-  .header h1 { font-size: 28px; font-weight: 700; background: linear-gradient(135deg, #00E676, #00BCD4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .header p { color: #7B8CA0; font-size: 14px; margin-top: 8px; }
+  .header { padding: 40px 20px 10px; text-align: center; }
+  .header h1 { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #00E676, #00BCD4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header p { color: #7B8CA0; font-size: 14px; margin-top: 6px; }
 
-  /* ── Color Palette ── */
-  .section { padding: 20px; max-width: 900px; margin: 0 auto; }
-  .section-title { font-size: 20px; font-weight: 600; margin-bottom: 16px; color: #00E676; }
-  .palette { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
-  .swatch { border-radius: 12px; overflow: hidden; background: #1A1A2E; }
-  .swatch-color { height: 60px; }
-  .swatch-info { padding: 8px; text-align: center; }
-  .swatch-info .name { font-size: 10px; color: #7B8CA0; }
-  .swatch-info .hex { font-size: 11px; font-weight: 600; color: #f0f0f0; margin-top: 2px; }
+  .nav-tabs { display: flex; justify-content: center; gap: 8px; padding: 16px 20px; flex-wrap: wrap; }
+  .nav-tab { padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #2A2A3E; color: #7B8CA0; background: transparent; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+  .nav-tab:hover, .nav-tab.active { background: rgba(0,230,118,0.12); border-color: #00E676; color: #00E676; }
 
-  .phone-row { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; padding: 20px; }
-  .phone-wrap { display: flex; flex-direction: column; align-items: center; }
-  .phone-frame { width: 340px; height: 680px; border-radius: 36px; border: 3px solid #2A2A3E; overflow: hidden; background: #0D0D1A; position: relative; flex-shrink: 0; box-shadow: 0 24px 80px rgba(0,0,0,0.6); }
-  .phone-frame.landscape-frame { width: 600px; height: 340px; border-radius: 28px; }
-  .phone-notch { width: 120px; height: 26px; background: #0D0D1A; border-radius: 0 0 16px 16px; margin: 0 auto; position: relative; z-index: 10; }
-  .phone-label { text-align: center; font-size: 13px; font-weight: 600; color: #7B8CA0; margin-top: 14px; letter-spacing: 0.5px; }
-  .phone-sublabel { text-align: center; font-size: 10px; color: #5C6B7A; margin-top: 2px; }
+  .section { padding: 20px; max-width: 1200px; margin: 0 auto; }
+  .section-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #00E676; }
+  .section-desc { font-size: 12px; color: #7B8CA0; margin-bottom: 20px; }
 
   .divider { height: 1px; background: linear-gradient(90deg, transparent, #2A2A3E, transparent); margin: 30px 20px; }
+  .phone-row { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; padding: 10px 0; }
+  .phone-wrap { display: flex; flex-direction: column; align-items: center; }
+  .phone-frame { width: 320px; height: 640px; border-radius: 32px; border: 3px solid #2A2A3E; overflow: hidden; background: #0D0D1A; position: relative; flex-shrink: 0; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  .phone-frame.drawer-frame { width: 300px; }
+  .phone-frame.landscape-frame { width: 560px; height: 320px; border-radius: 24px; }
+  .phone-notch { width: 100px; height: 22px; background: #0D0D1A; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 10; }
+  .phone-label { text-align: center; font-size: 13px; font-weight: 600; color: #7B8CA0; margin-top: 12px; }
+  .phone-sublabel { text-align: center; font-size: 10px; color: #5C6B7A; margin-top: 2px; max-width: 280px; }
+  .variant-badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; margin-top: 6px; }
+  .badge-main { background: rgba(0,230,118,0.15); border: 1px solid rgba(0,230,118,0.3); color: #00E676; }
+  .badge-alt { background: rgba(0,188,212,0.15); border: 1px solid rgba(0,188,212,0.3); color: #00BCD4; }
 
-  /* ═══════════════════════════════════════════════════
-     SPLASH
-     ═══════════════════════════════════════════════════ */
-  .splash { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(180deg, #0D0D1A 0%, #16213E 50%, #0D0D1A 100%); position: relative; }
-  .splash-logo { width: 90px; height: 90px; border-radius: 24px; background: linear-gradient(135deg, rgba(0,230,118,0.15), rgba(0,188,212,0.15)); border: 1px solid rgba(0,230,118,0.3); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; color: #00E676; animation: fadeInScale 0.8s ease-out; }
-  .splash-name { font-size: 26px; font-weight: 700; margin-top: 18px; background: linear-gradient(135deg, #00E676, #00BCD4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: fadeIn 0.8s ease-out 0.2s both; }
-  .splash-sub { font-size: 11px; color: #7B8CA0; margin-top: 6px; animation: fadeIn 0.8s ease-out 0.4s both; letter-spacing: 1px; text-transform: uppercase; }
-  .splash-loader { margin-top: 36px; width: 36px; height: 36px; border: 3px solid #2A2A3E; border-top-color: #00E676; border-radius: 50%; animation: spin 1s linear infinite; }
-  .splash-version { position: absolute; bottom: 18px; font-size: 10px; color: #5C6B7A; }
-  @keyframes fadeInScale { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ═══════════════════════════════════════════════════
-     HOME — Sportzfy Style
-     ═══════════════════════════════════════════════════ */
+  /* Common phone UI bits */
   .home { height: 100%; display: flex; flex-direction: column; background: #0D0D1A; }
-  .home-toolbar { padding: 12px 16px 10px; display: flex; align-items: center; justify-content: space-between; }
-  .home-toolbar .logo { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #00E676, #00BCD4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .home-toolbar .actions { display: flex; gap: 10px; }
-  .home-toolbar .icon-btn { width: 36px; height: 36px; border-radius: 50%; background: #1A1A2E; border: 1px solid #2A2A3E; display: flex; align-items: center; justify-content: center; color: #7B8CA0; font-size: 14px; cursor: pointer; }
+  .home-toolbar { padding: 10px 14px 8px; display: flex; align-items: center; justify-content: space-between; }
+  .home-toolbar .drawer-btn { font-size: 18px; cursor: pointer; color: #7B8CA0; }
+  .home-toolbar .logo { font-size: 18px; font-weight: 800; background: linear-gradient(135deg, #00E676, #00BCD4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .home-toolbar .actions { display: flex; gap: 8px; }
+  .home-toolbar .icon-btn { width: 32px; height: 32px; border-radius: 50%; background: #1A1A2E; border: 1px solid #2A2A3E; display: flex; align-items: center; justify-content: center; color: #7B8CA0; font-size: 13px; cursor: pointer; }
 
-  /* Banner */
-  .banner-scroll { padding: 4px 16px 12px; display: flex; gap: 12px; overflow-x: auto; }
-  .banner-scroll::-webkit-scrollbar { display: none; }
-  .banner-card { min-width: 280px; height: 150px; border-radius: 16px; position: relative; overflow: hidden; flex-shrink: 0; }
-  .banner-card .bg { position: absolute; inset: 0; }
-  .banner-card .overlay { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.85) 100%); }
-  .banner-card .content { position: absolute; bottom: 14px; left: 14px; right: 14px; z-index: 2; }
-  .banner-card .content .league { font-size: 10px; color: #00E676; font-weight: 600; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .banner-card .content h3 { font-size: 15px; font-weight: 700; line-height: 1.2; }
-  .banner-card .content p { font-size: 10px; color: #7B8CA0; margin-top: 3px; }
-  .banner-badge { position: absolute; top: 12px; right: 12px; z-index: 2; display: flex; align-items: center; gap: 4px; background: rgba(255,23,68,0.2); border: 1px solid rgba(255,23,68,0.4); padding: 3px 10px; border-radius: 16px; backdrop-filter: blur(8px); }
-  .banner-badge .dot { width: 6px; height: 6px; background: #FF1744; border-radius: 50%; animation: pulse 1.5s infinite; }
-  .banner-badge span { font-size: 9px; font-weight: 700; color: #FF1744; letter-spacing: 1px; }
-  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.4); } }
+  .notice-bar { padding: 6px 14px; font-size: 9px; color: #F0C040; background: rgba(240,192,64,0.08); border-top: 1px solid rgba(240,192,64,0.15); border-bottom: 1px solid rgba(240,192,64,0.15); white-space: nowrap; overflow: hidden; }
+  .notice-bar span { display: inline-block; animation: marqueeNotice 12s linear infinite; }
+  @keyframes marqueeNotice { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
 
-  /* Section */
-  .section-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px 10px; }
-  .section-header h2 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-  .section-header h2 .dot { width: 8px; height: 8px; background: #00E676; border-radius: 50%; animation: pulse 1.5s infinite; }
-  .section-header .view-all { font-size: 11px; color: #00E676; font-weight: 500; }
+  .cat-chips { display: flex; gap: 6px; padding: 8px 14px; overflow-x: auto; }
+  .cat-chips::-webkit-scrollbar { display: none; }
+  .cat-chip { flex-shrink: 0; padding: 5px 12px; border-radius: 16px; font-size: 10px; font-weight: 500; border: 1px solid #2A2A3E; color: #7B8CA0; white-space: nowrap; cursor: pointer; }
+  .cat-chip.active { background: rgba(0,230,118,0.12); border-color: #00E676; color: #00E676; }
 
-  .match-list { flex: 1; overflow-y: auto; padding: 0 16px 80px; }
-  .match-list::-webkit-scrollbar { display: none; }
+  .status-filters { display: flex; gap: 6px; padding: 4px 14px 8px; }
+  .status-pill { padding: 4px 10px; border-radius: 12px; font-size: 9px; font-weight: 500; border: 1px solid #2A2A3E; color: #7B8CA0; }
+  .status-pill.active { background: rgba(0,230,118,0.1); border-color: #00E676; color: #00E676; }
 
-  /* Match Card — Sportzfy style */
-  .match-card {
-    background: linear-gradient(160deg, #1A1A2E 0%, #16213E 100%);
-    border-radius: 16px; padding: 14px 16px; margin-bottom: 10px;
-    border: 1px solid #2A2A3E; position: relative; overflow: hidden;
-  }
-  .match-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, #00E676, transparent); opacity: 0.4;
-  }
-  .match-card .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .match-card .league-badge { font-size: 10px; color: #7B8CA0; font-weight: 500; display: flex; align-items: center; gap: 5px; }
-  .match-card .league-badge .emoji { font-size: 12px; }
-  .match-card .live-pill { display: flex; align-items: center; gap: 5px; background: rgba(255,23,68,0.12); border: 1px solid rgba(255,23,68,0.25); padding: 3px 10px; border-radius: 12px; }
-  .match-card .live-pill .dot { width: 5px; height: 5px; background: #FF1744; border-radius: 50%; animation: pulse 1.5s infinite; }
-  .match-card .live-pill span { font-size: 9px; font-weight: 700; color: #FF1744; letter-spacing: 1px; }
-
-  .match-card .teams { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .match-card { background: linear-gradient(160deg, #1A1A2E, #16213E); border-radius: 12px; padding: 10px 12px; margin: 0 14px 8px; border: 1px solid #2A2A3E; position: relative; overflow: hidden; }
+  .match-card::before { content:''; position: absolute; top:0; left:0; right:0; height: 2px; background: linear-gradient(90deg, transparent, #00E676, transparent); opacity: 0.3; }
+  .match-card .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .match-card .league-info { font-size: 9px; color: #7B8CA0; display: flex; align-items: center; gap: 4px; }
+  .match-card .live-badge { display: flex; align-items: center; gap: 3px; background: rgba(255,23,68,0.12); border: 1px solid rgba(255,23,68,0.25); padding: 2px 8px; border-radius: 10px; }
+  .match-card .live-badge .dot { width: 4px; height: 4px; background: #FF1744; border-radius: 50%; animation: pulse 1.5s infinite; }
+  .match-card .live-badge span { font-size: 8px; font-weight: 700; color: #FF1744; }
+  .match-card .teams { display: flex; align-items: center; justify-content: center; gap: 6px; }
   .match-card .team { text-align: center; flex: 1; }
-  .match-card .team .flag { width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; font-size: 26px; border: 2px solid #2A2A3E; }
-  .match-card .team .name { font-size: 11px; font-weight: 600; color: #E0E6ED; }
-  .match-card .vs-col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  .match-card .vs-col .vs { font-size: 11px; font-weight: 700; color: #00E676; background: rgba(0,230,118,0.1); padding: 2px 8px; border-radius: 6px; }
-  .match-card .vs-col .score { font-size: 18px; font-weight: 800; color: #F0F0F0; letter-spacing: 4px; }
-  .match-card .bottom-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #2A2A3E; }
-  .match-card .bottom-row .time { font-size: 10px; color: #7B8CA0; }
-  .match-card .bottom-row .watch-btn { font-size: 10px; font-weight: 600; color: #00E676; display: flex; align-items: center; gap: 4px; }
+  .match-card .team .flag { width: 36px; height: 36px; border-radius: 50%; margin: 0 auto 4px; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 2px solid #2A2A3E; }
+  .match-card .team .name { font-size: 9px; font-weight: 600; color: #E0E6ED; }
+  .match-card .vs-col { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+  .match-card .vs-col .score { font-size: 14px; font-weight: 800; color: #F0F0F0; }
+  .match-card .vs-col .vs { font-size: 9px; font-weight: 700; color: #00E676; background: rgba(0,230,118,0.1); padding: 1px 6px; border-radius: 4px; }
+  .match-card .bottom-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(42,42,62,0.5); }
+  .match-card .bottom-row .time { font-size: 9px; color: #7B8CA0; }
+  .match-card .bottom-row .watch-btn { font-size: 9px; font-weight: 600; color: #00E676; display: flex; align-items: center; gap: 3px; }
 
-  /* Bottom Nav */
-  .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; padding: 10px 0 16px; background: rgba(13,13,26,0.92); backdrop-filter: blur(20px); border-top: 1px solid rgba(42,42,62,0.6); }
-  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
-  .nav-item .icon { font-size: 20px; transition: all 0.2s; }
-  .nav-item .label { font-size: 10px; color: #5C6B7A; font-weight: 500; transition: all 0.2s; }
+  /* Vertical match card variant */
+  .match-card-v { background: linear-gradient(160deg, #1A1A2E, #16213E); border-radius: 12px; margin: 0 14px 8px; border: 1px solid #2A2A3E; overflow: hidden; }
+  .match-card-v .card-top { padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; }
+  .match-card-v .card-body { padding: 0 12px 8px; }
+  .match-card-v .team-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+  .match-card-v .team-row .flag { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 1px solid #2A2A3E; flex-shrink: 0; }
+  .match-card-v .team-row .name { font-size: 10px; font-weight: 600; flex: 1; }
+  .match-card-v .card-footer { padding: 6px 12px; border-top: 1px solid rgba(42,42,62,0.5); display: flex; justify-content: space-between; align-items: center; }
+  .match-card-v .card-footer .stream-status { font-size: 9px; color: #00E676; display: flex; align-items: center; gap: 4px; }
+  .match-card-v .card-footer .watch-link { font-size: 9px; font-weight: 600; color: #00E676; padding: 3px 10px; border-radius: 8px; background: rgba(0,230,118,0.1); border: 1px solid rgba(0,230,118,0.2); }
+
+  /* 2x2 category grid */
+  .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 14px 10px; }
+  .cat-grid-card { border-radius: 12px; background: linear-gradient(160deg, #1A1A2E, #16213E); border: 1px solid #2A2A3E; padding: 14px; text-align: center; position: relative; }
+  .cat-grid-card .emoji { font-size: 28px; }
+  .cat-grid-card .cat-name { font-size: 11px; font-weight: 700; margin-top: 6px; text-transform: uppercase; }
+  .cat-grid-card .live-count { font-size: 9px; color: #7B8CA0; margin-top: 2px; }
+  .cat-grid-card .live-count em { color: #FF1744; font-style: normal; font-weight: 600; }
+
+  /* Quick filters */
+  .quick-filters { display: flex; gap: 6px; padding: 6px 14px 10px; }
+  .qf { padding: 4px 10px; border-radius: 10px; font-size: 9px; font-weight: 500; border: 1px solid #2A2A3E; color: #7B8CA0; }
+  .qf.active { background: rgba(255,23,68,0.1); border-color: #FF1744; color: #FF1744; }
+
+  /* Section header in phone */
+  .ph-section { display: flex; justify-content: space-between; align-items: center; padding: 6px 14px; }
+  .ph-section h3 { font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .ph-section h3 .dot { width: 6px; height: 6px; background: #00E676; border-radius: 50%; animation: pulse 1.5s infinite; }
+  .ph-section .view-all { font-size: 10px; color: #00E676; }
+
+  /* Grid match cards */
+  .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 14px 8px; }
+  .match-grid-card { background: linear-gradient(160deg, #1A1A2E, #16213E); border-radius: 10px; padding: 8px; border: 1px solid #2A2A3E; }
+  .match-grid-card .mg-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .match-grid-card .mg-league { font-size: 8px; color: #7B8CA0; }
+  .match-grid-card .mg-teams { text-align: center; }
+  .match-grid-card .mg-teams .mg-team { font-size: 9px; font-weight: 600; padding: 2px 0; }
+  .match-grid-card .mg-teams .mg-vs { font-size: 8px; color: #7B8CA0; }
+  .match-grid-card .mg-servers { display: flex; gap: 4px; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(42,42,62,0.5); }
+  .match-grid-card .mg-servers .srv { font-size: 8px; color: #00E676; padding: 2px 6px; border-radius: 6px; background: rgba(0,230,118,0.08); border: 1px solid rgba(0,230,118,0.15); }
+
+  /* Bottom nav */
+  .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; padding: 8px 0 14px; background: rgba(13,13,26,0.92); backdrop-filter: blur(16px); border-top: 1px solid rgba(42,42,62,0.6); }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; }
+  .nav-item .icon { font-size: 18px; }
+  .nav-item .label { font-size: 9px; color: #5C6B7A; font-weight: 500; }
   .nav-item.active .label { color: #00E676; }
-  .nav-item.active .icon { filter: drop-shadow(0 0 6px rgba(0,230,118,0.4)); }
 
-  /* ═══════════════════════════════════════════════════
-     CATEGORIES — Sportzfy Style
-     ═══════════════════════════════════════════════════ */
-  .categories { height: 100%; display: flex; flex-direction: column; background: #0D0D1A; }
-  .cat-header { padding: 16px 16px 8px; }
-  .cat-header h2 { font-size: 22px; font-weight: 700; }
+  /* Drawer */
+  .drawer { height: 100%; display: flex; flex-direction: column; background: #0D0D1A; }
+  .drawer-header { padding: 24px 16px 14px; border-bottom: 1px solid #2A2A3E; }
+  .drawer-header .d-logo { font-size: 20px; font-weight: 800; background: linear-gradient(135deg, #00E676, #00BCD4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .drawer-header .d-ver { font-size: 10px; color: #7B8CA0; margin-top: 2px; }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .drawer-body::-webkit-scrollbar { display: none; }
+  .drawer-group-label { padding: 10px 16px 4px; font-size: 9px; font-weight: 700; color: #5C6B7A; letter-spacing: 1px; text-transform: uppercase; }
+  .drawer-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; transition: background 0.15s; }
+  .drawer-item:hover { background: rgba(0,230,118,0.05); }
+  .drawer-item .d-icon { width: 28px; height: 28px; border-radius: 8px; background: #1A1A2E; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .drawer-item .d-text { font-size: 12px; font-weight: 500; color: #E0E6ED; }
+  .drawer-item .d-toggle { margin-left: auto; width: 36px; height: 20px; border-radius: 10px; background: #2A2A3E; position: relative; }
+  .drawer-item .d-toggle.on { background: rgba(0,230,118,0.3); }
+  .drawer-item .d-toggle::after { content:''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #7B8CA0; transition: all 0.2s; }
+  .drawer-item .d-toggle.on::after { left: 18px; background: #00E676; }
+  .drawer-footer { padding: 12px 16px; border-top: 1px solid #2A2A3E; }
+  .drawer-footer .exit-btn { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 10px; background: rgba(255,23,68,0.08); border: 1px solid rgba(255,23,68,0.15); cursor: pointer; }
+  .drawer-footer .exit-btn span { font-size: 12px; font-weight: 600; color: #FF1744; }
 
-  .chips-scroll { display: flex; gap: 8px; padding: 8px 16px 16px; overflow-x: auto; scroll-snap-type: x mandatory; }
-  .chips-scroll::-webkit-scrollbar { display: none; }
-  .chip { flex-shrink: 0; padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1px solid #2A2A3E; color: #7B8CA0; background: transparent; white-space: nowrap; scroll-snap-align: start; cursor: pointer; transition: all 0.2s; }
-  .chip:hover { border-color: #00E676; color: #00E676; }
-  .chip.active { background: rgba(0,230,118,0.12); border-color: #00E676; color: #00E676; }
+  /* Grid drawer */
+  .drawer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 16px; }
+  .drawer-grid-item { border-radius: 10px; background: #1A1A2E; border: 1px solid #2A2A3E; padding: 12px 8px; text-align: center; cursor: pointer; transition: border-color 0.15s; }
+  .drawer-grid-item:hover { border-color: #00E676; }
+  .drawer-grid-item .dg-icon { font-size: 20px; }
+  .drawer-grid-item .dg-text { font-size: 10px; font-weight: 600; margin-top: 4px; }
 
-  .channel-grid { flex: 1; overflow-y: auto; padding: 0 16px 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
-  .channel-grid::-webkit-scrollbar { display: none; }
-  .channel-card { border-radius: 14px; background: linear-gradient(160deg, #1A1A2E, #16213E); border: 1px solid #2A2A3E; overflow: hidden; position: relative; }
-  .channel-card .thumb { width: 100%; height: 90px; display: flex; align-items: center; justify-content: center; font-size: 32px; position: relative; }
-  .channel-card .thumb::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 40%; background: linear-gradient(transparent, rgba(26,26,46,0.9)); }
-  .channel-card .live-tag { position: absolute; top: 8px; right: 8px; display: flex; align-items: center; gap: 3px; background: rgba(255,23,68,0.2); border: 1px solid rgba(255,23,68,0.35); padding: 2px 7px; border-radius: 8px; z-index: 2; }
-  .channel-card .live-tag .dot { width: 4px; height: 4px; background: #FF1744; border-radius: 50%; animation: pulse 1.5s infinite; }
-  .channel-card .live-tag span { font-size: 8px; font-weight: 700; color: #FF1744; }
-  .channel-card .info { padding: 8px 10px 10px; }
-  .channel-card .info .name { font-size: 11px; font-weight: 600; }
-  .channel-card .info .cat { font-size: 9px; color: #7B8CA0; margin-top: 2px; }
+  /* Network player */
+  .np { height: 100%; display: flex; flex-direction: column; background: #0D0D1A; }
+  .np-toolbar { padding: 10px 14px 8px; display: flex; align-items: center; gap: 8px; }
+  .np-toolbar .back { font-size: 18px; color: #7B8CA0; cursor: pointer; }
+  .np-toolbar .title { font-size: 15px; font-weight: 700; flex: 1; }
+  .np-toolbar .act { display: flex; gap: 6px; }
+  .np-toolbar .act span { font-size: 14px; color: #7B8CA0; cursor: pointer; }
 
-  /* ═══════════════════════════════════════════════════
-     PLAYER — Sportzfy Exact Spec
-     Layout: TopBar → LinksBar → Video+Center → BottomBar
-     ═══════════════════════════════════════════════════ */
+  .np-field { padding: 4px 14px; }
+  .np-field label { font-size: 9px; font-weight: 600; color: #7B8CA0; margin-bottom: 3px; display: block; }
+  .np-input { width: 100%; padding: 8px 10px; border-radius: 8px; background: #1A1A2E; border: 1px solid #2A2A3E; color: #E0E6ED; font-size: 10px; font-family: inherit; display: flex; align-items: center; gap: 6px; }
+  .np-input .paste { margin-left: auto; font-size: 12px; color: #00E676; cursor: pointer; }
+
+  .np-section-card { margin: 6px 14px; padding: 10px; border-radius: 10px; background: #1A1A2E; border: 1px solid #2A2A3E; }
+  .np-section-card .np-section-title { font-size: 10px; font-weight: 700; color: #00E676; margin-bottom: 6px; }
+
+  .np-dropdown { padding: 6px 14px; display: flex; gap: 8px; }
+  .np-dd { flex: 1; padding: 7px 10px; border-radius: 8px; background: #1A1A2E; border: 1px solid #2A2A3E; color: #E0E6ED; font-size: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+  .np-dd .dd-arrow { font-size: 10px; color: #7B8CA0; }
+
+  .np-play-btn { margin: 10px 14px; padding: 12px; border-radius: 12px; background: linear-gradient(135deg, rgba(0,230,118,0.2), rgba(0,188,212,0.2)); border: 1px solid rgba(0,230,118,0.3); text-align: center; font-size: 13px; font-weight: 700; color: #00E676; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+  /* Tabbed NP */
+  .np-tabs { display: flex; border-bottom: 1px solid #2A2A3E; }
+  .np-tab { flex: 1; padding: 8px 4px; text-align: center; font-size: 9px; font-weight: 600; color: #7B8CA0; cursor: pointer; border-bottom: 2px solid transparent; }
+  .np-tab.active { color: #00E676; border-bottom-color: #00E676; }
+
+  .np-tip { margin: 6px 14px; padding: 8px 10px; border-radius: 8px; background: rgba(0,230,118,0.05); border: 1px solid rgba(0,230,118,0.1); font-size: 9px; color: #7B8CA0; line-height: 1.4; }
+  .np-tip strong { color: #00E676; }
+
+  .np-fab { position: absolute; bottom: 60px; right: 16px; width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #00E676, #00BCD4); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #0D0D1A; box-shadow: 0 4px 20px rgba(0,230,118,0.3); cursor: pointer; }
+
+  /* Player landscape */
   .player { height: 100%; background: #000; position: relative; display: flex; flex-direction: column; }
+  .player-top { display: flex; align-items: center; padding: 28px 10px 8px; background: linear-gradient(180deg, rgba(0,0,0,0.75), transparent); z-index: 5; flex-shrink: 0; }
+  .player-top .back { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; flex-shrink: 0; }
+  .player-top .title-marquee { flex: 1; margin: 0 6px; overflow: hidden; white-space: nowrap; }
+  .player-top .title-marquee span { display: inline-block; font-size: 11px; font-weight: 600; animation: marquee 8s linear infinite; }
+  @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+  .player-top .right-btns { display: flex; gap: 3px; flex-shrink: 0; }
+  .player-top .ctrl-btn { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; }
 
-  /* Top bar — glass gradient */
-  .player-top {
-    display: flex; align-items: center; padding: 36px 12px 10px;
-    background: linear-gradient(180deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 70%, transparent 100%);
-    z-index: 5; flex-shrink: 0;
-  }
-  .player-top .back {
-    width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1);
-    display: flex; align-items: center; justify-content: center; font-size: 16px;
-    cursor: pointer; flex-shrink: 0;
-  }
-  .player-top .title-marquee {
-    flex: 1; margin: 0 8px; overflow: hidden; white-space: nowrap;
-  }
-  .player-top .title-marquee span {
-    display: inline-block; font-size: 13px; font-weight: 600;
-    animation: marquee 8s linear infinite;
-  }
-  @keyframes marquee {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-  }
-  .player-top .right-btns { display: flex; gap: 4px; flex-shrink: 0; }
-  .player-top .ctrl-btn {
-    width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1);
-    display: flex; align-items: center; justify-content: center; font-size: 14px;
-    cursor: pointer; transition: background 0.15s;
-  }
-  .player-top .ctrl-btn:hover { background: rgba(255,255,255,0.2); }
+  .player-links { display: flex; align-items: center; gap: 5px; padding: 3px 10px 5px; background: rgba(0,0,0,0.4); flex-shrink: 0; z-index: 5; }
+  .player-links .refresh { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; }
+  .player-links .srv-chips { display: flex; gap: 5px; }
+  .player-links .srv-chip { padding: 4px 10px; border-radius: 14px; font-size: 10px; font-weight: 500; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.05); cursor: pointer; }
+  .player-links .srv-chip.active { background: rgba(0,230,118,0.15); border-color: #00E676; color: #00E676; }
 
-  /* Links bar — glass chips */
-  .player-links {
-    display: flex; align-items: center; gap: 6px; padding: 4px 12px 6px;
-    background: rgba(0,0,0,0.4); flex-shrink: 0; z-index: 5;
-  }
-  .player-links .refresh-btn {
-    width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center;
-    justify-content: center; font-size: 13px; cursor: pointer; flex-shrink: 0;
-  }
-  .player-links .chips { display: flex; gap: 6px; overflow-x: auto; }
-  .player-links .chips::-webkit-scrollbar { display: none; }
-  .player-links .chip {
-    flex-shrink: 0; padding: 5px 12px; border-radius: 16px; font-size: 11px;
-    font-weight: 500; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6);
-    background: rgba(255,255,255,0.05); cursor: pointer; transition: all 0.15s;
-    white-space: nowrap;
-  }
-  .player-links .chip.active {
-    background: rgba(0,230,118,0.15); border-color: #00E676; color: #00E676;
-  }
-  .player-links .chip:hover:not(.active) {
-    border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.8);
-  }
+  .player-video { flex: 1; background: linear-gradient(135deg, #0a0a1a, #16213E 30%, #0a1a2e 60%, #0a0a1a); display: flex; align-items: center; justify-content: center; position: relative; }
+  .player-center { display: flex; align-items: center; gap: 20px; }
+  .player-center .c-btn { width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.08); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
+  .player-center .play { width: 56px; height: 56px; background: rgba(0,230,118,0.2); border: 2px solid rgba(0,230,118,0.4); font-size: 22px; color: #00E676; }
+  .player-center .c-btn .skip { position: absolute; bottom: -1px; font-size: 6px; font-weight: 700; color: rgba(255,255,255,0.5); }
+  .player-center .c-btn { position: relative; }
 
-  /* Video area */
-  .player-video {
-    flex: 1; background: linear-gradient(135deg, #0a0a1a, #16213E 30%, #0a1a2e 60%, #0a0a1a);
-    display: flex; align-items: center; justify-content: center; position: relative;
-  }
+  .player-bottom { position: absolute; bottom: 0; left: 0; right: 0; padding: 0 12px 10px; background: linear-gradient(0deg, rgba(0,0,0,0.85), transparent); z-index: 5; }
+  .player-seek { display: flex; align-items: center; gap: 6px; padding-top: 12px; margin-bottom: 6px; }
+  .player-seek .time { font-size: 9px; color: rgba(255,255,255,0.6); font-variant-numeric: tabular-nums; min-width: 30px; text-align: center; }
+  .player-seek .track { flex: 1; height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; position: relative; }
+  .player-seek .fill { width: 35%; height: 100%; background: #00E676; border-radius: 2px; }
+  .player-seek .dot { position: absolute; top: 50%; left: 35%; transform: translate(-50%,-50%); width: 10px; height: 10px; background: #00E676; border-radius: 50%; box-shadow: 0 0 6px rgba(0,230,118,0.5); }
+  .player-bottom-btns { display: flex; justify-content: flex-end; gap: 12px; }
+  .player-bottom-btns .b-btn { font-size: 14px; cursor: pointer; opacity: 0.8; }
 
-  /* Center controls — rewind / play / forward */
-  .player-center {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    display: flex; align-items: center; gap: 28px; z-index: 4;
-  }
-  .player-center .center-btn {
-    width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center;
-    justify-content: center; cursor: pointer; transition: all 0.15s;
-  }
-  .player-center .center-btn:hover { transform: scale(1.1); }
-  .player-center .rewind-btn, .player-center .forward-btn {
-    background: rgba(255,255,255,0.08); backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.12); font-size: 20px; color: white;
-  }
-  .player-center .play-btn {
-    width: 68px; height: 68px; background: rgba(0,230,118,0.2);
-    backdrop-filter: blur(12px); border: 2px solid rgba(0,230,118,0.4);
-    font-size: 28px; color: #00E676;
-  }
-  .player-center .center-btn .skip-label {
-    position: absolute; bottom: -2px; font-size: 7px; font-weight: 700;
-    color: rgba(255,255,255,0.5); letter-spacing: 0.5px;
-  }
-  .player-center .center-btn { position: relative; }
+  /* Dialogs */
+  .dialog-overlay { height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); padding: 20px; }
+  .dialog-box { width: 100%; max-width: 260px; background: #1A1A2E; border-radius: 16px; border: 1px solid #2A2A3E; padding: 20px; }
+  .dialog-box .d-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .dialog-box .d-body { font-size: 10px; color: #7B8CA0; line-height: 1.6; margin-bottom: 14px; }
+  .dialog-box .d-switch-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-radius: 10px; background: #0D0D1A; border: 1px solid #2A2A3E; margin-bottom: 14px; }
+  .dialog-box .d-switch-row span { font-size: 11px; font-weight: 600; }
+  .dialog-box .d-switch { width: 36px; height: 20px; border-radius: 10px; background: #2A2A3E; position: relative; }
+  .dialog-box .d-switch::after { content:''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #7B8CA0; }
+  .dialog-box .d-btn { display: block; width: 100%; padding: 10px; border-radius: 10px; text-align: center; font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 4px; }
+  .dialog-box .d-btn.close { background: rgba(255,255,255,0.05); color: #7B8CA0; border: 1px solid #2A2A3E; }
+  .dialog-box .d-btn.ok { background: rgba(0,230,118,0.15); color: #00E676; border: 1px solid rgba(0,230,118,0.3); }
 
-  /* Bottom bar — glass gradient */
-  .player-bottom {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 0 14px 14px;
-    background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
-    z-index: 5;
-  }
+  .match-list-scroll { flex: 1; overflow-y: auto; padding-bottom: 60px; }
+  .match-list-scroll::-webkit-scrollbar { display: none; }
 
-  /* Seek row */
-  .player-seek {
-    display: flex; align-items: center; gap: 8px; padding-top: 16px; margin-bottom: 8px;
-  }
-  .player-seek .time {
-    font-size: 10px; color: rgba(255,255,255,0.6);
-    font-variant-numeric: tabular-nums; min-width: 34px; text-align: center;
-  }
-  .player-seek .track {
-    flex: 1; height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px;
-    position: relative;
-  }
-  .player-seek .fill {
-    width: 35%; height: 100%; background: #00E676; border-radius: 2px;
-  }
-  .player-seek .dot {
-    position: absolute; top: 50%; left: 35%; transform: translate(-50%, -50%);
-    width: 12px; height: 12px; background: #00E676; border-radius: 50%;
-    box-shadow: 0 0 8px rgba(0,230,118,0.5);
-  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
 
-  /* Bottom icon buttons */
-  .player-bottom-btns {
-    display: flex; justify-content: flex-end; align-items: center; gap: 16px;
-    padding-bottom: 2px;
-  }
-  .player-bottom-btns .b-btn {
-    font-size: 18px; cursor: pointer; opacity: 0.8; transition: opacity 0.15s;
-  }
-  .player-bottom-btns .b-btn:hover { opacity: 1; }
-
-  /* ═══════════════════════════════════════════════════
-     Responsive
-     ═══════════════════════════════════════════════════ */
   @media (max-width: 720px) {
     .phone-row { flex-direction: column; align-items: center; }
-    .phone-frame { width: 300px; height: 600px; }
+    .phone-frame { width: 300px; height: 580px; }
+    .phone-frame.landscape-frame { width: 480px; height: 280px; }
   }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>Streamify × Sportzfy Redesign</h1>
-  <p>Interactive preview — approve before Android implementation</p>
+  <h1>⚡ Sportzfy — Complete UI Preview</h1>
+  <p>All design variants • Review and pick which to implement</p>
 </div>
 
-<!-- ── Color Palette ── -->
-<div class="section">
-  <div class="section-title">🎨 Color Palette</div>
-  <div class="palette">
-    <div class="swatch"><div class="swatch-color" style="background:#0D0D1A"></div><div class="swatch-info"><div class="name">Background</div><div class="hex">#0D0D1A</div></div></div>
-    <div class="swatch"><div class="swatch-color" style="background:#1A1A2E"></div><div class="swatch-info"><div class="name">Card Surface</div><div class="hex">#1A1A2E</div></div></div>
-    <div class="swatch"><div class="swatch-color" style="background:#16213E"></div><div class="swatch-info"><div class="name">Card Gradient</div><div class="hex">#16213E</div></div></div>
-    <div class="swatch"><div class="swatch-color" style="background:#2A2A3E"></div><div class="swatch-info"><div class="name">Border</div><div class="hex">#2A2A3E</div></div></div>
-    <div class="swatch"><div class="swatch-color" style="background:#00E676"></div><div class="swatch-info"><div class="name">Primary Green</div><div class="hex">#00E676</div></div></div>
-    <div class="swatch"><div class="swatch-color" style="background:#FF1744"></div><div class="swatch-info"><div class="name">Live Red</div><div class="hex">#FF1744</div></div></div>
-    <div class="swatch"><div class="swatch-color" style="background:#F0F0F0"></div><div class="swatch-info"><div class="name">Text Primary</div><div class="hex">#F0F0F0</div></div></div>
-    <div class="swatch"><div class="swatch-color" style="background:#7B8CA0"></div><div class="swatch-info"><div class="name">Text Muted</div><div class="hex">#7B8CA0</div></div></div>
-  </div>
+<div class="nav-tabs">
+  <a class="nav-tab active" href="#home">🏠 Home</a>
+  <a class="nav-tab" href="#drawer">☰ Drawer</a>
+  <a class="nav-tab" href="#network">🌐 Network Player</a>
+  <a class="nav-tab" href="#player">▶ Player</a>
+  <a class="nav-tab" href="#dialogs">💬 Dialogs</a>
 </div>
 
-<div class="divider"></div>
-
-<!-- ── Screen Mockups ── -->
-<div class="section">
-  <div class="section-title">📱 Screen Mockups</div>
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 1: HOME DASHBOARD ECOSYSTEM
+     ════════════════════════════════════════════════════════════ -->
+<div id="home" class="section">
+  <div class="section-title">🏠 Home Dashboard Ecosystem</div>
+  <div class="section-desc">5 design variants — scroll down to see all</div>
 </div>
 
 <div class="phone-row">
 
-  <!-- ═══ SPLASH ═══ -->
-  <div class="phone-wrap">
-    <div class="phone-frame">
-      <div class="phone-notch"></div>
-      <div class="splash">
-        <div class="splash-logo">S</div>
-        <div class="splash-name">Streamify</div>
-        <div class="splash-sub">Your Sports. Your Screen.</div>
-        <div class="splash-loader"></div>
-        <div class="splash-version">v1.1.0</div>
-      </div>
-    </div>
-    <div class="phone-label">Splash</div>
-    <div class="phone-sublabel">Animated logo + gradient bg</div>
-  </div>
-
-  <!-- ═══ HOME ═══ -->
+  <!-- HOME VARIANT 1: Pure Vertical Stream -->
   <div class="phone-wrap">
     <div class="phone-frame">
       <div class="phone-notch"></div>
       <div class="home">
         <div class="home-toolbar">
-          <div class="logo">Streamify</div>
-          <div class="actions">
-            <div class="icon-btn">🔍</div>
-            <div class="icon-btn">☰</div>
-          </div>
+          <div class="drawer-btn">☰</div>
+          <div class="logo">Sportzfy</div>
+          <div class="actions"><div class="icon-btn">🔍</div><div class="icon-btn">★</div></div>
         </div>
-
-        <!-- Banner carousel -->
-        <div class="banner-scroll">
-          <div class="banner-card">
-            <div class="bg" style="background:linear-gradient(135deg,#16213E,#0D3B2E,#1a237e)"></div>
-            <div class="overlay"></div>
-            <div class="banner-badge"><div class="dot"></div><span>LIVE</span></div>
-            <div class="content">
-              <div class="league">🏆 World Cup 2026</div>
-              <h3>Germany vs Brazil</h3>
-              <p>Group Stage • 20:00 UTC</p>
-            </div>
-          </div>
-          <div class="banner-card">
-            <div class="bg" style="background:linear-gradient(135deg,#4a148c,#1a237e,#004d40)"></div>
-            <div class="overlay"></div>
-            <div class="content">
-              <div class="league">⚽ Champions League</div>
-              <h3>Semi-Final Night</h3>
-              <p>4 matches streaming today</p>
-            </div>
-          </div>
+        <div class="notice-bar"><span>🔔 To Download Our Latest APK. Stay away from fraud. To Download Our Latest APK. Stay away from fraud.&nbsp;&nbsp;</span></div>
+        <div class="cat-chips">
+          <div class="cat-chip active">⚡ All (63)</div>
+          <div class="cat-chip">🏏 Cricket (2)</div>
+          <div class="cat-chip">⚽ Football (55)</div>
+          <div class="cat-chip">🥊 Boxing (3)</div>
+          <div class="cat-chip">🏎️ Motor (2)</div>
         </div>
-
-        <!-- Live Events -->
-        <div class="section-header">
-          <h2><span class="dot"></span>Live Events</h2>
-          <span class="view-all">View All →</span>
+        <div class="status-filters">
+          <div class="status-pill active">✓ Recent (17)</div>
+          <div class="status-pill" style="border-color:#FF1744;color:#FF1744">● Live (7)</div>
+          <div class="status-pill">📅 Upcoming (28)</div>
+          <div class="status-pill">All</div>
         </div>
-
-        <div class="match-list">
-          <!-- Match 1: LIVE -->
+        <div class="match-list-scroll">
           <div class="match-card">
             <div class="top-row">
-              <div class="league-badge"><span class="emoji">🏆</span> World Cup 2026</div>
-              <div class="live-pill"><div class="dot"></div><span>LIVE</span></div>
+              <div class="league-info">🟢 Football · Premier League 25/26</div>
+              <div class="live-badge"><div class="dot"></div><span>LIVE</span></div>
             </div>
             <div class="teams">
-              <div class="team">
-                <div class="flag" style="background:linear-gradient(135deg,#1a237e,#0d47a1)">🇩🇪</div>
-                <div class="name">Germany</div>
-              </div>
-              <div class="vs-col">
-                <div class="score">2 — 1</div>
-                <div class="vs">LIVE</div>
-              </div>
-              <div class="team">
-                <div class="flag" style="background:linear-gradient(135deg,#1b5e20,#2e7d32)">🇧🇷</div>
-                <div class="name">Brazil</div>
-              </div>
-            </div>
-            <div class="bottom-row">
-              <div class="time">67' • 2nd Half</div>
-              <div class="watch-btn">▶ Watch</div>
+              <div class="team"><div class="flag" style="background:linear-gradient(135deg,#1a237e,#0d47a1)">🔵</div><div class="name">Crystal Palace</div></div>
+              <div class="vs-col"><div class="score">0 — 2</div><div class="vs">LIVE</div></div>
+              <div class="team"><div class="flag" style="background:linear-gradient(135deg,#b71c1c,#c62828)">🔴</div><div class="name">Liverpool</div></div>
             </div>
           </div>
-
-          <!-- Match 2: LIVE -->
           <div class="match-card">
             <div class="top-row">
-              <div class="league-badge"><span class="emoji">⚽</span> Champions League</div>
-              <div class="live-pill"><div class="dot"></div><span>LIVE</span></div>
+              <div class="league-info">🟢 Football · Premier League 25/26</div>
+              <div class="live-badge"><div class="dot"></div><span>LIVE</span></div>
             </div>
             <div class="teams">
-              <div class="team">
-                <div class="flag" style="background:linear-gradient(135deg,#f57c00,#e65100)">🇦🇷</div>
-                <div class="name">Argentina</div>
-              </div>
-              <div class="vs-col">
-                <div class="score">1 — 1</div>
-                <div class="vs">LIVE</div>
-              </div>
-              <div class="team">
-                <div class="flag" style="background:linear-gradient(135deg,#1a237e,#283593)">🇫🇷</div>
-                <div class="name">France</div>
-              </div>
-            </div>
-            <div class="bottom-row">
-              <div class="time">34' • 1st Half</div>
-              <div class="watch-btn">▶ Watch</div>
+              <div class="team"><div class="flag" style="background:linear-gradient(135deg,#0277bd,#01579b)">🔵</div><div class="name">Man City</div></div>
+              <div class="vs-col"><div class="score">1 — 0</div><div class="vs">LIVE</div></div>
+              <div class="team"><div class="flag" style="background:linear-gradient(135deg,#4a148c,#6a1b9a)">🟣</div><div class="name">Burnley</div></div>
             </div>
           </div>
-
-          <!-- Match 3: Upcoming -->
           <div class="match-card">
-            <div class="top-row">
-              <div class="league-badge"><span class="emoji">🏆</span> World Cup 2026</div>
-            </div>
+            <div class="top-row"><div class="league-info">🔵 Cricket · International T20</div></div>
             <div class="teams">
-              <div class="team">
-                <div class="flag" style="background:linear-gradient(135deg,#75536e,#1565c0)">🇪🇸</div>
-                <div class="name">Spain</div>
-              </div>
-              <div class="vs-col">
-                <div class="vs" style="background:rgba(0,230,118,0.05);color:#7B8CA0">VS</div>
-              </div>
-              <div class="team">
-                <div class="flag" style="background:linear-gradient(135deg,#b71c1c,#d32f2f)">🏴</div>
-                <div class="name">England</div>
-              </div>
+              <div class="team"><div class="flag" style="background:linear-gradient(135deg,#e65100,#f57c00)">🇳🇵</div><div class="name">Nepal</div></div>
+              <div class="vs-col"><div class="vs" style="background:rgba(0,230,118,0.05);color:#7B8CA0">VS</div></div>
+              <div class="team"><div class="flag" style="background:linear-gradient(135deg,#1b5e20,#2e7d32)">🏝️</div><div class="name">West Indies</div></div>
             </div>
-            <div class="bottom-row">
-              <div class="time">21:00 UTC • Final</div>
-              <div class="watch-btn" style="color:#7B8CA0">⏰ Reminder</div>
-            </div>
+            <div class="bottom-row"><div class="time">07:30 PM · 27/09/2025</div></div>
           </div>
         </div>
-
         <div class="bottom-nav">
           <div class="nav-item active"><div class="icon">🏠</div><div class="label">Home</div></div>
-          <div class="nav-item"><div class="icon">📺</div><div class="label">Categories</div></div>
-          <div class="nav-item"><div class="icon">⭐</div><div class="label">Favorites</div></div>
+          <div class="nav-item"><div class="icon">㗊</div><div class="label">Category</div></div>
+          <div class="nav-item"><div class="icon">🔄</div><div class="label">Highlight</div></div>
         </div>
       </div>
     </div>
-    <div class="phone-label">Home Screen</div>
-    <div class="phone-sublabel">Banner carousel + live match cards with scores</div>
+    <div class="phone-label">Home — Pure Vertical Stream</div>
+    <div class="phone-sublabel">Clean vertical list with chips, filters, full-width match cards</div>
+    <div class="variant-badge badge-main">★ MAIN DESIGN</div>
   </div>
 
-  <!-- ═══ CATEGORIES ═══ -->
+  <!-- HOME VARIANT 2: Grid-Based Compact Layout -->
   <div class="phone-wrap">
     <div class="phone-frame">
       <div class="phone-notch"></div>
-      <div class="categories">
-        <div class="cat-header"><h2>Categories</h2></div>
-        <div class="chips-scroll">
-          <div class="chip active">🔥 All</div>
-          <div class="chip">🏆 World Cup</div>
-          <div class="chip">⚽ Football</div>
-          <div class="chip">🏏 Cricket</div>
-          <div class="chip">🏀 NBA</div>
-          <div class="chip">🎾 Tennis</div>
+      <div class="home">
+        <div class="home-toolbar">
+          <div class="drawer-btn">☰</div>
+          <div class="logo">Sportzfy</div>
+          <div class="actions"><div class="icon-btn">🔍</div><div class="icon-btn">★</div></div>
         </div>
-        <div class="channel-grid">
-          <div class="channel-card">
-            <div class="thumb" style="background:linear-gradient(135deg,#1a237e,#0d47a1)">📺</div>
-            <div class="live-tag"><div class="dot"></div><span>LIVE</span></div>
-            <div class="info"><div class="name">BeIN Sports 1</div><div class="cat">World Cup</div></div>
+        <div class="cat-chips">
+          <div class="cat-chip active">⚡ ALL</div>
+          <div class="cat-chip">🏏 CRICKET (2)</div>
+          <div class="cat-chip">⚽ FOOTBALL (55)</div>
+          <div class="cat-chip">🥊 BOXING</div>
+          <div class="cat-chip">🏎️ MOTOR</div>
+        </div>
+        <div class="ph-section"><h3><span class="dot"></span> LIVE FIXTURES (7)</h3><span class="view-all">View All</span></div>
+        <div class="match-grid">
+          <div class="match-grid-card">
+            <div class="mg-top"><span class="mg-league">⚽ Premier League</span><div class="live-badge"><div class="dot"></div><span>LIVE</span></div></div>
+            <div class="mg-teams"><div class="mg-team">Palace</div><div class="mg-vs">vs</div><div class="mg-team">Liverpool</div></div>
+            <div class="mg-servers"><div class="srv">▶ Srv 1</div><div class="srv">▶ Srv 2</div></div>
           </div>
-          <div class="channel-card">
-            <div class="thumb" style="background:linear-gradient(135deg,#b71c1c,#c62828)">📺</div>
-            <div class="info"><div class="name">ESPN</div><div class="cat">Football</div></div>
+          <div class="match-grid-card">
+            <div class="mg-top"><span class="mg-league">⚽ La Liga</span><div class="live-badge"><div class="dot"></div><span>LIVE</span></div></div>
+            <div class="mg-teams"><div class="mg-team">Getafe</div><div class="mg-vs">vs</div><div class="mg-team">Levante</div></div>
+            <div class="mg-servers"><div class="srv">▶ Srv 1</div><div class="srv">▶ Srv 2</div></div>
           </div>
-          <div class="channel-card">
-            <div class="thumb" style="background:linear-gradient(135deg,#1b5e20,#2e7d32)">📺</div>
-            <div class="live-tag"><div class="dot"></div><span>LIVE</span></div>
-            <div class="info"><div class="name">Sky Sports</div><div class="cat">World Cup</div></div>
-          </div>
-          <div class="channel-card">
-            <div class="thumb" style="background:linear-gradient(135deg,#4a148c,#6a1b9a)">📺</div>
-            <div class="info"><div class="name">Sony TEN 1</div><div class="cat">Cricket</div></div>
-          </div>
-          <div class="channel-card">
-            <div class="thumb" style="background:linear-gradient(135deg,#e65100,#f57c00)">📺</div>
-            <div class="info"><div class="name">Star Sports</div><div class="cat">Cricket</div></div>
-          </div>
-          <div class="channel-card">
-            <div class="thumb" style="background:linear-gradient(135deg,#01579b,#0288d1)">📺</div>
-            <div class="live-tag"><div class="dot"></div><span>LIVE</span></div>
-            <div class="info"><div class="name">Fox Sports</div><div class="cat">Football</div></div>
-          </div>
+        </div>
+        <div class="ph-section"><h3>📅 UPCOMING EVENTS</h3></div>
+        <div class="match-card" style="margin:0 14px 8px">
+          <div class="top-row"><div class="league-info">🏏 International T20 · Nepal vs West Indies</div><div class="time" style="font-size:9px;color:#7B8CA0">🕒 07:30 PM</div></div>
+        </div>
+        <div class="match-card" style="margin:0 14px 8px">
+          <div class="top-row"><div class="league-info">⚽ Champions League · Semi-Final</div><div class="time" style="font-size:9px;color:#7B8CA0">🕒 21:00 UTC</div></div>
         </div>
         <div class="bottom-nav">
-          <div class="nav-item"><div class="icon">🏠</div><div class="label">Home</div></div>
-          <div class="nav-item active"><div class="icon">📺</div><div class="label">Categories</div></div>
-          <div class="nav-item"><div class="icon">⭐</div><div class="label">Favorites</div></div>
+          <div class="nav-item active"><div class="icon">🏠</div><div class="label">Home</div></div>
+          <div class="nav-item"><div class="icon">㗊</div><div class="label">Category</div></div>
+          <div class="nav-item"><div class="icon">🔄</div><div class="label">Highlight</div></div>
         </div>
       </div>
     </div>
-    <div class="phone-label">Categories</div>
-    <div class="phone-sublabel">Snap chips + glass channel grid</div>
+    <div class="phone-label">Home — Grid Compact Layout</div>
+    <div class="phone-sublabel">2-column grid for live fixtures with server buttons + compact upcoming list</div>
+    <div class="variant-badge badge-alt">VARIANT A</div>
   </div>
 
-  <!-- ═══ PLAYER — Landscape / Horizontal ═══ -->
+  <!-- HOME VARIANT 3: LIVE NOW Hero -->
+  <div class="phone-wrap">
+    <div class="phone-frame">
+      <div class="phone-notch"></div>
+      <div class="home">
+        <div class="home-toolbar">
+          <div class="drawer-btn">☰</div>
+          <div class="logo">Sportify</div>
+          <div class="actions"><div class="icon-btn">🔍</div><div class="icon-btn">★</div></div>
+        </div>
+        <div class="notice-bar" style="color:#00E676;background:rgba(0,230,118,0.05);border-color:rgba(0,230,118,0.1)"><span>🔔 Welcome to Sportify! Download our official v1.2 APK here... Welcome to Sportify!&nbsp;&nbsp;</span></div>
+        <div class="ph-section"><h3><span class="dot"></span> LIVE NOW (7)</h3><span class="view-all">View All →</span></div>
+        <!-- Horizontal live cards -->
+        <div style="display:flex;gap:8px;padding:0 14px 10px;overflow-x:auto">
+          <div style="min-width:200px;border-radius:12px;background:linear-gradient(160deg,#1A1A2E,#16213E);border:1px solid #2A2A3E;padding:10px;flex-shrink:0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:9px;color:#7B8CA0">🏆 Premier League</span><div class="live-badge"><div class="dot"></div><span>LIVE</span></div></div>
+            <div style="text-align:center">
+              <div style="font-size:10px;font-weight:600">Crystal Palace</div>
+              <div style="font-size:16px;font-weight:800;color:#00E676;margin:4px 0">0 — 2</div>
+              <div style="font-size:10px;font-weight:600">Liverpool</div>
+            </div>
+          </div>
+          <div style="min-width:200px;border-radius:12px;background:linear-gradient(160deg,#1A1A2E,#16213E);border:1px solid #2A2A3E;padding:10px;flex-shrink:0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:9px;color:#7B8CA0">⚽ La Liga</span><div class="live-badge"><div class="dot"></div><span>LIVE</span></div></div>
+            <div style="text-align:center">
+              <div style="font-size:10px;font-weight:600">Getafe</div>
+              <div style="font-size:16px;font-weight:800;color:#00E676;margin:4px 0">1 — 1</div>
+              <div style="font-size:10px;font-weight:600">Levante UD</div>
+            </div>
+          </div>
+        </div>
+        <div class="cat-chips">
+          <div class="cat-chip active">⚡ All</div>
+          <div class="cat-chip">🏏 Cricket</div>
+          <div class="cat-chip">⚽ Football</div>
+          <div class="cat-chip">🥊 Boxing</div>
+        </div>
+        <div class="ph-section"><h3>📅 UPCOMING MATCHES</h3></div>
+        <div class="match-list-scroll">
+          <div class="match-card">
+            <div class="top-row"><div class="league-info">📅 International T20</div><div class="time">🕒 07:30 PM | 27/09</div></div>
+            <div class="teams">
+              <div class="team"><div class="flag" style="background:linear-gradient(135deg,#e65100,#f57c00)">🇳🇵</div><div class="name">Nepal</div></div>
+              <div class="vs-col"><div class="vs" style="background:rgba(0,230,118,0.05);color:#7B8CA0">VS</div></div>
+              <div class="team"><div class="flag" style="background:linear-gradient(135deg,#1b5e20,#2e7d32)">🏝️</div><div class="name">West Indies</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-item active"><div class="icon">🏠</div><div class="label">Home</div></div>
+          <div class="nav-item"><div class="icon">㗊</div><div class="label">Category</div></div>
+          <div class="nav-item"><div class="icon">🔄</div><div class="label">Highlights</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">Home — LIVE NOW Hero</div>
+    <div class="phone-sublabel">Horizontal scroll live cards at top, category pills, upcoming list below</div>
+    <div class="variant-badge badge-alt">VARIANT B</div>
+  </div>
+
+</div>
+
+<div class="phone-row">
+
+  <!-- HOME VARIANT 4: Large 2x2 Category Grid -->
+  <div class="phone-wrap">
+    <div class="phone-frame">
+      <div class="phone-notch"></div>
+      <div class="home">
+        <div class="home-toolbar">
+          <div class="drawer-btn">☰</div>
+          <div class="logo">Sportify</div>
+          <div class="actions"><div class="icon-btn">🔍</div><div class="icon-btn">★</div></div>
+        </div>
+        <div class="notice-bar"><span>📢 Notice: Verify your app version before streaming matches. Verify your app version...&nbsp;&nbsp;</span></div>
+        <div class="ph-section"><h3>CHOOSE YOUR SPORT</h3></div>
+        <div class="cat-grid">
+          <div class="cat-grid-card"><div class="emoji">🏏</div><div class="cat-name">Cricket</div><div class="live-count"><em>2</em> Live Matches</div></div>
+          <div class="cat-grid-card"><div class="emoji">⚽</div><div class="cat-name">Football</div><div class="live-count"><em>55</em> Live Matches</div></div>
+          <div class="cat-grid-card"><div class="emoji">🥊</div><div class="cat-name">Boxing</div><div class="live-count"><em>0</em> Live</div></div>
+          <div class="cat-grid-card"><div class="emoji">🏎️</div><div class="cat-name">Motorsport</div><div class="live-count"><em>2</em> Live</div></div>
+        </div>
+        <div class="quick-filters">
+          <div class="qf active">● Live Now</div>
+          <div class="qf">📅 Tomorrow</div>
+          <div class="qf">⭐ My Favorites</div>
+        </div>
+        <div class="match-list-scroll">
+          <div class="match-card">
+            <div class="top-row"><div class="league-info">⚽ La Liga</div><div class="live-badge"><div class="dot"></div><span>LIVE</span></div></div>
+            <div class="teams">
+              <div class="team"><div class="flag" style="background:linear-gradient(135deg,#1a237e,#283593)">🔵</div><div class="name">Getafe</div></div>
+              <div class="vs-col"><div class="score">1 — 1</div><div class="vs">LIVE</div></div>
+              <div class="team"><div class="flag" style="background:linear-gradient(135deg,#b71c1c,#c62828)">🔴</div><div class="name">Levante UD</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-item active"><div class="icon">🏠</div><div class="label">Home</div></div>
+          <div class="nav-item"><div class="icon">㗊</div><div class="label">Category</div></div>
+          <div class="nav-item"><div class="icon">🔄</div><div class="label">Highlights</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">Home — 2×2 Category Grid</div>
+    <div class="phone-sublabel">Large sport category squares with live counters + quick filters + match cards</div>
+    <div class="variant-badge badge-alt">VARIANT C</div>
+  </div>
+
+  <!-- HOME VARIANT 5: Floating Elevation Cards -->
+  <div class="phone-wrap">
+    <div class="phone-frame">
+      <div class="phone-notch"></div>
+      <div class="home">
+        <div class="home-toolbar">
+          <div class="drawer-btn">☰</div>
+          <div class="logo">Sportzfy</div>
+          <div class="actions"><div class="icon-btn">🔍</div><div class="icon-btn">★</div></div>
+        </div>
+        <div class="notice-bar" style="color:#FF6D00;background:rgba(255,109,0,0.06);border-color:rgba(255,109,0,0.15)"><span>🔥 Total 128 streams available today! Total 128 streams available today!&nbsp;&nbsp;</span></div>
+        <div class="cat-chips">
+          <div class="cat-chip active">⚡ All</div>
+          <div class="cat-chip">🏏 Cricket</div>
+          <div class="cat-chip">⚽ Football</div>
+          <div class="cat-chip">🥊 Boxing</div>
+          <div class="cat-chip">🏎️ Motor</div>
+        </div>
+        <div class="match-list-scroll">
+          <div class="match-card-v">
+            <div class="card-top">
+              <div class="league-info" style="font-size:9px;color:#7B8CA0">🟢 Premier League · Round 6</div>
+              <div class="live-badge"><div class="dot"></div><span>LIVE</span></div>
+            </div>
+            <div class="card-body">
+              <div class="team-row"><div class="flag" style="background:linear-gradient(135deg,#1a237e,#0d47a1)">🔵</div><div class="name">Crystal Palace</div></div>
+              <div class="team-row"><div class="flag" style="background:linear-gradient(135deg,#b71c1c,#c62828)">🔴</div><div class="name">Liverpool</div></div>
+            </div>
+            <div class="card-footer"><div class="stream-status">📺 Stream Active</div><div class="watch-link">Watch Stream ➔</div></div>
+          </div>
+          <div class="match-card-v">
+            <div class="card-top">
+              <div class="league-info" style="font-size:9px;color:#7B8CA0">🔵 UAE International T20</div>
+              <div style="font-size:9px;color:#7B8CA0">📅 27/09 · 07:30</div>
+            </div>
+            <div class="card-body">
+              <div class="team-row"><div class="flag" style="background:linear-gradient(135deg,#e65100,#f57c00)">🇳🇵</div><div class="name">Nepal</div></div>
+              <div class="team-row"><div class="flag" style="background:linear-gradient(135deg,#1b5e20,#2e7d32)">🏝️</div><div class="name">West Indies</div></div>
+            </div>
+          </div>
+          <div class="match-card-v">
+            <div class="card-top">
+              <div class="league-info" style="font-size:9px;color:#7B8CA0">🟢 La Liga · Round 4</div>
+              <div class="live-badge"><div class="dot"></div><span>LIVE</span></div>
+            </div>
+            <div class="card-body">
+              <div class="team-row"><div class="flag" style="background:linear-gradient(135deg,#1a237e,#283593)">🔵</div><div class="name">Getafe</div></div>
+              <div class="team-row"><div class="flag" style="background:linear-gradient(135deg,#4a148c,#6a1b9a)">🟣</div><div class="name">Levante UD</div></div>
+            </div>
+            <div class="card-footer"><div class="stream-status">📺 Stream Active</div><div class="watch-link">Watch Stream ➔</div></div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-item active"><div class="icon">🏠</div><div class="label">Home</div></div>
+          <div class="nav-item"><div class="icon">㗊</div><div class="label">Category</div></div>
+          <div class="nav-item"><div class="icon">🔄</div><div class="label">Highlights</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">Home — Floating Elevation Cards</div>
+    <div class="phone-sublabel">Vertical team layout, "Watch Stream" buttons, live badges</div>
+    <div class="variant-badge badge-alt">VARIANT D</div>
+  </div>
+
+</div>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 2: NAVIGATION DRAWER
+     ════════════════════════════════════════════════════════════ -->
+<div id="drawer" class="section">
+  <div class="section-title">☰ Navigation Drawer</div>
+  <div class="section-desc">2 design variants</div>
+</div>
+
+<div class="phone-row">
+
+  <!-- DRAWER VARIANT 1: Grouped Functional Sections -->
+  <div class="phone-wrap">
+    <div class="phone-frame drawer-frame">
+      <div class="phone-notch"></div>
+      <div class="drawer">
+        <div class="drawer-header">
+          <div class="d-logo">Sportzfy Premium</div>
+          <div class="d-ver">v22.1 · Connected</div>
+        </div>
+        <div class="drawer-body">
+          <div class="drawer-group-label">⚡ STREAMING TOOLS</div>
+          <div class="drawer-item"><div class="d-icon">▶</div><div class="d-text">Network Player</div></div>
+          <div class="drawer-item"><div class="d-icon">☰</div><div class="d-text">Playlists</div></div>
+          <div class="drawer-item"><div class="d-icon">▢</div><div class="d-text">Floating Player</div></div>
+
+          <div class="drawer-group-label">⚙️ PREFERENCES</div>
+          <div class="drawer-item"><div class="d-icon">⚙</div><div class="d-text">Video Quality Settings</div></div>
+          <div class="drawer-item"><div class="d-icon">🎛</div><div class="d-text">Crash Log Dialog</div><div class="d-toggle on"></div></div>
+
+          <div class="drawer-group-label">📢 INFO & COMMUNITY</div>
+          <div class="drawer-item"><div class="d-icon">🔔</div><div class="d-text">Notice</div></div>
+          <div class="drawer-item"><div class="d-icon">💬</div><div class="d-text">Join Telegram Channel</div></div>
+          <div class="drawer-item"><div class="d-icon">©</div><div class="d-text">Copyright Policy</div></div>
+          <div class="drawer-item"><div class="d-icon">✉</div><div class="d-text">Contact Support</div></div>
+        </div>
+        <div class="drawer-footer">
+          <div class="exit-btn"><span style="font-size:14px">➔</span><span>Exit Application</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">Drawer — Grouped Sections</div>
+    <div class="phone-sublabel">Organized into Streaming Tools, Preferences, Info & Community</div>
+    <div class="variant-badge badge-main">★ MAIN DESIGN</div>
+  </div>
+
+  <!-- DRAWER VARIANT 2: Quick-Action Grid -->
+  <div class="phone-wrap">
+    <div class="phone-frame drawer-frame">
+      <div class="phone-notch"></div>
+      <div class="drawer">
+        <div class="drawer-header">
+          <div class="d-logo">Sportzfy Ecosystem</div>
+          <div class="d-ver">v22.1</div>
+        </div>
+        <div class="drawer-grid">
+          <div class="drawer-grid-item"><div class="dg-icon">▶</div><div class="dg-text">Network Player</div></div>
+          <div class="drawer-grid-item"><div class="dg-icon">☰</div><div class="dg-text">Playlists</div></div>
+          <div class="drawer-grid-item"><div class="dg-icon">▢</div><div class="dg-text">Float Player</div></div>
+          <div class="drawer-grid-item"><div class="dg-icon">⚙</div><div class="dg-text">Settings</div></div>
+        </div>
+        <div style="padding:4px 16px">
+          <div class="drawer-item" style="padding:8px 0"><div class="d-icon">🔘</div><div class="d-text">Enable Crash Logging</div><div class="d-toggle"></div></div>
+        </div>
+        <div style="border-top:1px solid #2A2A3E;margin:6px 16px"></div>
+        <div style="padding:0 16px">
+          <div class="drawer-item" style="padding:8px 0"><div class="d-icon">🔔</div><div class="d-text">Notice & Rules</div></div>
+          <div class="drawer-item" style="padding:8px 0"><div class="d-icon">💬</div><div class="d-text">Social Communities</div></div>
+          <div class="drawer-item" style="padding:8px 0"><div class="d-icon">©</div><div class="d-text">Copyright & DMCA</div></div>
+          <div class="drawer-item" style="padding:8px 0"><div class="d-icon">🔄</div><div class="d-text">Check App Updates</div></div>
+        </div>
+        <div class="drawer-footer">
+          <div class="exit-btn"><span style="font-size:14px">➔</span><span>Exit Account</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">Drawer — Quick-Action Grid</div>
+    <div class="phone-sublabel">Top 4 items in 2×2 grid, then simple list below</div>
+    <div class="variant-badge badge-alt">VARIANT A</div>
+  </div>
+
+</div>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 3: NETWORK PLAYER
+     ════════════════════════════════════════════════════════════ -->
+<div id="network" class="section">
+  <div class="section-title">🌐 Network Player</div>
+  <div class="section-desc">2 design variants</div>
+</div>
+
+<div class="phone-row">
+
+  <!-- NP VARIANT 1: Stacked Fields -->
+  <div class="phone-wrap">
+    <div class="phone-frame">
+      <div class="phone-notch"></div>
+      <div class="np">
+        <div class="np-toolbar">
+          <div class="back">←</div>
+          <div class="title">Network Player Configurations</div>
+          <div class="act"><span>🔄</span><span>★</span><span>➔</span></div>
+        </div>
+        <div class="match-list-scroll" style="padding-bottom:70px">
+          <div class="np-section-card">
+            <div class="np-section-title">Input Media Target:</div>
+            <div class="np-field"><label>Media Stream URL</label><div class="np-input">https://live.stream.provider/manifest.mpd <span class="paste">📋</span></div></div>
+          </div>
+          <div class="np-section-card">
+            <div class="np-section-title">Headers & Configuration:</div>
+            <div class="np-field"><label>Cookie</label><div class="np-input">Enter cookie string value... <span class="paste">📋</span></div></div>
+            <div class="np-field"><label>Referer</label><div class="np-input">Enter network request referer... <span class="paste">📋</span></div></div>
+            <div class="np-field"><label>Origin</label><div class="np-input">Enter connection origin header... <span class="paste">📋</span></div></div>
+          </div>
+          <div class="np-section-card">
+            <div class="np-section-title">DRM Settings:</div>
+            <div class="np-field"><label>License URL</label><div class="np-input">Enter licenser key gateway link... <span class="paste">📋</span></div></div>
+            <div class="np-dropdown">
+              <div class="np-dd">Default <span class="dd-arrow">▼</span></div>
+              <div class="np-dd">ClearKey <span class="dd-arrow">▼</span></div>
+            </div>
+          </div>
+          <div class="np-play-btn">▶ Launch Video Stream</div>
+        </div>
+        <div class="bottom-nav">
+          <div class="nav-item"><div class="icon">🏠</div><div class="label">Home</div></div>
+          <div class="nav-item"><div class="icon">㗊</div><div class="label">Categories</div></div>
+          <div class="nav-item active"><div class="icon">▶</div><div class="label">Highlights</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">Network Player — Stacked Fields</div>
+    <div class="phone-sublabel">All fields stacked vertically with labeled sections</div>
+    <div class="variant-badge badge-main">★ MAIN DESIGN</div>
+  </div>
+
+  <!-- NP VARIANT 2: Tabbed Setup -->
+  <div class="phone-wrap">
+    <div class="phone-frame">
+      <div class="phone-notch"></div>
+      <div class="np">
+        <div class="np-toolbar">
+          <div class="back">←</div>
+          <div class="title">Network Stream Engine</div>
+        </div>
+        <div class="np-tabs">
+          <div class="np-tab active">🗲 Stream URL</div>
+          <div class="np-tab">🌐 Headers</div>
+          <div class="np-tab">🔐 DRM</div>
+        </div>
+        <div class="match-list-scroll" style="padding-bottom:70px">
+          <div class="ph-section" style="padding-top:12px"><h3>ENTER LIVE MEDIA STREAM URL</h3></div>
+          <div class="np-field">
+            <div class="np-input">🔗 Enter target source (.m3u8, .mpd, .mp4) <span class="paste">📋</span></div>
+          </div>
+          <div class="ph-section" style="padding-top:10px"><h3>QUICK CONFIG SELECTIONS:</h3></div>
+          <div class="np-dropdown">
+            <div class="np-dd">Decryption: Default <span class="dd-arrow">▼</span></div>
+            <div class="np-dd">Scheme: ClearKey <span class="dd-arrow">▼</span></div>
+          </div>
+          <div class="np-tip">💡 <strong>Tip:</strong> Tap the 'Request Headers' tab above if your network source requires customized user-agent or security authorization cookie tokens.</div>
+        </div>
+        <div class="np-fab">▶</div>
+        <div class="bottom-nav">
+          <div class="nav-item"><div class="icon">🏠</div><div class="label">Home</div></div>
+          <div class="nav-item"><div class="icon">㗊</div><div class="label">Categories</div></div>
+          <div class="nav-item active"><div class="icon">▶</div><div class="label">Highlights</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">Network Player — Tabbed Setup</div>
+    <div class="phone-sublabel">3 tabs (Stream URL, Headers, DRM) + floating play button</div>
+    <div class="variant-badge badge-alt">VARIANT A</div>
+  </div>
+
+</div>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 4: PLAYER (LANDSCAPE)
+     ════════════════════════════════════════════════════════════ -->
+<div id="player" class="section">
+  <div class="section-title">▶ ExoPlayer — Landscape</div>
+  <div class="section-desc">Forced landscape video player with glass controls</div>
+</div>
+
+<div class="phone-row">
   <div class="phone-wrap">
     <div class="phone-frame landscape-frame">
       <div class="player">
-        <!-- Top bar: [←] title(marquee) [🔒][▢][⇄][⚙] -->
         <div class="player-top">
           <div class="back">←</div>
-          <div class="title-marquee">
-            <span>Germany vs Brazil • BeIN Sports 1 • World Cup 2026&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Germany vs Brazil • BeIN Sports 1 • World Cup 2026</span>
-          </div>
+          <div class="title-marquee"><span>Crystal Palace vs Liverpool • Premier League 25/26&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Crystal Palace vs Liverpool • Premier League 25/26</span></div>
           <div class="right-btns">
             <div class="ctrl-btn">🔒</div>
             <div class="ctrl-btn">▢</div>
@@ -531,40 +759,27 @@
             <div class="ctrl-btn">⚙</div>
           </div>
         </div>
-
-        <!-- Links bar: [🔄] [Server 1] [Server 2] [Server 3] -->
         <div class="player-links">
-          <div class="refresh-btn">🔄</div>
-          <div class="chips">
-            <div class="chip active">Server 1</div>
-            <div class="chip">Server 2</div>
-            <div class="chip">Server 3</div>
+          <div class="refresh">🔄</div>
+          <div class="srv-chips">
+            <div class="srv-chip active">Server 1</div>
+            <div class="srv-chip">Server 2</div>
+            <div class="srv-chip">Server 3</div>
           </div>
         </div>
-
-        <!-- Video area with center controls -->
         <div class="player-video">
-          <!-- Center: [⏪10s] [▶] [10s⏩] -->
+          <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:16px;font-weight:800;background:linear-gradient(135deg,#00E676,#00BCD4);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Sportify</div>
           <div class="player-center">
-            <div class="center-btn rewind-btn">
-              ⏪<span class="skip-label">10s</span>
-            </div>
-            <div class="center-btn play-btn">▶</div>
-            <div class="center-btn forward-btn">
-              ⏩<span class="skip-label">10s</span>
-            </div>
+            <div class="c-btn">⏪<span class="skip">10s</span></div>
+            <div class="c-btn play">▶</div>
+            <div class="c-btn">⏩<span class="skip">10s</span></div>
           </div>
-
-          <!-- Bottom glass bar -->
           <div class="player-bottom">
-            <!-- Seek: 12:34 ▬▬▬▬▬▬▬▬▬▬▬ 45:00 -->
             <div class="player-seek">
               <span class="time">12:34</span>
               <div class="track"><div class="fill"></div><div class="dot"></div></div>
               <span class="time">45:00</span>
             </div>
-
-            <!-- Bottom icons: [🔊][⛶] -->
             <div class="player-bottom-btns">
               <span class="b-btn">🔊</span>
               <span class="b-btn">⛶</span>
@@ -574,52 +789,75 @@
       </div>
     </div>
     <div class="phone-label">Player (Landscape)</div>
-    <div class="phone-sublabel">Always horizontal — forced landscape mode</div>
+    <div class="phone-sublabel">Glass top bar, server chips, center controls, seek bar — auto-hide after 3s</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 5: SYSTEM DIALOGS
+     ════════════════════════════════════════════════════════════ -->
+<div id="dialogs" class="section">
+  <div class="section-title">💬 System Dialogs</div>
+  <div class="section-desc">2 dialog designs — Settings Toggle and Informational Notice</div>
+</div>
+
+<div class="phone-row">
+
+  <!-- DIALOG A: Settings Toggle -->
+  <div class="phone-wrap">
+    <div class="phone-frame" style="height:400px">
+      <div class="phone-notch"></div>
+      <div class="dialog-overlay">
+        <div class="dialog-box">
+          <div class="d-title">Force Low Video Quality</div>
+          <div class="d-body">Enable this option to reduce buffering on slow connections. This will reduce video quality but improve playback stability.</div>
+          <div class="d-switch-row">
+            <span>Force Low Video Quality</span>
+            <div class="d-switch"></div>
+          </div>
+          <div class="d-btn close">CLOSE</div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">Dialog A — Settings Toggle</div>
+    <div class="phone-sublabel">Quality / Floating Player settings with switch widget</div>
+  </div>
+
+  <!-- DIALOG B: Informational Notice -->
+  <div class="phone-wrap">
+    <div class="phone-frame" style="height:400px">
+      <div class="phone-notch"></div>
+      <div class="dialog-overlay">
+        <div class="dialog-box">
+          <div class="d-title">Important Notice</div>
+          <div class="d-body">We do not support gambling. If you see gambling ads on our app, they are from third-party sources.<br><br>The streaming links are from third party websites available freely on the internet.<br><br>If you have any complaints please mail us at: support@sportzfy.com</div>
+          <div class="d-btn ok">OK</div>
+        </div>
+      </div>
+    </div>
+    <div class="phone-label">Dialog B — Informational Notice</div>
+    <div class="phone-sublabel">Copyright / policy / announcement with OK button</div>
   </div>
 
 </div>
 
 <div class="divider"></div>
 
-<!-- ── Feature Summary ── -->
+<!-- ── Legend ── -->
 <div class="section" style="padding-bottom:60px">
-  <div class="section-title">🎮 Player Features (Sportzfy Parity)</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-    <div style="background:#1A1A2E;border-radius:12px;padding:16px;border:1px solid #2A2A3E">
-      <div style="color:#00E676;font-weight:600;margin-bottom:6px">👆 Gesture Controls</div>
-      <div style="font-size:11px;color:#7B8CA0;line-height:1.6">
-        • Swipe left side → Volume<br>
-        • Swipe right side → Brightness<br>
-        • Swipe horizontal → Seek ±10s<br>
-        • Double tap → Play/Pause
-      </div>
-    </div>
-    <div style="background:#1A1A2E;border-radius:12px;padding:16px;border:1px solid #2A2A3E">
-      <div style="color:#00E676;font-weight:600;margin-bottom:6px">🎯 Quality & Sources</div>
-      <div style="font-size:11px;color:#7B8CA0;line-height:1.6">
-        • Quality selector pill (Auto/1080p/720p/480p)<br>
-        • Stream source chips bar<br>
-        • Subtitle toggle<br>
-        • Aspect ratio toggle (16:9, 4:3, Fill)
-      </div>
-    </div>
-    <div style="background:#1A1A2E;border-radius:12px;padding:16px;border:1px solid #2A2A3E">
-      <div style="color:#00E676;font-weight:600;margin-bottom:6px">🔒 Screen Lock</div>
-      <div style="font-size:11px;color:#7B8CA0;line-height:1.6">
-        • Lock button hides all controls<br>
-        • Single tap center to unlock<br>
-        • Full gesture blocking when locked<br>
-        • Dim overlay effect
-      </div>
-    </div>
-    <div style="background:#1A1A2E;border-radius:12px;padding:16px;border:1px solid #2A2A3E">
-      <div style="color:#00E676;font-weight:600;margin-bottom:6px">🖥️ PiP & Resize</div>
-      <div style="font-size:11px;color:#7B8CA0;line-height:1.6">
-        • Picture-in-Picture mode<br>
-        • Mini player floating<br>
-        • Resize (Fit / Fill / Stretch / 16:9)<br>
-        • Auto-fullscreen on landscape
-      </div>
+  <div class="section-title">📋 Design Legend</div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px">
+    <div style="display:flex;align-items:center;gap:6px"><div class="variant-badge badge-main">★ MAIN DESIGN</div><span style="font-size:12px;color:#7B8CA0">— Primary recommended design</span></div>
+    <div style="display:flex;align-items:center;gap:6px"><div class="variant-badge badge-alt">VARIANT</div><span style="font-size:12px;color:#7B8CA0">— Alternative option</span></div>
+  </div>
+  <div style="margin-top:16px;padding:16px;border-radius:12px;background:#1A1A2E;border:1px solid #2A2A3E">
+    <div style="font-size:14px;font-weight:600;color:#00E676;margin-bottom:8px">📌 How to use this preview:</div>
+    <div style="font-size:12px;color:#7B8CA0;line-height:1.8">
+      1. Review each variant and pick your preferred design for each section<br>
+      2. Tell me which variant to implement (e.g., "Use Home Variant D + Drawer Main + NP Tabbed")<br>
+      3. I'll update the actual Android layouts and Kotlin code to match
     </div>
   </div>
 </div>
