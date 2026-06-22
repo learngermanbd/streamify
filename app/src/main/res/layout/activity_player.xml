@@ -1,22 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Phase 4 · Step 4.2 — Player screen layout.
+    Sportzfy Player — matches the original Sportzfy APK player UI.
 
-    Strict-plan compliance per sportzfy_build_plan.html#phase4 Step 4.2:
-    - Top bar: back, title (marquee), lock, PiP, resize, settings
-    - Links bar: stream source switching (RecyclerView of StreamLink chips)
-    - Center: rewind 10s, play/pause, fast forward (42 dp)
-    - Bottom: position, seek bar, duration, volume, fullscreen
+    Layout:
+    - Top bar: Back arrow | Title (marquee) | Quality button
+    - Links bar: horizontal stream source chips
+    - Center: single play/pause button (no rewind/forward)
+    - Bottom: position | thin seek bar | duration | fullscreen | lock
+    - All overlays are semi-transparent and auto-hide on tap
 
-    Layout uses androidx.media3.ui.PlayerView with `useController="false"`
-    so we can paint our own custom glass overlay (the Streamify.PlayerOverlay
-    style from Phase 1.5). All controls are styled Material 3 buttons.
-
-    `app:resize_mode="fit"` is the default resize. The resize button toggles
-    between FIT / FILL / ZOOM via the Activity.
-
-    ConstraintLayout fits the immersive full-screen requirement (Phase 4.4
-    lock-screen polish lands later; Step 4.2 ships the visual frame).
+    Color: green accent (#00E676) on seek bar and active elements.
+    Gesture controls: swipe left=brightness, swipe right=volume (handled by SwipeGestureDetector).
 -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -25,17 +19,9 @@
     android:id="@+id/playerRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dark_bg"
-    android:fitsSystemWindows="true">
+    android:background="@android:color/black">
 
-    <!--
-        Media3 Player host. useController=false so the layout below is the
-        only control surface. resize_mode defaults to FIT. The optional
-        `show_shutter` / `show_buffering` media3-ui-1.5.x attrs are omitted
-        here (PlayerView's runtime defaults already render the shutter while
-        idle and a buffering spinner while preparing). Keeping them stripped
-        avoids bundling/allowList variance per CI build.
-    -->
+    <!-- Media3 Player host. useController=false — all controls are custom. -->
     <androidx.media3.ui.PlayerView
         android:id="@+id/playerView"
         android:layout_width="0dp"
@@ -48,19 +34,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Step 4.4 polish: lock dim overlay. visibility=gone by default. Toggled VISIBLE
-         by PlayerActivity.applyLockedState() while isLocked=true so the user sees
-         "slightly dimmed" video per the strict-plan spec (still bright enough for
-         subtitles). Sits BETWEEN playerView and the control chrome so it dims the
-         video while the unlock button (topBar) remains fully visible. -->
+    <!-- Lock dim overlay — shown when controls are locked -->
     <View
         android:id="@+id/lockDimOverlay"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@color/lock_dim"
-        android:clickable="false"
+        android:clickable="true"
         android:focusable="false"
-        android:importantForAccessibility="no"
+        android:importantForAccessibility="yes"
+        android:contentDescription="@string/player_unlock_desc"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -68,18 +51,18 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <!--
-        Top bar \u2014 back, title (marquee-ready TextView with marqueeRepeatLimit),
-        lock, PiP, resize, settings. Anchored to top of parent.
+        Top bar — Back | Title (marquee) | Quality.
+        Minimal like original Sportzfy: only essential controls.
     -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/glass_primary"
+        android:background="#66000000"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingHorizontal="6dp"
-        android:paddingVertical="6dp"
+        android:paddingHorizontal="4dp"
+        android:paddingVertical="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -87,8 +70,8 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnBack"
             style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:contentDescription="@string/player_top_back"
             app:icon="@android:drawable/ic_menu_revert"
             app:iconTint="@color/text" />
@@ -106,93 +89,32 @@
             android:marqueeRepeatLimit="marquee_forever"
             android:singleLine="true"
             android:textColor="@color/text"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold"
             tools:text="Live: Manchester United vs Liverpool" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLock"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:contentDescription="@string/player_top_lock"
-            app:icon="@android:drawable/ic_lock_lock"
-            app:iconTint="@color/text" />
-
-        <!-- Step 4.6 — btnDetach. Sits between btnLock and btnPip so the
-             top-bar ordering stays (back / title / lock / detach / pip /
-             subtitle / quality / resize / settings). Mirrors the PiP
-             entry-point iconographically (both are "smallify the player"
-             affordances). -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDetach"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:contentDescription="@string/player_top_detach"
-            app:icon="@android:drawable/ic_menu_send"
-            app:iconTint="@color/text" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnPip"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:contentDescription="@string/player_top_pip"
-            app:icon="@android:drawable/ic_menu_crop"
-            app:iconTint="@color/text" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSubtitle"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:contentDescription="@string/player_track_selection_title"
-            app:icon="@android:drawable/ic_menu_sort_by_size"
-            app:iconTint="@color/text" />
-
-        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnQuality"
             style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:contentDescription="@string/player_quality_title"
             app:icon="@android:drawable/ic_menu_view"
-            app:iconTint="@color/text" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnResize"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:contentDescription="@string/player_top_resize"
-            app:icon="@android:drawable/ic_menu_view"
-            app:iconTint="@color/text" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSettings"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:contentDescription="@string/player_top_settings"
-            app:icon="@android:drawable/ic_menu_preferences"
             app:iconTint="@color/text" />
     </LinearLayout>
 
     <!--
-        Links bar \u2014 horizontal RecyclerView of StreamLink chips. Anchored
-        to top under topBar. Empty list (singleton from Channel.streamUrl)
-        renders as a single "Auto" chip.
+        Links bar — horizontal stream source chips (Server 1, Server 2, etc.)
     -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/linksBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/glass_primary"
+        android:background="#44000000"
         android:clipToPadding="false"
         android:orientation="horizontal"
         android:paddingHorizontal="8dp"
-        android:paddingVertical="4dp"
+        android:paddingVertical="3dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/topBar"
@@ -200,158 +122,96 @@
         tools:listitem="@layout/view_player_link_chip" />
 
     <!--
-        Center controls \u2014 large rewind/play-pause/forward buttons floating
-        over the PlayerView. Bottom-center of the screen so they don't
-        obscure the seek bar.
+        Center — single large play/pause button.
+        Original Sportzfy shows ONLY play/pause in the center.
     -->
-    <LinearLayout
-        android:id="@+id/centerControls"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal"
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnPlayPause"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:contentDescription="@string/player_controls_play"
+        app:icon="@android:drawable/ic_media_play"
+        app:iconSize="36dp"
+        app:iconTint="@color/primary"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnRewind"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:contentDescription="@string/player_controls_rewind"
-            app:icon="@android:drawable/ic_media_rew"
-            app:iconSize="32dp"
-            app:iconTint="@color/text" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnPlayPause"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:layout_marginHorizontal="20dp"
-            android:contentDescription="@string/player_controls_play"
-            app:icon="@android:drawable/ic_media_play"
-            app:iconSize="40dp"
-            app:iconTint="@color/primary" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnForward"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:contentDescription="@string/player_controls_forward"
-            app:icon="@android:drawable/ic_media_ff"
-            app:iconSize="32dp"
-            app:iconTint="@color/text" />
-    </LinearLayout>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!--
-        Bottom controls \u2014 position label, seek bar, duration label,
-        volume slider, fullscreen toggle. Anchored to bottom of parent.
+        Bottom bar — position | seek bar | duration | fullscreen | lock.
+        Thin green seek bar matching Sportzfy style.
     -->
     <LinearLayout
         android:id="@+id/bottomBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/glass_primary"
+        android:background="#66000000"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingHorizontal="14dp"
-        android:paddingVertical="8dp"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
         <TextView
             android:id="@+id/positionText"
-            android:layout_width="56dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/poppins_regular"
             android:gravity="end"
             android:singleLine="true"
             android:textColor="@color/text"
-            android:textSize="12sp"
-            tools:text="01:23" />
+            android:textSize="11sp"
+            tools:text="00:00" />
 
         <SeekBar
             android:id="@+id/seekBar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginHorizontal="6dp"
+            android:layout_marginHorizontal="8dp"
             android:max="1000"
-            android:progressTint="@color/primary"
-            android:secondaryProgressTint="@color/glass_primary_border"
-            android:thumbTint="@color/primary" />
+            android:progressDrawable="@drawable/player_seekbar_progress"
+            android:thumb="@drawable/player_seekbar_thumb" />
 
         <TextView
             android:id="@+id/durationText"
-            android:layout_width="56dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/poppins_regular"
             android:gravity="start"
             android:singleLine="true"
             android:textColor="@color/text"
-            android:textSize="12sp"
-            tools:text="02:00" />
-
-        <SeekBar
-            android:id="@+id/volumeSlider"
-            android:layout_width="100dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:max="100"
-            android:progressTint="@color/primary"
-            android:thumbTint="@color/primary" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnFavorite"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginStart="6dp"
-            android:contentDescription="@string/player_favorite_add_desc"
-            app:icon="@drawable/ic_heart_outline"
-            app:iconSize="24dp"
-            app:iconTint="@color/text" />
-
-        <!--
-            Phase 5 · Step 5.2 — Add-to-playlist launcher.
-
-            Sits between the heart and fullscreen in the bottom bar
-            so the ordering stays (volume slider → favorite →
-            add-to-playlist → fullscreen). Tapping opens
-            [com.streamify.app.ui.player.AddToPlaylistDialogFragment]
-            with the currently-playing [StreamLink] as the pending
-            single stream to add.
-        -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnAddToPlaylist"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginStart="2dp"
-            android:contentDescription="@string/player_add_to_playlist_desc"
-            app:icon="@android:drawable/ic_menu_sort_by_size"
-            app:iconSize="24dp"
-            app:iconTint="@color/text" />
+            android:textSize="11sp"
+            tools:text="00:00" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnFullscreen"
             style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="6dp"
             android:contentDescription="@string/player_fullscreen_enter"
             app:icon="@android:drawable/ic_menu_view"
+            app:iconSize="20dp"
+            app:iconTint="@color/text" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLock"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="2dp"
+            android:contentDescription="@string/player_lock_desc"
+            app:icon="@android:drawable/ic_lock_lock"
+            app:iconSize="20dp"
             app:iconTint="@color/text" />
     </LinearLayout>
 
-    <!--
-        Loading state \u2014 centered progress indicator while ExoPlayer is
-        in STATE_BUFFERING.
-    -->
+    <!-- Loading spinner — centered while buffering -->
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/loadingIndicator"
         android:layout_width="wrap_content"
@@ -359,16 +219,14 @@
         android:indeterminate="true"
         android:visibility="gone"
         app:indicatorColor="@color/primary"
-        app:indicatorSize="56dp"
+        app:indicatorSize="48dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:trackThickness="4dp" />
+        app:trackThickness="3dp" />
 
-    <!--
-        Error state \u2014 shown when the snapshot transitions to UiState.Error.
-    -->
+    <!-- Error state -->
     <TextView
         android:id="@+id/errorText"
         android:layout_width="0dp"
@@ -379,29 +237,18 @@
         android:textColor="@color/live_red"
         android:textSize="14sp"
         android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         tools:text="Couldn't load channel" />
 
-    <!--
-        Phase 4 · Step 4.3 — Gesture-feedback overlay. Reused by the
-        SwipeGestureDetector for all three indicator types. Anchored to
-        center; the card slides slightly off-center per direction in
-        PlayerActivity (computed off the player's touch x-zone).
-
-        Placed LAST so the document-order draw places it on top of every
-        other surface in the ConstraintLayout (topBar, centerControls,
-        bottomBar, linksBar). MaterialCardView's `app:cardElevation` is
-        12dp which is greater than any sibling elevation so the OS
-        elevation ordering matches.
-    -->
+    <!-- Gesture feedback overlay (brightness/volume/seek indicator) -->
     <include
         android:id="@+id/swipeGestureOverlay"
         layout="@layout/layout_swipe_gesture"
-        android:layout_width="240dp"
-        android:layout_height="92dp"
+        android:layout_width="200dp"
+        android:layout_height="80dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

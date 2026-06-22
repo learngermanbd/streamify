@@ -1,17 +1,12 @@
 package com.streamify.app.ui.activities
 
-import android.app.PictureInPictureParams
 import android.content.Intent
 import android.content.res.Configuration
-import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
-import android.net.Uri
-import android.provider.Settings
-import android.util.Rational
+
 import android.view.View
 import android.view.WindowManager
-import android.view.animation.AnimationUtils
 import android.widget.SeekBar
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -28,69 +23,45 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
-import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.streamify.app.R
 import com.streamify.app.StreamifyApp
 import com.streamify.app.data.models.Channel
 import com.streamify.app.data.models.StreamLink
-import com.streamify.app.data.remote.NetworkModule
 import com.streamify.app.databinding.ActivityPlayerBinding
 import com.streamify.app.ui.adapters.PlayerLinkAdapter
 import com.streamify.app.ui.common.UiState
 import com.streamify.app.ui.gestures.SwipeGestureDetector
-import com.streamify.app.ui.player.AddToPlaylistDialogFragment
-import com.streamify.app.ui.player.TrackSelectionDialogFragment
 import com.streamify.app.ui.player.VideoQualityManager
 import com.streamify.app.data.prefs.PlayerPrefs
 import com.streamify.app.data.prefs.VideoQualityMode
 import com.streamify.app.ui.viewmodels.PlayerSnapshot
 import com.streamify.app.ui.viewmodels.PlayerViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
 /**
- * Phase 4 · Step 4.2 — Video player.
+ * Sportzfy-style minimal video player.
  *
- * Wire model:
+ * Matches the original Sportzfy APK player UI:
+ *  - Top bar: Back arrow | Title (marquee) | Quality button
+ *  - Links bar: horizontal stream source chips
+ *  - Center: single play/pause button (no rewind/forward)
+ *  - Bottom: position | thin seek bar | duration | fullscreen | lock
+ *  - Auto-hide controls after 4 seconds of inactivity
+ *  - Gesture controls: swipe left=brightness, swipe right=volume
+ *  - Green accent (#00E676) on seek bar and play button
  *
- *  - ExoPlayer + OkHttpDataSource over the project's existing OkHttpClient
- *    (NetworkModule.httpClient) — same cache + auth headers + debug logging
- *    as the rest of the app.
- *
- *  - PlayerView with `useController=false`; all transport controls are
- *    Material 3 buttons from [activity_player.xml].
- *
- *  - Lifecycle-aware:
- *      - [onStart]  — build ExoPlayer + connect to MediaController (future).
- *      - [onResume] — release PiP-aware pause; if not in PiP, call play().
- *      - [onPause]  — pause when the user leaves (PiP/recents keeps playing
- *                     because we override onUserLeaveHint + PiP mode).
- *      - [onStop]   — enter PiP if [isInPictureInPictureMode] is not yet
- *                     true and we are still playing.
- *      - [onDestroy]— release ExoPlayer.
- *
- *  - URL routing — three Intent contract modes (per strict-plan):
- *      1. EXTRA_CHANNEL_ID — PlayerViewModel resolves Channel from /api/channels.
- *      2. EXTRA_VIDEO_URL + EXTRA_TITLE — direct playback of an HLS/DASH URL
- *         (used by Highlights tap).
- *      3. EXTRA_EVENT_ID — for Phase 4.x: resolve the Event's first channel.
- *
- *  - PiP — `btnPip` calls [enterPictureInPictureMode] with an aspect ratio
- *    derived from the PlayerView (16:9 default).
- *
- * See sportzfy_build_plan.html #phase4 Step 4.2 for the strict plan; this
- * implementation matches the criteria: top bar + links bar + center
- * controls + bottom controls + PiP button are all present and wired.
+ *  - ExoPlayer + OkHttpDataSource over the project's existing OkHttpClient.
+ *  - Lifecycle-aware: onStart builds, onDestroy releases.
+ *  - URL routing: EXTRA_CHANNEL_ID, EXTRA_VIDEO_URL, EXTRA_EVENT_ID.
  */
 class PlayerActivity : AppCompatActivity() {
 
@@ -118,6 +89,10 @@ class PlayerActivity : AppCompatActivity() {
     private var currentLinks: List<StreamLink> = emptyList()
     private var selectedLinkIndex: Int = 0
 
+    /** Auto-hide delay for controls overlay (ms). */
+    private val AUTO_HIDE_DELAY_MS = 4000L
+    private var autoHideJob: kotlinx.coroutines.Job? = null
+
     /**
      * Phase 4 · Step 4.3 — single-touch dispatcher attached to the player
      * surface via `binding.playerView.setOnTouchListener(detector::onTouch)`.
@@ -138,7 +113,7 @@ class PlayerActivity : AppCompatActivity() {
             }
             det.onSingleTap = { toggleControlsVisibility() }
             det.onDoubleTap = { isLeft ->
-                if (isLeft) exoPlayer?.seekBack() else exoPlayer?.seekForward()
+                // Double-tap gesture — no rewind/forward in Sportzfy minimal player.
             }
             det.onSeekPreview = { ms ->
                 // Use ?.let { dur -> ... } to avoid `return` from inside a nested
@@ -203,18 +178,7 @@ class PlayerActivity : AppCompatActivity() {
         const val STATE_POS = "player_pos_ms"
         const val STATE_PWR = "player_pwr"
 
-        // Step 4.6 — system permission request code for ACTION_MANAGE_OVERLAY_PERMISSION
-        // (Settings → Apps → SportStream → "Display over other apps"); consumed by
-        // onActivityResult to retry FloatingPlayerService.launchStart when the user
-        // grants the runtime overlay permission.
-        const val REQ_CODE_OVERLAY_PERMISSION = 0x46C0
     }
-
-    // TODO Step 4.7 (Code Review): swap the bottom SeekBar + volume slider
-    // for androidx.media3.ui.DefaultTimeBar + a Volume-button that toggles
-    // the system volume / surfaces a media volume dialog per strict-plan.
-    // Step 4.2 ships SeekBar + slider so the controller chrome is functional
-    // in CI builds; Step 4.7 closes the deviation.
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Android 16 (API 36) migration: call `enableEdgeToEdge()` BEFORE
@@ -230,51 +194,21 @@ class PlayerActivity : AppCompatActivity() {
         // Auto-launch PiP if the user pressed Home mid-playback (one-way).
         // Android handles the actual transition; we just tell it the
         // aspect ratio up-front.
-        binding.playerView.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                setPictureInPictureParams(currentPipParams())
-            }
-        }
+        // (PiP params removed — Sportzfy minimal player has no PiP button)
 
-        // Volume control slide binds to AudioManager.STREAM_MUSIC.
-        val audio = getSystemService(AUDIO_SERVICE) as AudioManager
-        val maxVolume = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-        binding.volumeSlider.max = maxVolume
-        binding.volumeSlider.progress = audio.getStreamVolume(AudioManager.STREAM_MUSIC)
-        binding.volumeSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) audio.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
-        })
-
-        // Top-bar buttons.
+        // Top-bar buttons (Sportzfy minimal: back + quality only).
         binding.btnBack.setOnClickListener { finish() }
-        binding.btnLock.setOnClickListener { toggleLock() }
-        binding.btnPip.setOnClickListener { enterPip() }
-        binding.btnResize.setOnClickListener { cycleResizeMode() }
         binding.btnQuality.setOnClickListener { showQualityPicker() }
-        binding.btnSubtitle.setOnClickListener { showSubtitlePicker() }
-        binding.btnSettings.setOnClickListener {
-            // Placeholder: surfaces "Settings coming in Step 4.5"
-            // (subtitle + quality pickers). Step 4.5 wired those into their
-            // own buttons; this remains a hook for future settings.
-        }
-        // Step 4.6 — Detach to floating overlay (TYPE_APPLICATION_OVERLAY).
-        // Mirrors btnPip's "smallify" affordance; btnDetach keeps playback
-        // running when PlayerActivity finishes. Captures URL + position +
-        // title from the active MediaItem + bindings; launches
-        // FloatingPlayerService once SYSTEM_ALERT_WINDOW is granted.
-        binding.btnDetach.setOnClickListener { onDetachClicked() }
+        // Bottom-bar buttons.
+        binding.btnLock.setOnClickListener { toggleLock() }
+        // When locked, the dim overlay is the only tap target to unlock.
+        binding.lockDimOverlay.setOnClickListener { toggleLock() }
 
-        // Center buttons.
-        binding.btnRewind.setOnClickListener { exoPlayer?.seekBack() }
+        // Play/pause button.
         binding.btnPlayPause.setOnClickListener {
             val p = exoPlayer ?: return@setOnClickListener
             if (p.isPlaying) p.pause() else p.play()
         }
-        binding.btnForward.setOnClickListener { exoPlayer?.seekForward() }
 
         // Bottom bars.
         binding.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -295,24 +229,6 @@ class PlayerActivity : AppCompatActivity() {
         })
 
         binding.btnFullscreen.setOnClickListener { cycleFullscreen() }
-
-        // Phase 5 · Step 5.1 — heart toggle. The icon flips based on
-        // the latest PlayerSnapshot.isFavorite (observed below in
-        // observePlayerVm). Tapping calls PlayerViewModel.toggleFavorite()
-        // (already wired in Step 2.5) and runs a brief overshoot pop so
-        // the user gets the same feedback most apps give on a favorite
-        // star.
-        binding.btnFavorite.setOnClickListener {
-            playerVm.toggleFavorite()
-            applyFavoritePulse()
-        }
-
-        // Phase 5 · Step 5.2 — Add-to-playlist launcher. Pops
-        // [AddToPlaylistDialogFragment] with the currently-streaming
-        // [StreamLink] as the pending single stream to add. The dialog
-        // calls back via Listener.onPicked so the player can show a
-        // Snackbar confirming which playlist the stream joined.
-        binding.btnAddToPlaylist.setOnClickListener { onAddToPlaylistClicked() }
 
         // Phase 4 · Step 4.3 — attach the gesture detector. The detector returns
         // true on ACTION_DOWN, claiming the touch stream for the touch lifetime so
@@ -343,6 +259,9 @@ class PlayerActivity : AppCompatActivity() {
 
         savedInstanceState?.getLong(STATE_POS)?.let { currentPlaybackPosition = it }
         savedInstanceState?.getBoolean(STATE_PWR)?.let { playWhenReady = it }
+
+        // Auto-show controls on first entry, then schedule auto-hide.
+        scheduleAutoHide()
 
         // Decide URL routing right away so we can show the loading hint.
         val intent = getIntent()
@@ -408,12 +327,10 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        // MAJOR #2 (pass-4 fix) — cancel the indicator hide job so the launched
-        // coroutine doesn't outlive the visible window. lifecycleScope only
-        // cancels on DESTROY by default; between STOP and DESTROY a delay(1000)
-        // could fire and access a frozen View tree.
         indicatorHideJob?.cancel()
         indicatorHideJob = null
+        autoHideJob?.cancel()
+        autoHideJob = null
         // post-v1.1.0 fix — DO NOT release ExoPlayer in onStop. Historically we
         // released when `!isInPictureInPictureMode` to free decoders early,
         // but `isInPictureInPictureMode` can be FALSE during onStop because
@@ -430,19 +347,18 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Step 4.3 — cancel the indicator hide timer so the Job + Handler
-        // chain can't leak into the torn-down Activity.
         indicatorHideJob?.cancel()
         indicatorHideJob = null
+        autoHideJob?.cancel()
+        autoHideJob = null
         releasePlayer()
     }
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        // Auto-enter PiP on Home press (Android 8+) if the user is mid-play.
+        // Pause playback when user leaves the app.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val p = exoPlayer ?: return
-            if (p.isPlaying) enterPip()
+            exoPlayer?.pause()
         }
     }
 
@@ -451,14 +367,11 @@ class PlayerActivity : AppCompatActivity() {
         newConfig: Configuration
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        // Hide our custom overlay in PiP (the system bars are hidden by the OS).
         val visibility = if (isInPictureInPictureMode) View.GONE else View.VISIBLE
         binding.topBar.visibility = visibility
         binding.bottomBar.visibility = visibility
-        binding.centerControls.visibility = visibility
+        binding.btnPlayPause.visibility = visibility
         binding.linksBar.visibility = visibility
-        // Step 4.3 — also hide the gesture-feedback overlay since it's
-        // chrome on top of PiP's system-bar-less surface.
         binding.swipeGestureOverlay.swipeGestureCard.visibility = visibility
         controlsVisible = !isInPictureInPictureMode
         if (!isInPictureInPictureMode) {
@@ -469,19 +382,35 @@ class PlayerActivity : AppCompatActivity() {
     // ----- Step 4.3 gesture helpers -----
 
     /**
-     * Single-tap toggle. Mirrors the Step 5.5 Dashboard-into-immersive UX
-     * pattern most video apps use: tapping the video surface shows or
-     * hides the chrome.
+     * Single-tap toggle. Shows controls overlay, then auto-hides after 4 seconds.
+     * Matches original Sportzfy behavior.
      */
     private fun toggleControlsVisibility() {
-        if (isLocked) return  // Step 4.4: locked state ignored
+        if (isLocked) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInPictureInPictureMode) return
         controlsVisible = !controlsVisible
         val v = if (controlsVisible) View.VISIBLE else View.GONE
         binding.topBar.visibility = v
         binding.bottomBar.visibility = v
-        binding.centerControls.visibility = v
+        binding.btnPlayPause.visibility = v
         binding.linksBar.visibility = v
+        if (controlsVisible) scheduleAutoHide()
+        else autoHideJob?.cancel()
+    }
+
+    /** Schedule auto-hide of controls after AUTO_HIDE_DELAY_MS. */
+    private fun scheduleAutoHide() {
+        autoHideJob?.cancel()
+        autoHideJob = lifecycleScope.launch {
+            delay(AUTO_HIDE_DELAY_MS)
+            if (controlsVisible && !isLocked) {
+                controlsVisible = false
+                binding.topBar.visibility = View.GONE
+                binding.bottomBar.visibility = View.GONE
+                binding.btnPlayPause.visibility = View.GONE
+                binding.linksBar.visibility = View.GONE
+            }
+        }
     }
 
     /**
@@ -603,179 +532,6 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Step 4.6 — Catch the return from ACTION_MANAGE_OVERLAY_PERMISSION.
-     * If the user granted the runtime overlay permission we resume the
-     * pending detach (captured Dialog positive-button click). If the
-     * user denied (or navigated back without granting) we drop the
-     * pending payload — they're back on PlayerActivity with the
-     * PlayerView still playing.
-     */
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode != REQ_CODE_OVERLAY_PERMISSION) return
-        val payload = pendingDetach
-        pendingDetach = null
-        if (payload != null && Settings.canDrawOverlays(this)) {
-            startFloatingPlayer(payload)
-        }
-    }
-
-    // ----- Step 4.6 detach helpers -----
-
-    /**
-     * Snapshot of the stream fields needed by [FloatingPlayerService.launchStart].
-     * Captured at btnDetach click time so a slow Settings-screen round-trip
-     * doesn't lose the user's last position.
-     */
-    private data class DetachPayload(
-        val url: String,
-        val title: String,
-        val positionMs: Long,
-        val subUrl: String?,
-        val subLang: String?
-    )
-
-    /** Carried across the SYSTEM_ALERT_WINDOW permission flow. Null when idle. */
-    private var pendingDetach: DetachPayload? = null
-
-    /**
-     * Pre-flight the detach click: capture current stream + position, then
-     * either start the overlay service directly or surface the rationale
-     * dialog followed by the system-overlay-permission settings screen.
-     */
-    private fun onDetachClicked() {
-        if (pendingDetach != null) return  // re-tap during pending Settings round-trip
-        val url = currentStreamUrl()
-        if (url.isBlank()) {
-            android.widget.Toast.makeText(
-                this,
-                R.string.player_error_no_url,
-                android.widget.Toast.LENGTH_SHORT
-            ).show()
-            return
-        }
-        val payload = DetachPayload(
-            url = url,
-            title = binding.titleText.text?.toString().orEmpty(),
-            positionMs = exoPlayer?.currentPosition ?: 0L,
-            subUrl = pendingSubtitleUrl.takeIf { it.isNotBlank() },
-            subLang = pendingSubtitleLang
-        )
-        if (Settings.canDrawOverlays(this)) {
-            startFloatingPlayer(payload)
-        } else {
-            pendingDetach = payload
-            showOverlayPermissionRationale()
-        }
-    }
-
-    /**
-     * MaterialAlertDialog explaining the SYSTEM_ALERT_WINDOW runtime grant.
-     * Positive button launches Settings.ACTION_MANAGE_OVERLAY_PERMISSION
-     * scoped to our package; negative drops the pending payload silently.
-     */
-    private fun showOverlayPermissionRationale() {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.player_floating_permission_required_title)
-            .setMessage(R.string.player_floating_permission_required_message)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                val intent = Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:$packageName")
-                )
-                runCatching { startActivityForResult(intent, REQ_CODE_OVERLAY_PERMISSION) }
-                    .onFailure {
-                        pendingDetach = null
-                        android.widget.Toast.makeText(
-                            this,
-                            android.R.string.cancel,
-                            android.widget.Toast.LENGTH_SHORT
-                        ).show()
-                    }
-            }
-            .setNegativeButton(android.R.string.cancel) { _, _ ->
-                pendingDetach = null
-            }
-            .show()
-    }
-
-    /**
-     * Hand-off step. Release the Activity-owned ExoPlayer NOW so its surface
-     * tears down BEFORE the Service adds its OWN PlayerView to the overlay
-     * (avoids the brief double-surface / flicker that happens when both
-     * PlayerViews are alive simultaneously). Then launch the service and
-     * finish so the user sees the overlay over whatever app they return to.
-     */
-    private fun startFloatingPlayer(payload: DetachPayload) {
-        releasePlayer()
-        com.streamify.app.ui.player.FloatingPlayerService.launchStart(
-            context = this,
-            videoUrl = payload.url,
-            title = payload.title,
-            positionMs = payload.positionMs,
-            subtitleUrl = payload.subUrl,
-            subtitleLang = payload.subLang
-        )
-        finish()
-    }
-
-    /**
-     * Resolve the URL the floating service should resume from. Mirrors what
-     * `submitCurrentLink` last submitted — falls back to the original intent
-     * extra when the link bar hasn't been populated yet (direct video URL
-     * route from Highlights/Network Stream).
-     */
-    private fun currentStreamUrl(): String {
-        val link = currentLinks.getOrNull(selectedLinkIndex)
-        val linkUrl = link?.url.orEmpty()
-        if (linkUrl.isNotBlank()) return linkUrl
-        return intent.getStringExtra(EXTRA_VIDEO_URL).orEmpty()
-    }
-
-    // ----- Step 5.2 add-to-playlist -----
-
-    /**
-     * Show [AddToPlaylistDialogFragment] with the currently-active
-     * [StreamLink] as the pending payload. Uses supportFragmentManager
-     * because PlayerActivity hosts the dialog; the dialog's lifecycle
-     * is bound to the Activity. The playWhenReady state is captured
-     * but not paused — playback continues while the sheet is open.
-     */
-    private fun onAddToPlaylistClicked() {
-        val stream = currentLinks.getOrNull(selectedLinkIndex)
-            ?: StreamLink(
-                name = getString(R.string.player_links_empty),
-                url = intent.getStringExtra(EXTRA_VIDEO_URL).orEmpty(),
-                quality = com.streamify.app.data.models.VideoQuality.AUTO
-            )
-        val title = binding.titleText.text?.toString().orEmpty()
-        // Promote the channel/stream name so the dialog shows a useful
-        // "Add 'X' to ..." subtitle rather than a blank line.
-        val payload = stream.copy(name = stream.name.ifBlank { title })
-        if (payload.url.isBlank()) {
-            android.widget.Toast.makeText(
-                this,
-                R.string.player_error_no_url,
-                android.widget.Toast.LENGTH_SHORT
-            ).show()
-            return
-        }
-        AddToPlaylistDialogFragment.show(
-            fm = supportFragmentManager,
-            stream = payload,
-            listener = object : AddToPlaylistDialogFragment.Listener {
-                override fun onPicked(playlistId: String, playlistName: String) {
-                    Snackbar.make(
-                        binding.root,
-                        getString(R.string.add_to_playlist_added_template, playlistName),
-                        Snackbar.LENGTH_SHORT
-                    ).setAnchorView(binding.bottomBar).show()
-                }
-            }
-        )
-    }
-
     // ----- Initialization -----
 
     private fun initializePlayer() {
@@ -888,17 +644,11 @@ class PlayerActivity : AppCompatActivity() {
     // ----- Routing branch: PlayerViewModel-driven channel -----
 
     private fun observePlayerVm(channelId: String) {
-        // Step 4.7 / Step 5.1 unification — one repeatOnLifecycle collector
-        // handles BOTH the snapshot apply + the heart-icon sync, so every
-        // re-emit runs through the same path.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 playerVm.state.collectLatest { state ->
                     when (state) {
-                        is UiState.Success -> {
-                            applySnapshot(state.value)
-                            bindFavoriteIcon(state.value.isFavorite)
-                        }
+                        is UiState.Success -> applySnapshot(state.value)
                         is UiState.Error -> showError(state.message)
                         UiState.Loading -> showLoading()
                         UiState.Idle -> Unit
@@ -907,26 +657,6 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
         playerVm.load(channelId)
-    }
-
-    private fun bindFavoriteIcon(isFavorite: Boolean) {
-        val iconRes = if (isFavorite) R.drawable.ic_heart_filled else R.drawable.ic_heart_outline
-        binding.btnFavorite.setIconResource(iconRes)
-        binding.btnFavorite.setIconTintResource(
-            if (isFavorite) R.color.live_red else R.color.text
-        )
-        binding.btnFavorite.contentDescription = getString(
-            if (isFavorite) R.string.player_favorite_remove_desc
-            else R.string.player_favorite_add_desc
-        )
-    }
-
-    private fun applyFavoritePulse() {
-        // Step 5.1 — short overshoot pop, same Phase-1.5 overshoot
-        // interpolator used by livePulse.xml for the LIVE badge, so
-        // the feedback feels uniform with the rest of the app.
-        val anim = AnimationUtils.loadAnimation(this, R.anim.heart_pulse)
-        binding.btnFavorite.startAnimation(anim)
     }
 
     private fun applySnapshot(snapshot: PlayerSnapshot) {
@@ -1047,20 +777,6 @@ class PlayerActivity : AppCompatActivity() {
             .show()
     }
 
-    // Step 4.5 — subtitle picker: open TrackSelectionDialogFragment if the player has text tracks.
-    private fun showSubtitlePicker() {
-        val p = exoPlayer ?: run {
-            android.widget.Toast.makeText(this, R.string.player_track_selection_empty, android.widget.Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (!TrackSelectionDialogFragment.exoPlayerHasTextTracks(p)) {
-            // Disable the button visually if there are no text tracks.
-            android.widget.Toast.makeText(this, R.string.player_track_selection_empty, android.widget.Toast.LENGTH_SHORT).show()
-            return
-        }
-        TrackSelectionDialogFragment.show(supportFragmentManager, p, playerPrefs)
-    }
-
     private fun switchToLink(link: StreamLink) {
         val index = currentLinks.indexOfFirst { it.url == link.url }
         if (index == -1 || index == selectedLinkIndex) return
@@ -1083,6 +799,12 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun toggleLock() {
         isLocked = !isLocked
+        if (!isLocked) {
+            // Reset auto-hide state so controls stay visible after unlock.
+            controlsVisible = true
+            autoHideJob?.cancel()
+            scheduleAutoHide()
+        }
         applyLockedState()
     }
 
@@ -1096,42 +818,21 @@ class PlayerActivity : AppCompatActivity() {
      *   - The back button is already swallowed in onBackPressed per Step 4.2.
      */
     private fun applyLockedState() {
-        val bottom = binding.bottomBar
-        val center = binding.centerControls
-        val links = binding.linksBar
-        val dim = binding.lockDimOverlay
         if (isLocked) {
-            bottom.visibility = View.GONE
-            center.visibility = View.GONE
-            links.visibility = View.GONE
-            dim.visibility = View.VISIBLE
+            binding.bottomBar.visibility = View.GONE
+            binding.btnPlayPause.visibility = View.GONE
+            binding.linksBar.visibility = View.GONE
+            binding.lockDimOverlay.visibility = View.VISIBLE
             binding.btnLock.setIconResource(android.R.drawable.ic_lock_idle_lock)
             binding.btnLock.contentDescription = getString(R.string.player_unlock_desc)
-            binding.btnLock.text = getString(R.string.player_unlock_short)
         } else {
-            bottom.visibility = View.VISIBLE
-            center.visibility = View.VISIBLE
-            links.visibility = View.VISIBLE
-            dim.visibility = View.GONE
+            binding.bottomBar.visibility = View.VISIBLE
+            binding.btnPlayPause.visibility = View.VISIBLE
+            binding.linksBar.visibility = View.VISIBLE
+            binding.lockDimOverlay.visibility = View.GONE
             binding.btnLock.setIconResource(android.R.drawable.ic_lock_lock)
             binding.btnLock.contentDescription = getString(R.string.player_lock_desc)
-            binding.btnLock.text = getString(R.string.player_lock_short)
         }
-    }
-
-    // PlayerView extends androidx.media3.ui.AspectRatioFrameLayout, which
-    // is where both the `resizeMode` javaBean property AND the static
-    // RESIZE_MODE_* Int constants live. PlayerView's own class declares
-    // only the setter; trying to use `PlayerView.RESIZE_MODE_FIT` produces
-    // an unresolved-reference error in the kotlinc resolve step.
-    private fun cycleResizeMode() {
-        val current = binding.playerView.resizeMode
-        val nextMode = when (current) {
-            AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_FILL
-            AspectRatioFrameLayout.RESIZE_MODE_FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-            else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-        }
-        binding.playerView.resizeMode = nextMode
     }
 
     private fun cycleFullscreen() {
@@ -1148,22 +849,6 @@ class PlayerActivity : AppCompatActivity() {
             decorView.systemUiVisibility = 0
             window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         }
-    }
-
-    private fun enterPip() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            enterPictureInPictureMode(currentPipParams())
-        }
-    }
-
-    private fun currentPipParams(): PictureInPictureParams {
-        val aspect = Rational(16, 9)
-        val builder = PictureInPictureParams.Builder()
-            .setAspectRatio(aspect)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            builder.setAutoEnterEnabled(true)
-        }
-        return builder.build()
     }
 
     // ----- Helpers -----
