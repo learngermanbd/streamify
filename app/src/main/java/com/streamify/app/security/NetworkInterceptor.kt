@@ -74,6 +74,9 @@ internal object NetworkInterceptor : Interceptor {
             || path.contains("/live/")
             || path.contains("/stream/")
             || path.contains("/hls/")
+            || path.contains("/play/")
+            || path.contains("/playback/")
+            || path.contains("/watch/")
 
         if (!request.url.isHttps && !allowCleartextLoopback && !isVideoStream) {
             Log.e(TAG, "BLOCKED non-HTTPS request: ${request.url}")
