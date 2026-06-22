@@ -101,7 +101,8 @@
         android:layout_width="280dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:background="@color/secondary"
+        android:background="@color/dark_bg"
+        app:headerLayout="@layout/nav_header_main"
         app:itemIconTint="@color/primary"
         app:itemTextColor="@color/text"
         app:menu="@menu/drawer_menu" />

@@ -17,8 +17,6 @@
     <!-- Main bottom nav tabs (Step 3.2). These MUST be the same identifiers
          used by res/menu/bottom_nav_menu.xml `android:title` attributes —
          AAPT validates the @string/main_nav_* refs at compile time. -->
-    <string name="main_nav_home">HOME</string>
-    <string name="main_nav_favorites">FAVORITES</string>
     <!-- post-v1.1.0: Settings tab removed from bottom-nav; string kept for potential future restore -->
 
     <!-- Tab placeholder content (Step 3.2 — replaced in Steps 3.3, 5.1, 5.5).
@@ -85,8 +83,7 @@
     <string name="view_item_banner_default_title">Promo</string>
     <string name="fragment_home_banners_a11y">Promotional banner carousel</string>
 
-    <!-- Nav graph label for the Categories destination (used by toolbars, action labels). -->
-    <string name="main_nav_categories">CATEGORIES</string>
+    <!-- main_nav_categories moved to bottom of file -->
 
     <!-- view_item_channel.xml row content (Step 3.4). -->
     <string name="view_item_channel_default_name">Channel</string>
@@ -98,16 +95,7 @@
         Playlists, Floating Player, Video Quality, Notice, Join Us,
         Share, Update, Exit.
     -->
-    <string name="drawer_highlights">Highlights</string>
-    <string name="drawer_network_stream">Network Stream</string>
-    <string name="drawer_playlists">Playlists</string>
-    <string name="drawer_floating_player">Floating Player</string>
-    <string name="drawer_video_quality">Video Quality</string>
-    <string name="drawer_notice">Notice</string>
-    <string name="drawer_join_us">Join Us</string>
-    <string name="drawer_share">Share</string>
-    <string name="drawer_update">Update</string>
-    <string name="drawer_exit">Exit</string>
+    <!-- Drawer strings (updated in Sportzfy redesign — see bottom of file) -->
     <string name="drawer_coming_soon_template">%1$s — Coming in Step %2$s</string>
     <string name="drawer_share_message">Check out SportStream — live sports streaming in HLS / DASH.</string>
 
@@ -373,4 +361,28 @@
     <string name="update_download_failed">Couldn’t start the update download</string>
     <string name="update_channel_name">App Updates</string>
     <string name="update_channel_description">Notifications about available SportStream updates.</string>
+    <!-- Drawer grouped sections -->
+    <string name="drawer_highlights">Highlights</string>
+    <string name="drawer_network_stream">Network Player</string>
+    <string name="drawer_playlists">Playlists</string>
+    <string name="drawer_floating_player">Floating Player</string>
+    <string name="drawer_video_quality">Video Quality Settings</string>
+    <string name="drawer_crash_log">Crash Log Dialog</string>
+    <string name="drawer_notice">Notice</string>
+    <string name="drawer_join_us">Join Telegram Channel</string>
+    <string name="drawer_share">Share Our App</string>
+    <string name="drawer_update">Update App</string>
+    <string name="drawer_exit">Exit Application</string>
+    <string name="drawer_group_tools">STREAMING TOOLS</string>
+    <string name="drawer_group_prefs">PREFERENCES</string>
+    <string name="drawer_group_info">INFO &amp; COMMUNITY</string>
+    <!-- Network Player tabs -->
+    <string name="network_tab_url">Stream URL</string>
+    <string name="network_tab_headers">Headers</string>
+    <string name="network_tab_drm">DRM</string>
+    <!-- Bottom nav -->
+    <string name="main_nav_home">Home</string>
+    <string name="main_nav_categories">Category</string>
+    <string name="main_nav_favorites">Favorites</string>
+    <string name="main_nav_highlight">Highlight</string>
 </resources>

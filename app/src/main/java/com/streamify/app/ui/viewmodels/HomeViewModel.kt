@@ -19,6 +19,11 @@ class HomeViewModel(
     private val mainRepository: MainRepository
 ) : StateViewModel<List<Event>>() {
 
+    /** Full unfiltered merged list kept for re-filtering. */
+    private var fullList: List<Event> = emptyList()
+    private var currentCategory: String? = null
+    private var currentStatus: String? = null
+
     fun refresh() = launch {
         setState(UiState.Loading)
 
@@ -76,7 +81,40 @@ class HomeViewModel(
             val merged = (snapshot.live + snapshot.events)
                 .distinctBy { it.id }
                 .sortedWith(compareBy({ !it.isLive }, { it.date + it.time }))
-            setState(UiState.Success(merged))
+            fullList = merged
+            applyFilters()
         }
+    }
+
+    fun filterByCategory(category: String?) {
+        currentCategory = category
+        applyFilters()
+    }
+
+    fun filterByStatus(status: String?) {
+        currentStatus = status
+        applyFilters()
+    }
+
+    private fun applyFilters() {
+        var filtered = fullList
+
+        // Category filter
+        val cat = currentCategory
+        if (!cat.isNullOrBlank()) {
+            filtered = filtered.filter { event ->
+                event.category?.contains(cat, ignoreCase = true) == true ||
+                event.title?.contains(cat, ignoreCase = true) == true
+            }
+        }
+
+        // Status filter
+        when (currentStatus) {
+            "LIVE" -> filtered = filtered.filter { it.isLive }
+            "UPCOMING" -> filtered = filtered.filter { !it.isLive }
+            "RECENT", "ALL", null -> { /* show all */ }
+        }
+
+        setState(UiState.Success(filtered))
     }
 }

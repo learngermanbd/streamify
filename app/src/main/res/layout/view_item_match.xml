@@ -1,45 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Phase 3 · Step 3.3 — Live-event row (RecyclerView item).
-    Visual stack, top to bottom:
-      - title (event/league name) + LIVE badge anchored top-right of title
-      - subtitle (category · date/time)
-      - team logos + VS separator row (44 dp circular ImageViews)
-      - team name row (left/right aligned under the logos)
-
-    LIVE badge visibility is driven by event.isLive in EventAdapter.
--->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="14dp">
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/bg_match_card_sportzfy">
 
-    <!-- Title (event/league name) — extends under the LIVE badge. -->
+    <!-- Top accent line -->
+    <View
+        android:id="@+id/accentLine"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:background="@drawable/bg_live_dot"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Top row: league info + LIVE badge -->
     <TextView
-        android:id="@+id/title"
+        android:id="@+id/leagueInfo"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="8dp"
         android:ellipsize="end"
         android:fontFamily="@font/poppins_regular"
-        android:letterSpacing="0.05"
         android:maxLines="1"
-        android:textColor="@color/text"
-        android:textSize="14sp"
-        android:textStyle="bold"
+        android:paddingHorizontal="12dp"
+        android:textColor="@color/text_muted"
+        android:textSize="9sp"
         app:layout_constraintEnd_toStartOf="@id/liveBadge"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginEnd="8dp"
-        tools:text="Champions League Final" />
+        app:layout_constraintTop_toBottomOf="@id/accentLine"
+        tools:text="🟢 Football · Premier League 25/26" />
 
-    <!-- LIVE badge — small red pill, top-right. -->
     <TextView
         android:id="@+id/liveBadge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
         android:background="@drawable/bg_live_badge"
         android:fontFamily="@font/poppins_regular"
         android:letterSpacing="0.10"
@@ -47,112 +48,146 @@
         android:paddingVertical="2dp"
         android:text="@string/view_item_match_live"
         android:textColor="@color/white"
-        android:textSize="10sp"
+        android:textSize="8sp"
         android:textStyle="bold"
         android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/leagueInfo"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/title"
-        app:layout_constraintBottom_toBottomOf="@id/title" />
+        app:layout_constraintTop_toTopOf="@id/leagueInfo" />
 
-    <!-- Subtitle (category · date/time). -->
+    <!-- Teams row -->
+    <ImageView
+        android:id="@+id/teamALogo"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_team_logo_placeholder"
+        android:contentDescription="@string/view_item_match_team_a_desc"
+        android:scaleType="centerCrop"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/leagueInfo" />
+
     <TextView
-        android:id="@+id/subtitle"
+        android:id="@+id/teamAName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:ellipsize="end"
         android:fontFamily="@font/poppins_regular"
-        android:letterSpacing="0.04"
+        android:gravity="center"
         android:maxLines="1"
-        android:textColor="@color/text_muted"
-        android:textSize="11sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/title"
-        tools:text="Football · 19:30" />
+        android:textColor="@color/text"
+        android:textSize="9sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@id/vsText"
+        app:layout_constraintStart_toStartOf="@id/teamALogo"
+        app:layout_constraintTop_toBottomOf="@id/teamALogo"
+        tools:text="Crystal Palace" />
 
-    <!-- Team A logo + Team B logo + VS separator row. -->
-    <ImageView
-        android:id="@+id/teamALogo"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_team_logo_placeholder"
-        android:contentDescription="@string/view_item_match_team_a_desc"
-        android:scaleType="centerCrop"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/subtitle" />
-
-    <TextView
+    <LinearLayout
         android:id="@+id/vsText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:fontFamily="@font/poppins_regular"
         android:gravity="center"
-        android:letterSpacing="0.18"
-        android:text="@string/view_item_match_vs"
-        android:textColor="@color/primary"
-        android:textSize="14sp"
-        android:textStyle="bold"
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="@id/teamALogo"
         app:layout_constraintEnd_toStartOf="@id/teamBLogo"
         app:layout_constraintStart_toEndOf="@id/teamALogo"
-        app:layout_constraintTop_toTopOf="@id/teamALogo" />
+        app:layout_constraintTop_toTopOf="@id/teamALogo">
+
+        <TextView
+            android:id="@+id/scoreText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppins_regular"
+            android:textColor="@color/text"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            tools:text="0 — 2" />
+
+        <TextView
+            android:id="@+id/vsLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_status_pill_active"
+            android:fontFamily="@font/poppins_regular"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="1dp"
+            android:text="@string/view_item_match_vs"
+            android:textColor="@color/primary"
+            android:textSize="9sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <ImageView
         android:id="@+id/teamBLogo"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="8dp"
         android:background="@drawable/bg_team_logo_placeholder"
         android:contentDescription="@string/view_item_match_team_b_desc"
         android:scaleType="centerCrop"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/teamALogo" />
+        app:layout_constraintTop_toBottomOf="@id/leagueInfo" />
 
-    <!-- Team name row, below the logos. -->
-    <LinearLayout
-        android:id="@+id/teamNameRow"
+    <TextView
+        android:id="@+id/teamBName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:orientation="horizontal"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppins_regular"
+        android:gravity="center"
+        android:maxLines="1"
+        android:textColor="@color/text"
+        android:textSize="9sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="@id/teamBLogo"
+        app:layout_constraintStart_toEndOf="@id/vsText"
+        app:layout_constraintTop_toBottomOf="@id/teamBLogo"
+        tools:text="Liverpool" />
+
+    <!-- Bottom row: time + watch button -->
+    <View
+        android:id="@+id/bottomDivider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/border_default"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/teamALogo">
+        app:layout_constraintTop_toBottomOf="@id/teamBName" />
 
-        <TextView
-            android:id="@+id/teamAName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:fontFamily="@font/poppins_regular"
-            android:letterSpacing="0.03"
-            android:maxLines="1"
-            android:textAlignment="textStart"
-            android:textColor="@color/text"
-            android:textSize="11sp"
-            tools:text="Team A" />
+    <TextView
+        android:id="@+id/timeText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppins_regular"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="6dp"
+        android:textColor="@color/text_muted"
+        android:textSize="9sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/watchBtn"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/bottomDivider"
+        tools:text="67' · 2nd Half" />
 
-        <View
-            android:layout_width="64dp"
-            android:layout_height="0dp" />
-
-        <TextView
-            android:id="@+id/teamBName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ellipsize="start"
-            android:fontFamily="@font/poppins_regular"
-            android:letterSpacing="0.03"
-            android:maxLines="1"
-            android:textAlignment="textEnd"
-            android:textColor="@color/text"
-            android:textSize="11sp"
-            tools:text="Team B" />
-    </LinearLayout>
+    <TextView
+        android:id="@+id/watchBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:fontFamily="@font/poppins_regular"
+        android:paddingVertical="6dp"
+        android:text="▶ Watch"
+        android:textColor="@color/primary"
+        android:textSize="9sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/bottomDivider" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

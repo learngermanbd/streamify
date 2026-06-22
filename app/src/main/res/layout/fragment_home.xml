@@ -1,19 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Phase 3 · Step 3.3 — Home tab content (the Step 3.2 placeholder
-    is fully replaced).
-
-    Top-level SwipeRefreshLayout (so Swipe-to-refresh works); inside
-    it a ConstraintLayout hosting:
-      - section header ("LIVE EVENTS" pill)
-      - RecyclerView of Event rows (view_item_match.xml inflated)
-      - empty-state TextView ("No live matches right now") shown when
-        the merged list is empty
-      - CircularProgressIndicator overlay during Loading
-
-    All overlays ('emptyState', 'loadingIndicator') start gone; the
-    HomeFragment pipe-orchestrator toggles them on each UiState.
--->
 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -22,93 +7,198 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/dark_bg">
+        android:background="@color/dark_bg"
+        android:orientation="vertical">
 
-        <!--
-            Phase 3 · Step 3.3 — banner carousel.
-            ViewPager2 hosted above the sectionTitle so the LIVE
-            EVENTS list sits directly under the promo slides.
-            Auto-scroll (5s) is driven from HomeFragment via a Handler
-            posted to the main looper; the runnable is cancelled in
-            `onDestroyView` to avoid leaks.
-        -->
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/bannerPager"
-            android:layout_width="0dp"
-            android:layout_height="160dp"
-            android:layout_marginTop="14dp"
-            android:contentDescription="@string/fragment_home_banners_a11y"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
+        <!-- Notice Bar -->
         <TextView
-            android:id="@+id/sectionTitle"
-            android:layout_width="0dp"
+            android:id="@+id/noticeBar"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_notice_bar"
+            android:ellipsize="marquee"
+            android:focusable="true"
             android:fontFamily="@font/poppins_regular"
-            android:letterSpacing="0.18"
-            android:paddingHorizontal="20dp"
-            android:text="@string/fragment_home_header"
-            android:textColor="@color/primary"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/bannerPager" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/homeRv"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginTop="14dp"
-            android:clipToPadding="false"
+            android:marqueeRepeatLimit="marquee_forever"
             android:paddingHorizontal="14dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="20dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/sectionTitle"
-            android:layoutAnimation="@anim/layout_anim_fall_down"
-            tools:listitem="@layout/view_item_match" />
+            android:paddingVertical="6dp"
+            android:scrollHorizontally="true"
+            android:singleLine="true"
+            android:text="🔔 To Download Our Latest APK. Stay away from fraud apps."
+            android:textColor="#F0C040"
+            android:textSize="9sp" />
 
-        <TextView
-            android:id="@+id/emptyState"
-            android:layout_width="0dp"
+        <!-- Category Chips (horizontal scroll) -->
+        <HorizontalScrollView
+            android:id="@+id/categoryChipScroll"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/poppins_regular"
-            android:gravity="center"
-            android:letterSpacing="0.06"
-            android:paddingHorizontal="32dp"
-            android:text="@string/fragment_home_empty"
-            android:textColor="@color/text_muted"
-            android:textSize="14sp"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="@id/homeRv"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/homeRv" />
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:scrollbars="none">
 
-        <com.google.android.material.progressindicator.CircularProgressIndicator
-            android:id="@+id/loadingIndicator"
-            android:layout_width="wrap_content"
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/categoryChips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp"
+                app:chipSpacingHorizontal="6dp"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipAll"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="⚡ All" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCricket"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🏏 Cricket" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFootball"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚽ Football" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipBoxing"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🥊 Boxing" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipMotor"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🏎️ Motor" />
+
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
+
+        <!-- Status Filter Pills -->
+        <LinearLayout
+            android:id="@+id/statusFilters"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:indeterminate="true"
-            android:visibility="gone"
-            app:indicatorColor="@color/primary"
-            app:indicatorSize="40dp"
-            app:layout_constraintBottom_toBottomOf="@id/homeRv"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/homeRv"
-            app:layout_constraintVertical_bias="0.4"
-            app:trackThickness="3dp" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp"
+            android:paddingBottom="8dp">
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <TextView
+                android:id="@+id/filterRecent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_status_pill_active"
+                android:fontFamily="@font/poppins_regular"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="✓ Recent"
+                android:textColor="@color/primary"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/filterLive"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_status_pill_live"
+                android:fontFamily="@font/poppins_regular"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="● Live"
+                android:textColor="@color/live_red"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/filterUpcoming"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_status_pill"
+                android:fontFamily="@font/poppins_regular"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="📅 Upcoming"
+                android:textColor="@color/text_muted"
+                android:textSize="9sp" />
+
+            <TextView
+                android:id="@+id/filterAll"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_status_pill"
+                android:fontFamily="@font/poppins_regular"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="All"
+                android:textColor="@color/text_muted"
+                android:textSize="9sp" />
+
+        </LinearLayout>
+
+        <!-- Match List + Overlays -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/homeRv"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingHorizontal="14dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="20dp"
+                android:layoutAnimation="@anim/layout_anim_fall_down"
+                tools:listitem="@layout/view_item_match" />
+
+            <TextView
+                android:id="@+id/emptyState"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="@font/poppins_regular"
+                android:gravity="center"
+                android:letterSpacing="0.06"
+                android:paddingHorizontal="32dp"
+                android:text="@string/fragment_home_empty"
+                android:textColor="@color/text_muted"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/loadingIndicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:indeterminate="true"
+                android:visibility="gone"
+                app:indicatorColor="@color/primary"
+                app:indicatorSize="40dp"
+                app:trackThickness="3dp" />
+
+        </FrameLayout>
+
+    </LinearLayout>
 
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

@@ -12,19 +12,15 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.chip.Chip
 import com.streamify.app.R
 import com.streamify.app.StreamifyApp
 import com.streamify.app.databinding.FragmentHomeBinding
-import com.streamify.app.ui.adapters.BannerAdapter
 import com.streamify.app.ui.adapters.EventAdapter
 import com.streamify.app.ui.common.UiState
 import com.streamify.app.ui.viewmodels.HomeViewModel
 import com.streamify.app.ui.viewmodels.MainViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
@@ -89,38 +85,14 @@ class HomeFragment : Fragment() {
     }
 
     private lateinit var adapter: EventAdapter
-    private lateinit var bannerAdapter: BannerAdapter
 
-    /**
-     * Plan Step 3.3: 5 s auto-scroll interval for the banner ViewPager2.
-     * Driven by a [Job] in [viewLifecycleOwner.lifecycleScope] rather than a
-     * Handler+Runnable pair so that lifecycle cancellation replaces the
-     * manual `removeCallbacks` pattern (Code Reviewer major fix).
-     */
-    private val bannerAutoScrollIntervalMs = 5_000L
-    private var autoScrollJob: Job? = null
+    /** Current active category filter (null = All). */
+    private var selectedCategory: String? = null
 
-    /**
-     * ViewPager2 page-change callback — pauses auto-scroll while the user
-     * is actively dragging the carousel. STEP 3.3 reviewer fix #2; without
-     * this, every 5 s the carousel yanks the user mid-flick.
-     */
-    private val pageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
-        override fun onPageScrollStateChanged(state: Int) {
-            // SCROLL_STATE_DRAGGING == 1, IDLE == 0, SETTLING == 2.
-            // We only want to count "user is touching the carousel" — not
-            // programmatic settling (which our own auto-scroll triggers —
-            // we want the timer to keep running across those).
-            if (state == ViewPager2.SCROLL_STATE_DRAGGING) {
-                autoScrollJob?.cancel()
-                autoScrollJob = null
-            } else if (state == ViewPager2.SCROLL_STATE_IDLE) {
-                // Restart the timer so the user gets a full 5 s after
-                // finishing their flick before auto-scroll resumes.
-                restartAutoScroll()
-            }
-        }
-    }
+    /** Current active status filter. */
+    private var selectedStatus: StatusFilter = StatusFilter.RECENT
+
+    private enum class StatusFilter { RECENT, LIVE, UPCOMING, ALL }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -134,11 +106,6 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Phase 4 · Step 4.2 — Event row tap fires the PlayerActivity with
-        // the Event's id routed through EXTRA_EVENT_ID. PlayerActivity
-        // distinguishes this branch (Phase 4.x task: resolve Event ->
-        // first Channel; for v1 the activity shows a friendly "Loading…"
-        // placeholder rather than crashing).
         adapter = EventAdapter(onClick = { event ->
             com.streamify.app.ui.util.PlayerNavigation.startPlayerForEvent(
                 context = requireContext(),
@@ -149,20 +116,26 @@ class HomeFragment : Fragment() {
         binding.homeRv.layoutManager = LinearLayoutManager(requireContext())
         binding.homeRv.adapter = adapter
 
-        // Step 3.3 — banner carousel. Click is a no-op for v1 (deep-link
-        // wiring lands in Step 4.x). The adapter is bound to the live
-        // Snapshot.banners via the mainVm.state collector below.
-        bannerAdapter = BannerAdapter(onClick = { _banner -> /* Phase 4 deep-link */ })
-        binding.bannerPager.adapter = bannerAdapter
-        binding.bannerPager.offscreenPageLimit = 1
-        // Register the drag-detect callback so auto-scroll pauses while
-        // the user is actively flicking the carousel. unregistered on
-        // destroyView below.
-        binding.bannerPager.registerOnPageChangeCallback(pageChangeCallback)
+        // Category chip selection
+        binding.categoryChips.setOnCheckedStateChangeListener { group, _ ->
+            val checkedId = group.checkedChipId
+            selectedCategory = if (checkedId == View.NO_ID || checkedId == R.id.chipAll) {
+                null
+            } else {
+                val chip = group.findViewById<Chip>(checkedId)
+                chip?.text?.toString()?.replace(Regex("[⚡🏏⚽🥊🏎️ ]"), "")?.trim()
+            }
+            // Re-filter the current list
+            homeVm.filterByCategory(selectedCategory)
+        }
+
+        // Status filter pills
+        binding.filterRecent.setOnClickListener { selectStatus(StatusFilter.RECENT) }
+        binding.filterLive.setOnClickListener { selectStatus(StatusFilter.LIVE) }
+        binding.filterUpcoming.setOnClickListener { selectStatus(StatusFilter.UPCOMING) }
+        binding.filterAll.setOnClickListener { selectStatus(StatusFilter.ALL) }
 
         // Swipe-to-refresh re-triggers the activity-scoped boot fetch.
-        // The downstream HomeViewModel re-derives automatically when
-        // mainVm.state transitions back to Success.
         binding.swipeRefresh.setColorSchemeResources(R.color.primary, R.color.live_red)
         binding.swipeRefresh.setOnRefreshListener { mainVm.load() }
 
@@ -171,16 +144,9 @@ class HomeFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 mainVm.state.collectLatest { state ->
                     if (state is UiState.Success) {
-                        // UiState.Success<T> where T = MainSnapshot.
-                        // `state.value` is `Any` after the smart-cast (the
-                        // sealed-class success variant is generic but Kotlin
-                        // can't reify it), so we unchecked-cast back to
-                        // MainSnapshot. Safe because MainViewModel only ever
-                        // emits Success<MainSnapshot>.
                         @Suppress("UNCHECKED_CAST")
                         val snapshot = state.value as com.streamify.app.ui.viewmodels.MainSnapshot
                         homeVm.bindFromSnapshot(snapshot)
-                        bindBannersFromSnapshot(snapshot)
                     }
                 }
             }
@@ -229,57 +195,47 @@ class HomeFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        // Step 3.3 — lifecycle cancellation of the auto-scroll coroutine
-        // happens automatically when viewLifecycleOwner.lifecycleScope
-        // is cancelled. We additionally drop the Job reference so a
-        // never-started Job can't leak.
-        autoScrollJob = null
-
-        // Unregister the page-change callback so the lifecycle-bound
-        // bannerPager doesn't keep a reference to a torn-down Fragment.
-        binding.bannerPager.unregisterOnPageChangeCallback(pageChangeCallback)
-
-        // Memory hygiene: drop adapter references (so the RecyclerView's
-        // internal ViewHolder pool + the ViewPager2's offscreen page pool
-        // can be GC'd) and reset the binding.
         binding.homeRv.adapter = null
-        binding.bannerPager.adapter = null
         _binding = null
         super.onDestroyView()
     }
 
     /**
-     * Submit the snapshot's banner list to the [BannerAdapter] and start /
-     * restart the 5 s auto-scroll timer. Empty list hides the pager.
+     * Update the visual state of the status filter pills.
      */
-    private fun bindBannersFromSnapshot(snapshot: com.streamify.app.ui.viewmodels.MainSnapshot) {
-        val banners = snapshot.banners
-        binding.bannerPager.isVisible = banners.isNotEmpty()
-        bannerAdapter.submitList(banners)
-        restartAutoScroll()
-    }
+    private fun selectStatus(filter: StatusFilter) {
+        selectedStatus = filter
+        val b = _binding ?: return
 
-    /**
-     * Cancel any in-flight auto-scroll Job then start a fresh 5 s loop
-     * tied to the fragment's lifecycle. Lifecycle cancellation handles
-     * tear-down so no manual removeCallbacks is needed.
-     */
-    private fun restartAutoScroll() {
-        autoScrollJob?.cancel()
-        val banners = bannerAdapter.itemCount
-        if (banners <= 1) return
-        autoScrollJob = viewLifecycleOwner.lifecycleScope.launch {
-            // First delay gives the user a full 5 s of idle viewing before
-            // the first auto-advance (so a freshly-bound carousel doesn't
-            // jerk immediately).
-            while (isActive) {
-                delay(bannerAutoScrollIntervalMs)
-                val pager = _binding?.bannerPager ?: return@launch
-                val count = bannerAdapter.itemCount
-                if (count <= 1) return@launch
-                val next = (pager.currentItem + 1) % count
-                pager.setCurrentItem(next, true)
+        // Reset all pills to inactive
+        b.filterRecent.setBackgroundResource(R.drawable.bg_status_pill)
+        b.filterRecent.setTextColor(resources.getColor(R.color.text_muted, null))
+        b.filterLive.setBackgroundResource(R.drawable.bg_status_pill)
+        b.filterLive.setTextColor(resources.getColor(R.color.text_muted, null))
+        b.filterUpcoming.setBackgroundResource(R.drawable.bg_status_pill)
+        b.filterUpcoming.setTextColor(resources.getColor(R.color.text_muted, null))
+        b.filterAll.setBackgroundResource(R.drawable.bg_status_pill)
+        b.filterAll.setTextColor(resources.getColor(R.color.text_muted, null))
+
+        // Activate the selected one
+        when (filter) {
+            StatusFilter.RECENT -> {
+                b.filterRecent.setBackgroundResource(R.drawable.bg_status_pill_active)
+                b.filterRecent.setTextColor(resources.getColor(R.color.primary, null))
+            }
+            StatusFilter.LIVE -> {
+                b.filterLive.setBackgroundResource(R.drawable.bg_status_pill_live)
+                b.filterLive.setTextColor(resources.getColor(R.color.live_red, null))
+            }
+            StatusFilter.UPCOMING -> {
+                b.filterUpcoming.setBackgroundResource(R.drawable.bg_status_pill_active)
+                b.filterUpcoming.setTextColor(resources.getColor(R.color.primary, null))
+            }
+            StatusFilter.ALL -> {
+                b.filterAll.setBackgroundResource(R.drawable.bg_status_pill_active)
+                b.filterAll.setTextColor(resources.getColor(R.color.primary, null))
             }
         }
+        homeVm.filterByStatus(filter.name)
     }
 }
