@@ -28,7 +28,12 @@
     <!-- Block cleartext globally — all connections must use TLS
          (the loopback domain-configs below are the explicit dev
          carve-outs). -->
-    <base-config cleartextTrafficPermitted="false">
+    <!-- Allow cleartext (HTTP) globally for streaming CDN URLs.
+         Most sports streaming servers use plain HTTP. HTTPS enforcement
+         for API calls is handled at the OkHttp interceptor layer
+         (NetworkInterceptor.kt) which only allows HTTPS for the API
+         backend domain (learngermanwith.fun). -->
+    <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <!-- Only trust system-installed CA certificates.
                  User-installed CAs are NOT trusted, blocking MITM
