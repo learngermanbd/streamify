@@ -3,6 +3,7 @@ package com.streamify.app.ui.activities
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.HapticFeedbackConstants
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -90,23 +91,27 @@ class MainActivity : AppCompatActivity() {
         val navController = navHost.navController
         binding.bottomNav.setupWithNavController(navController)
 
-        // Sportzfy top bar buttons.
-        binding.btnDrawerToggle.setOnClickListener {
-            binding.drawerRoot.openDrawer(androidx.core.view.GravityCompat.START)
+        // Sportzfy top bar buttons — haptic feedback + Material3 ripple.
+        binding.btnDrawerToggle.setOnClickListener { v ->
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            binding.drawerRoot.openDrawer(GravityCompat.START)
         }
-        binding.btnToolbarSearch.setOnClickListener {
+        binding.btnToolbarSearch.setOnClickListener { v ->
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             navController.navigate(R.id.searchFragment)
         }
-        binding.btnToolbarFavorites.setOnClickListener {
+        binding.btnToolbarFavorites.setOnClickListener { v ->
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             navController.navigate(R.id.favoritesFragment)
         }
-        binding.btnToolbarRefresh.setOnClickListener {
-            // Call HomeFragment.refresh() which triggers mainVm.load().
+        binding.btnToolbarRefresh.setOnClickListener { v ->
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             supportFragmentManager.fragments
                 .filterIsInstance<com.streamify.app.ui.fragments.HomeFragment>()
                 .firstOrNull()?.refresh()
         }
-        binding.btnToolbarNetwork.setOnClickListener {
+        binding.btnToolbarNetwork.setOnClickListener { v ->
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             navController.navigate(R.id.networkStreamFragment)
         }
 
