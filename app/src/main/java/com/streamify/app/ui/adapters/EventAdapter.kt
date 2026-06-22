@@ -81,12 +81,18 @@ class EventAdapter(
             binding.root.setOnClickListener { current?.let(onClick) }
             val ctx = binding.root.context
 
-            // Title fallback if the API sends an empty title.
-            binding.title.text = event.title.ifBlank {
-                ctx.getString(R.string.view_item_match_default_title)
-            }
-            binding.subtitle.text = buildSubtitle(ctx, event)
-            binding.vsText.text = ctx.getString(R.string.view_item_match_vs)
+            // League / category info line (e.g. "Football · Premier League 25/26")
+            binding.leagueInfo.text = buildLeagueInfo(event)
+
+            // VS label and score
+            binding.vsLabel.text = ctx.getString(R.string.view_item_match_vs)
+            val score = buildScoreText(event)
+            binding.scoreText.text = score
+            binding.scoreText.isVisible = score.isNotBlank()
+
+            // Time text in bottom row
+            val time = buildTimeText(event)
+            binding.timeText.text = time.ifBlank { "—" }
 
             // Team names ("Team A" / "Team B") — fall back to "TBD" when
             // the backend leaves team names empty.
@@ -111,11 +117,7 @@ class EventAdapter(
                 .circleCrop()
                 .into(binding.teamBLogo)
 
-            // Per-row contentDescription for TalkBack — the layout's
-            // static `Team A logo` / `Team B logo` would otherwise read
-            // identically for every row. Fall back to the TBD sentinel
-            // when the API sends an empty team name (matches the
-            // teamAName / teamBName fall-back below).
+            // Per-row contentDescription for TalkBack
             binding.teamALogo.contentDescription =
                 event.teamA.name.ifBlank { ctx.getString(R.string.view_item_match_default_team) }
             binding.teamBLogo.contentDescription =
@@ -154,13 +156,30 @@ class EventAdapter(
             Glide.with(binding.teamBLogo).clear(binding.teamBLogo)
         }
 
-        private fun buildSubtitle(ctx: android.content.Context, event: Event): CharSequence {
-            val category = event.category.takeIf { it.isNotBlank() }
-            val when_ = "${event.date} ${event.time}".trim().takeIf { it.isNotBlank() }
+        private fun buildLeagueInfo(event: Event): String {
+            val sport = event.category.takeIf { it.isNotBlank() }
+            val title = event.title.takeIf { it.isNotBlank() }
             return when {
-                category != null && when_ != null -> "$category · $when_"
-                category != null -> category
-                when_ != null -> when_
+                sport != null && title != null -> "$sport · $title"
+                title != null -> title
+                sport != null -> sport
+                else -> ""
+            }
+        }
+
+        private fun buildScoreText(event: Event): String {
+            // Score data not yet available in Team model — return empty
+            // so scoreText is hidden. When the API adds scores, wire them here.
+            return ""
+        }
+
+        private fun buildTimeText(event: Event): String {
+            val date = event.date.takeIf { it.isNotBlank() }
+            val time = event.time.takeIf { it.isNotBlank() }
+            return when {
+                date != null && time != null -> "$date · $time"
+                time != null -> time
+                date != null -> date
                 else -> ""
             }
         }

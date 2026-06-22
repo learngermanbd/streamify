@@ -101,11 +101,6 @@ class MainActivity : AppCompatActivity() {
 
         binding.navView.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.drawer_highlights -> {
-                    navController.navigate(R.id.highlightsFragment)
-                    binding.drawerRoot.closeDrawers()
-                    true
-                }
                 R.id.drawer_playlists -> {
                     navController.navigate(R.id.playlistsFragment)
                     binding.drawerRoot.closeDrawers()

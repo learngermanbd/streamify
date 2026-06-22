@@ -76,7 +76,7 @@ class NetworkStreamFragment : Fragment() {
             return
         }
 
-        val formatLabel = urlFragment.selectedFormatLabel()
+        val formatLabel = urlFragment?.selectedFormatLabel().orEmpty()
 
         PlayerNavigation.startPlayerForVideo(
             context = requireContext(),
