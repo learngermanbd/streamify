@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Streamify Admin Panel</title>
+<title>Sportzfy Admin Panel</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
-  --primary: #1CCBD4; --primary-dark: #17a8b0; --secondary: #131931;
-  --bg: #0a0f1a; --bg-card: #121a27; --bg-elevated: #1a2436;
-  --text: #e0e6ed; --text-muted: #8899aa; --text-dim: #5a6b7c;
-  --border: #1e2d45; --green: #22c55e; --orange: #f59e0b;
-  --red: #ef4444; --purple: #a78bfa; --pink: #ec4899; --blue: #3b82f6;
-  --glass: rgba(28,203,212,0.08); --glass-border: rgba(28,203,212,0.15);
+  --primary: #00E676; --primary-dark: #00C853; --secondary: #16213E;
+  --bg: #0D0D1A; --bg-card: #1A1A2E; --bg-elevated: #16213E;
+  --text: #F0F0F0; --text-muted: #7B8CA0; --text-dim: #5a6b7c;
+  --border: #2A2A3E; --green: #00E676; --orange: #FFB300;
+  --red: #FF1744; --purple: #00BCD4; --pink: #ec4899; --blue: #3b82f6;
+  --glass: rgba(0,230,118,0.08); --glass-border: rgba(0,230,118,0.15);
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
@@ -20,9 +20,8 @@ body {
   background: var(--bg); color: var(--text); min-height:100vh;
 }
 body::before {
-  content:''; position:fixed; top:-50%; left:-50%; width:200%; height:200%;
-  background: radial-gradient(ellipse at 20% 30%, rgba(28,203,212,0.04) 0%, transparent 50%),
-              radial-gradient(ellipse at 80% 70%, rgba(167,139,250,0.03) 0%, transparent 50%);
+  content:''; position:fixed; top:-50%; left:-50%; width:200%; height:200%;    background: radial-gradient(ellipse at 20% 30%, rgba(0,230,118,0.04) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 70%, rgba(0,188,212,0.03) 0%, transparent 50%);
   z-index:-1;
 }
 
@@ -35,12 +34,11 @@ body::before {
   padding:40px; width:100%; max-width:420px; position:relative; overflow:hidden;
 }
 .login-card::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:2px;
-  background:linear-gradient(90deg,var(--primary),var(--purple));
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;    background:linear-gradient(90deg,var(--primary),var(--purple));
 }
 .login-card h1 {
   font-size:28px; font-weight:800; margin-bottom:4px;
-  background:linear-gradient(135deg,var(--primary),var(--purple));
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
 }
 .login-card .subtitle { color:var(--text-muted); font-size:13px; margin-bottom:28px; }
@@ -69,7 +67,7 @@ body::before {
 .sidebar-brand {
   padding:20px 24px; border-bottom:1px solid var(--border);
   font-size:20px; font-weight:800;
-  background:linear-gradient(135deg,var(--primary),var(--purple));
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
 }
 .sidebar-nav { flex:1; overflow-y:auto; padding:12px 0; }
@@ -147,11 +145,11 @@ tr:hover td { background:rgba(255,255,255,0.02); }
   display:inline-block; padding:2px 8px; border-radius:4px;
   font-size:10px; font-weight:700; text-transform:uppercase;
 }
-.badge.live { background:rgba(239,68,68,0.15); color:var(--red); }
-.badge.scheduled { background:rgba(34,197,94,0.15); color:var(--green); }
+.badge.live { background:rgba(255,23,68,0.15); color:var(--red); }
+.badge.scheduled { background:rgba(0,230,118,0.15); color:var(--green); }
 .badge.ended { background:rgba(90,107,124,0.15); color:var(--text-dim); }
-.badge.draft { background:rgba(245,158,11,0.15); color:var(--orange); }
-.badge.active { background:rgba(34,197,94,0.15); color:var(--green); }
+.badge.draft { background:rgba(255,179,0,0.15); color:var(--orange); }
+.badge.active { background:rgba(0,230,118,0.15); color:var(--green); }
 
 /* ===== MODAL ===== */
 .modal-overlay {
@@ -228,8 +226,8 @@ tr:hover td { background:rgba(255,255,255,0.02); }
 <!-- ========== LOGIN SCREEN ========== -->
 <div id="loginScreen">
   <div class="login-card">
-    <h1>Streamify</h1>
-    <p class="subtitle">Admin Panel — Phase 8</p>
+    <h1>Sportzfy</h1>
+    <p class="subtitle">Admin Panel — v22.1</p>
     <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
     <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
     <button onclick="doLogin()">Sign In</button>
@@ -241,7 +239,7 @@ tr:hover td { background:rgba(255,255,255,0.02); }
 <div id="appScreen">
   <!-- Sidebar -->
   <aside class="sidebar">
-    <div class="sidebar-brand">Streamify Admin</div>
+    <div class="sidebar-brand">Sportzfy Admin</div>
     <nav class="sidebar-nav">
       <a href="#dashboard" class="active" data-page="dashboard">
         <span class="icon">📊</span> Dashboard
@@ -298,7 +296,7 @@ tr:hover td { background:rgba(255,255,255,0.02); }
 <script>
 // ==================== STATE ====================
 const API = window.location.origin + '/api';
-let token = localStorage.getItem('streamify_admin_token') || '';
+let token = localStorage.getItem('sportzfy_admin_token') || '';
 let user = null;
 let currentPage = 'dashboard';
 
@@ -309,7 +307,7 @@ async function api(path, opts = {}) {
   if (opts.method && opts.method !== 'GET') headers['Content-Type'] = 'application/json';
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${API}${path}`, { ...opts, headers });
-  if (res.status === 401) { token = ''; localStorage.removeItem('streamify_admin_token'); showLogin(); throw new Error('Unauthorized'); }
+  if (res.status === 401) { token = ''; localStorage.removeItem('sportzfy_admin_token'); showLogin(); throw new Error('Unauthorized'); }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
@@ -328,7 +326,7 @@ async function doLogin() {
     });
     token = data.accessToken || data.token;
     user = data.user || { email, role: data.role || 'EDITOR', name: email.split('@')[0] };
-    localStorage.setItem('streamify_admin_token', token);
+    localStorage.setItem('sportzfy_admin_token', token);
     showApp();
   } catch (e) {
     errEl.textContent = e.message;
@@ -337,7 +335,7 @@ async function doLogin() {
 
 function doLogout() {
   token = ''; user = null;
-  localStorage.removeItem('streamify_admin_token');
+  localStorage.removeItem('sportzfy_admin_token');
   showLogin();
 }
 
@@ -366,7 +364,7 @@ if (token) {
     showApp();
   }).catch(() => {
     token = '';
-    localStorage.removeItem('streamify_admin_token');
+    localStorage.removeItem('sportzfy_admin_token');
   });
 }
 
@@ -374,7 +372,7 @@ if (token) {
 function navigateTo(page) {
   currentPage = page;
   document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
-  const link = document.querySelector(`[data-page="${page}"]`);
+  const link =  document.querySelector(`[data-page="${page}"]`);
   if (link) link.classList.add('active');
 
   const container = document.getElementById('mainContent');
@@ -458,7 +456,7 @@ async function renderDashboard(container) {
       data: {
         labels: ['Live', 'Scheduled', 'Ended', 'Draft'],
         datasets: [{ data: [statusCounts.LIVE, statusCounts.SCHEDULED, statusCounts.ENDED, statusCounts.DRAFT],
-          backgroundColor: ['#ef4444', '#22c55e', '#5a6b7c', '#f59e0b'], borderWidth: 0 }]
+          backgroundColor: ['#FF1744', '#00E676', '#5a6b7c', '#FFB300'], borderWidth: 0 }]
       },
       options: { responsive:true, maintainAspectRatio:false, plugins: { legend: { position:'bottom', labels: { color:'#8899aa', padding:16, font:{size:12} } } } }
     }));
@@ -470,7 +468,7 @@ async function renderDashboard(container) {
       type: 'bar',
       data: {
         labels: catNames,
-        datasets: [{ label: 'Channels', data: catCounts, backgroundColor: '#1CCBD4', borderRadius: 6 }]
+        datasets: [{ label: 'Channels', data: catCounts, backgroundColor: '#00E676', borderRadius: 6 }]
       },
       options: { responsive:true, maintainAspectRatio:false, plugins: { legend: { display:false } },
         scales: { y: { beginAtZero:true, ticks:{color:'#8899aa'}, grid:{color:'rgba(255,255,255,0.04)'} },
@@ -1156,7 +1154,7 @@ async function renderAnalytics(container) {
       type: 'bar',
       data: {
         labels,
-        datasets: [{ label: 'Count', data: values, backgroundColor: labels.map((_, i) => ['#1CCBD4','#a78bfa','#22c55e','#f59e0b','#ef4444','#ec4899'][i % 6]), borderRadius: 6 }]
+        datasets: [{ label: 'Count', data: values, backgroundColor: labels.map((_, i) => ['#00E676','#00BCD4','#00E676','#FFB300','#FF1744','#ec4899'][i % 6]), borderRadius: 6 }]
       },
       options: {
         responsive:true, maintainAspectRatio:false,
