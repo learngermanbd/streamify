@@ -18,12 +18,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Top row: league info + LIVE badge -->
+    <!-- Row 1: Tournament/Cup info (left) + Countdown/LIVE badge (right) -->
     <TextView
-        android:id="@+id/leagueInfo"
+        android:id="@+id/tournamentInfo"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:ellipsize="end"
         android:fontFamily="@font/poppins_regular"
@@ -31,10 +31,26 @@
         android:paddingHorizontal="12dp"
         android:textColor="@color/text_muted"
         android:textSize="9sp"
-        app:layout_constraintEnd_toStartOf="@id/liveBadge"
+        app:layout_constraintEnd_toStartOf="@id/timeBadge"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/accentLine"
-        tools:text="🟢 Football · Premier League 25/26" />
+        tools:text="🏆 Cup • Round 2" />
+
+    <TextView
+        android:id="@+id/timeBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:fontFamily="@font/poppins_regular"
+        android:letterSpacing="0.05"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="2dp"
+        android:textColor="@color/text_muted"
+        android:textSize="8sp"
+        app:layout_constraintBottom_toBottomOf="@id/tournamentInfo"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tournamentInfo"
+        tools:text="🕒 07:49:16" />
 
     <TextView
         android:id="@+id/liveBadge"
@@ -51,143 +67,159 @@
         android:textSize="8sp"
         android:textStyle="bold"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@id/leagueInfo"
+        app:layout_constraintBottom_toBottomOf="@id/tournamentInfo"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/leagueInfo" />
+        app:layout_constraintTop_toTopOf="@id/tournamentInfo" />
 
-    <!-- Teams row -->
-    <ImageView
-        android:id="@+id/teamALogo"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+    <!-- Row 2: Sport category + League title (e.g. "Football ll World Cup 2026") -->
+    <TextView
+        android:id="@+id/leagueInfo"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/poppins_regular"
+        android:maxLines="1"
+        android:paddingHorizontal="12dp"
+        android:textColor="@color/text_muted"
+        android:textSize="8sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tournamentInfo"
+        tools:text="Football ll World Cup 2026" />
+
+    <!-- Teams row: (flag) Team A  VS  Team B (flag) -->
+    <TextView
+        android:id="@+id/teamAFlag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
         android:layout_marginTop="8dp"
-        android:background="@drawable/bg_team_logo_placeholder"
-        android:contentDescription="@string/view_item_match_team_a_desc"
-        android:scaleType="centerCrop"
+        android:fontFamily="@font/poppins_regular"
+        android:textSize="16sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/leagueInfo" />
+        app:layout_constraintTop_toBottomOf="@id/leagueInfo"
+        tools:text="🇦🇺" />
 
     <TextView
         android:id="@+id/teamAName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="10dp"
         android:ellipsize="end"
         android:fontFamily="@font/poppins_regular"
-        android:gravity="center"
+        android:gravity="end"
         android:maxLines="1"
         android:textColor="@color/text"
-        android:textSize="9sp"
+        android:textSize="10sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@id/vsText"
-        app:layout_constraintStart_toStartOf="@id/teamALogo"
-        app:layout_constraintTop_toBottomOf="@id/teamALogo"
-        tools:text="Crystal Palace" />
+        app:layout_constraintEnd_toStartOf="@id/vsLabel"
+        app:layout_constraintStart_toEndOf="@id/teamAFlag"
+        app:layout_constraintTop_toBottomOf="@id/leagueInfo"
+        tools:text="New Zealand" />
 
-    <LinearLayout
-        android:id="@+id/vsText"
+    <TextView
+        android:id="@+id/vsLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="@id/teamALogo"
-        app:layout_constraintEnd_toStartOf="@id/teamBLogo"
-        app:layout_constraintStart_toEndOf="@id/teamALogo"
-        app:layout_constraintTop_toTopOf="@id/teamALogo">
-
-        <TextView
-            android:id="@+id/scoreText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="@font/poppins_regular"
-            android:textColor="@color/text"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            tools:text="0 — 2" />
-
-        <TextView
-            android:id="@+id/vsLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_status_pill_active"
-            android:fontFamily="@font/poppins_regular"
-            android:paddingHorizontal="6dp"
-            android:paddingVertical="1dp"
-            android:text="@string/view_item_match_vs"
-            android:textColor="@color/primary"
-            android:textSize="9sp"
-            android:textStyle="bold" />
-    </LinearLayout>
-
-    <ImageView
-        android:id="@+id/teamBLogo"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/bg_team_logo_placeholder"
-        android:contentDescription="@string/view_item_match_team_b_desc"
-        android:scaleType="centerCrop"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/leagueInfo" />
+        android:background="@drawable/bg_status_pill_active"
+        android:fontFamily="@font/poppins_regular"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="3dp"
+        android:text="@string/view_item_match_vs"
+        android:textColor="@color/primary"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@id/teamAName"
+        app:layout_constraintEnd_toStartOf="@id/teamBName"
+        app:layout_constraintStart_toEndOf="@id/teamAName"
+        app:layout_constraintTop_toTopOf="@id/teamAName" />
 
     <TextView
         android:id="@+id/teamBName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginTop="10dp"
         android:ellipsize="end"
         android:fontFamily="@font/poppins_regular"
-        android:gravity="center"
+        android:gravity="start"
         android:maxLines="1"
         android:textColor="@color/text"
-        android:textSize="9sp"
+        android:textSize="10sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="@id/teamBLogo"
-        app:layout_constraintStart_toEndOf="@id/vsText"
-        app:layout_constraintTop_toBottomOf="@id/teamBLogo"
-        tools:text="Liverpool" />
+        app:layout_constraintEnd_toStartOf="@id/teamBFlag"
+        app:layout_constraintStart_toEndOf="@id/vsLabel"
+        app:layout_constraintTop_toBottomOf="@id/leagueInfo"
+        tools:text="Egypt" />
 
-    <!-- Bottom row: time + watch button -->
-    <View
-        android:id="@+id/bottomDivider"
-        android:layout_width="0dp"
-        android:layout_height="1dp"
+    <TextView
+        android:id="@+id/teamBFlag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
         android:layout_marginTop="8dp"
-        android:background="@color/border_default"
+        android:fontFamily="@font/poppins_regular"
+        android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/leagueInfo"
+        tools:text="🇪🇬" />
+
+    <!-- Hidden views kept for backward compatibility with EventAdapter Glide calls -->
+    <ImageView
+        android:id="@+id/teamALogo"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/teamBName" />
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/teamBLogo"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Hidden compatibility views for EventAdapter binding references -->
+    <LinearLayout
+        android:id="@+id/vsText"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/scoreText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/timeText"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/poppins_regular"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="6dp"
-        android:textColor="@color/text_muted"
-        android:textSize="9sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/watchBtn"
+        android:layout_height="0dp"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/bottomDivider"
-        tools:text="67' · 2nd Half" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/watchBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="12dp"
-        android:fontFamily="@font/poppins_regular"
-        android:paddingVertical="6dp"
-        android:text="▶ Watch"
-        android:textColor="@color/primary"
-        android:textSize="9sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/bottomDivider" />
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/bottomDivider"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -13,12 +13,69 @@
         android:background="@color/dark_bg"
         android:orientation="vertical">
 
-        <!-- Notice Bar -->
+        <!-- Dismissible Ad / Promo Banner -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/adBannerCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="10dp"
+            android:layout_marginTop="6dp"
+            app:cardBackgroundColor="#1A1A2E"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="🌐 Download Our Latest v20.0 to Play Quiz &amp; Earn 500$ From:⭐️\nhttps://thesportzfybd.com ⭐️"
+                        android:textColor="#F0C040"
+                        android:textSize="9sp" />
+
+                    <ImageView
+                        android:id="@+id/adBannerClose"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="6dp"
+                        android:contentDescription="Close banner"
+                        android:padding="2dp"
+                        android:src="@android:drawable/ic_menu_close_clear_cancel"
+                        app:tint="@color/text_muted" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:autoLink="web"
+                    android:fontFamily="@font/poppins_regular"
+                    android:text="👉 Join our Official Facebook Group: https://www.facebook.com/thesportzfy"
+                    android:textColor="#5B9DF0"
+                    android:textSize="8sp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Marquee Scrolling Notice -->
         <TextView
             android:id="@+id/noticeBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_notice_bar"
+            android:layout_marginTop="4dp"
             android:ellipsize="marquee"
             android:focusable="true"
             android:fontFamily="@font/poppins_regular"
@@ -27,70 +84,266 @@
             android:paddingVertical="6dp"
             android:scrollHorizontally="true"
             android:singleLine="true"
-            android:text="🔔 To Download Our Latest APK. Stay away from fraud apps."
+            android:text="🔔 To Download Official Latest App. Don't get Scammed by fake apps!"
             android:textColor="#F0C040"
             android:textSize="9sp" />
 
-        <!-- Category Chips (horizontal scroll) -->
+        <!-- Circular Category Badges -->
         <HorizontalScrollView
-            android:id="@+id/categoryChipScroll"
+            android:id="@+id/categoryBadgeScroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clipToPadding="false"
             android:overScrollMode="never"
             android:scrollbars="none">
 
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/categoryChips"
+            <LinearLayout
+                android:id="@+id/categoryBadges"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingHorizontal="14dp"
-                android:paddingVertical="8dp"
-                app:chipSpacingHorizontal="6dp"
-                app:singleLine="true"
-                app:singleSelection="true">
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="8dp">
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipAll"
-                    style="@style/Widget.Material3.Chip.Filter"
+                <!-- All -->
+                <LinearLayout
+                    android:id="@+id/badgeAll"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="⚡ All" />
+                    android:gravity="center"
+                    android:orientation="vertical">
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipCricket"
-                    style="@style/Widget.Material3.Chip.Filter"
+                    <FrameLayout
+                        android:layout_width="52dp"
+                        android:layout_height="52dp">
+
+                        <TextView
+                            android:layout_width="52dp"
+                            android:layout_height="52dp"
+                            android:background="@drawable/bg_category_badge_selected"
+                            android:gravity="center"
+                            android:text="⚡"
+                            android:textSize="20sp" />
+
+                        <TextView
+                            android:id="@+id/badgeAllCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="top|end"
+                            android:background="@drawable/bg_badge_counter"
+                            android:fontFamily="@font/poppins_regular"
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="0dp"
+                            android:text="0"
+                            android:textColor="@color/white"
+                            android:textSize="7sp"
+                            android:textStyle="bold"
+                            android:visibility="gone" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="All"
+                        android:textColor="@color/primary"
+                        android:textSize="8sp" />
+                </LinearLayout>
+
+                <!-- Cricket -->
+                <LinearLayout
+                    android:id="@+id/badgeCricket"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🏏 Cricket" />
+                    android:layout_marginStart="10dp"
+                    android:gravity="center"
+                    android:orientation="vertical">
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipFootball"
-                    style="@style/Widget.Material3.Chip.Filter"
+                    <FrameLayout
+                        android:layout_width="52dp"
+                        android:layout_height="52dp">
+
+                        <TextView
+                            android:layout_width="52dp"
+                            android:layout_height="52dp"
+                            android:background="@drawable/bg_category_badge"
+                            android:gravity="center"
+                            android:text="🏏"
+                            android:textSize="20sp" />
+
+                        <TextView
+                            android:id="@+id/badgeCricketCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="top|end"
+                            android:background="@drawable/bg_badge_counter"
+                            android:fontFamily="@font/poppins_regular"
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="0dp"
+                            android:text="0"
+                            android:textColor="@color/white"
+                            android:textSize="7sp"
+                            android:textStyle="bold"
+                            android:visibility="gone" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Cricket"
+                        android:textColor="@color/text_muted"
+                        android:textSize="8sp" />
+                </LinearLayout>
+
+                <!-- Football -->
+                <LinearLayout
+                    android:id="@+id/badgeFootball"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="⚽ Football" />
+                    android:layout_marginStart="10dp"
+                    android:gravity="center"
+                    android:orientation="vertical">
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipBoxing"
-                    style="@style/Widget.Material3.Chip.Filter"
+                    <FrameLayout
+                        android:layout_width="52dp"
+                        android:layout_height="52dp">
+
+                        <TextView
+                            android:layout_width="52dp"
+                            android:layout_height="52dp"
+                            android:background="@drawable/bg_category_badge"
+                            android:gravity="center"
+                            android:text="⚽"
+                            android:textSize="20sp" />
+
+                        <TextView
+                            android:id="@+id/badgeFootballCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="top|end"
+                            android:background="@drawable/bg_badge_counter"
+                            android:fontFamily="@font/poppins_regular"
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="0dp"
+                            android:text="0"
+                            android:textColor="@color/white"
+                            android:textSize="7sp"
+                            android:textStyle="bold"
+                            android:visibility="gone" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Football"
+                        android:textColor="@color/text_muted"
+                        android:textSize="8sp" />
+                </LinearLayout>
+
+                <!-- Boxing -->
+                <LinearLayout
+                    android:id="@+id/badgeBoxing"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🥊 Boxing" />
+                    android:layout_marginStart="10dp"
+                    android:gravity="center"
+                    android:orientation="vertical">
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipMotor"
-                    style="@style/Widget.Material3.Chip.Filter"
+                    <FrameLayout
+                        android:layout_width="52dp"
+                        android:layout_height="52dp">
+
+                        <TextView
+                            android:layout_width="52dp"
+                            android:layout_height="52dp"
+                            android:background="@drawable/bg_category_badge"
+                            android:gravity="center"
+                            android:text="🥊"
+                            android:textSize="20sp" />
+
+                        <TextView
+                            android:id="@+id/badgeBoxingCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="top|end"
+                            android:background="@drawable/bg_badge_counter"
+                            android:fontFamily="@font/poppins_regular"
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="0dp"
+                            android:text="0"
+                            android:textColor="@color/white"
+                            android:textSize="7sp"
+                            android:textStyle="bold"
+                            android:visibility="gone" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Boxing"
+                        android:textColor="@color/text_muted"
+                        android:textSize="8sp" />
+                </LinearLayout>
+
+                <!-- Motorsport -->
+                <LinearLayout
+                    android:id="@+id/badgeMotor"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🏎️ Motor" />
+                    android:layout_marginStart="10dp"
+                    android:gravity="center"
+                    android:orientation="vertical">
 
-            </com.google.android.material.chip.ChipGroup>
+                    <FrameLayout
+                        android:layout_width="52dp"
+                        android:layout_height="52dp">
+
+                        <TextView
+                            android:layout_width="52dp"
+                            android:layout_height="52dp"
+                            android:background="@drawable/bg_category_badge"
+                            android:gravity="center"
+                            android:text="🏎️"
+                            android:textSize="20sp" />
+
+                        <TextView
+                            android:id="@+id/badgeMotorCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="top|end"
+                            android:background="@drawable/bg_badge_counter"
+                            android:fontFamily="@font/poppins_regular"
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="0dp"
+                            android:text="0"
+                            android:textColor="@color/white"
+                            android:textSize="7sp"
+                            android:textStyle="bold"
+                            android:visibility="gone" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Motor"
+                        android:textColor="@color/text_muted"
+                        android:textSize="8sp" />
+                </LinearLayout>
+
+            </LinearLayout>
         </HorizontalScrollView>
 
-        <!-- Status Filter Pills -->
+        <!-- Status Filter Pills with dynamic counts -->
         <LinearLayout
             android:id="@+id/statusFilters"
             android:layout_width="match_parent"
@@ -98,7 +351,7 @@
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingHorizontal="14dp"
-            android:paddingBottom="8dp">
+            android:paddingBottom="6dp">
 
             <TextView
                 android:id="@+id/filterRecent"
@@ -108,7 +361,7 @@
                 android:fontFamily="@font/poppins_regular"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="4dp"
-                android:text="✓ Recent"
+                android:text="✓ Recent (0)"
                 android:textColor="@color/primary"
                 android:textSize="9sp"
                 android:textStyle="bold" />
@@ -122,7 +375,7 @@
                 android:fontFamily="@font/poppins_regular"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="4dp"
-                android:text="● Live"
+                android:text="● Live (0)"
                 android:textColor="@color/live_red"
                 android:textSize="9sp"
                 android:textStyle="bold" />
@@ -136,7 +389,7 @@
                 android:fontFamily="@font/poppins_regular"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="4dp"
-                android:text="📅 Upcoming"
+                android:text="📅 Upcoming (0)"
                 android:textColor="@color/text_muted"
                 android:textSize="9sp" />
 
@@ -149,7 +402,7 @@
                 android:fontFamily="@font/poppins_regular"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="4dp"
-                android:text="All"
+                android:text="All (0)"
                 android:textColor="@color/text_muted"
                 android:textSize="9sp" />
 
